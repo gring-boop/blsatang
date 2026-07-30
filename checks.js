@@ -29,6 +29,41 @@ const WATCH=["container","app-head","head-tools","chat-sidebar","cards-area","si
 const miss=WATCH.filter(c=>!new RegExp("\\."+c+"[^a-zA-Z0-9_-]").test(CSS));
 ok(miss.length===0, "CSS 규칙 없는 클래스: "+miss.join(", "));
 
+/* ---- 1.5 index.html 구조 검사 ----
+
+   TheMagam 에서 닫는 </div> 를 잘못 잘라 설정 모달이 중간에서 끝나고
+   "닫기" 버튼이 화면 절반을 덮은 일이 있었습니다. 눈으로는 잡기 어렵고
+   브라우저는 조용히 넘어가는 종류라, 여기서도 같이 지킵니다. */
+{
+  const t = HTML.replace(/<!--[\s\S]*?-->/g, "");
+  const open  = (t.match(/<div\b/g)  || []).length;
+  const close = (t.match(/<\/div>/g) || []).length;
+  ok(open === close, `<div> 여닫이 개수가 맞다 (열림 ${open} / 닫힘 ${close})`);
+
+  const ids = t.match(/id="([^"]+)"/g).map(x => x.slice(4, -1));
+  const dup = [...new Set(ids.filter((v, i) => ids.indexOf(v) !== i))];
+  ok(dup.length === 0, "중복된 id 가 없다" + (dup.length ? " — " + dup.join(", ") : ""));
+
+  const tabs   = (t.match(/data-tab="(\w+)"/g) || []).map(x => x.slice(10, -1));
+  const panels = (t.match(/id="panel-(\w+)"/g) || []).map(x => x.slice(10, -1));
+  tabs.forEach(k => ok(panels.includes(k), `설정 탭 ${k} 에 짝이 되는 패널이 있다`));
+
+  /* 보기 고르기 버튼 — 두 겹으로 눌리는지 (인라인 + 위임) */
+  const pick = t.slice(t.indexOf('id="layout-pick"'), t.indexOf('id="slot-title"'));
+  ["landscape", "portrait"].forEach(o => {
+    const m = pick.match(new RegExp(`data-orient="${o}"[^>]*`));
+    ok(!!m, `${o} 버튼이 있다`);
+    ok(m && /onclick=/.test(m[0]), `${o} 버튼에 인라인 클릭이 달려 있다`);
+  });
+  ["-1", "1"].forEach(v => {
+    const m = pick.match(new RegExp(`data-side="${v}"[^>]*`));
+    ok(!!m, `좌우 ${v} 버튼이 있다`);
+    ok(m && /onclick=/.test(m[0]), `좌우 ${v} 버튼에 인라인 클릭이 달려 있다`);
+  });
+  ok(/function bindLayoutPick/.test(fs.readFileSync(DIR+"script_ui.js","utf8")),
+     "위임 클릭도 함께 걸려 있다");
+}
+
 /* ---- 2. 칸 배치 전수 검사 ---- */
 const ctx={window:{addEventListener(){}},document:{readyState:"complete",addEventListener(){},
   getElementById(){return null},querySelectorAll(){return []},querySelector(){return null},
