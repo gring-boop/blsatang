@@ -769,6 +769,14 @@
     lastRendered = { user: data.user, ts: time, ymd: ymd(time), msg: rawMsg };
 
     if (mentionedMe) showMentionToast(data.user, data.emoji);
+
+    /* 좁은 화면에서 다른 창을 보고 있을 때 💬 탭에 개수를 올립니다.
+
+       예전에는 script_profile.js 가 renderChatMessage 를 감싸서 셌는데,
+       이 함수를 감싸는 곳이 네 군데(ui·reactions·profile)나 되어서
+       순서가 조금만 틀어져도 조용히 안 불렸습니다.
+       세는 일은 원본에서 직접 하는 편이 확실합니다. */
+    if (!isMe) { try { window.noteNarrowChatUnread?.(); } catch (e) {} }
   }
 
   // =====================================================

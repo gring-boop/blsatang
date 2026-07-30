@@ -191,7 +191,22 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
   /* 안 읽은 채팅 배지 */
   const prof = fs.readFileSync(DIR+"script_profile.js","utf8");
   ok(/window\.noteNarrowChatUnread/.test(lay), "안 읽은 개수를 세는 함수가 있다");
-  ok(/window\.noteNarrowChatUnread\?\.\(\)/.test(prof), "새 메시지가 오면 실제로 부른다");
+  {
+    /* 세는 자리는 원본 renderChatMessage 안이어야 합니다.
+       감싸개 순서에 기대면 조용히 안 불립니다. */
+    const chat = fs.readFileSync(DIR+"script_chat.js","utf8");
+    ok(/window\.noteNarrowChatUnread\?\.\(\)/.test(chat),
+       "새 메시지가 오면 원본에서 직접 센다");
+    const i = chat.indexOf("function renderChatMessage");
+    const j = chat.indexOf("window.noteNarrowChatUnread");
+    ok(i > 0 && j > i, "세는 코드가 renderChatMessage 안에 있다");
+    ok(/if \(!isMe\) \{ try \{ window\.noteNarrowChatUnread/.test(chat),
+       "내 메시지는 세지 않는다");
+    ok(!/noteNarrowChatUnread/.test(prof), "감싸개 쪽 중복 호출이 없다");
+  }
+  ok(/data-narrow-exit/.test(lay) && /window\.leaveRoom/.test(lay),
+     "좁은 화면에도 나가기 버튼이 있다");
+  ok(/\.nt-exit\{/.test(CSS), "나가기 버튼 CSS 가 있다");
   ok(/nt-badge/.test(lay) && /\.nt-badge\{/.test(CSS), "💬 탭에 배지가 붙는다");
   {
     const i = lay.indexOf("window.noteNarrowChatUnread = function");

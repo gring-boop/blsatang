@@ -330,8 +330,17 @@
                 title="${p.label}" aria-label="${p.label}">
           <span class="nt-ico" aria-hidden="true">${p.icon}</span>
           ${p.id === "chat" ? '<span class="nt-badge hidden" aria-live="polite">0</span>' : ""}
-        </button>`).join("");
+        </button>`).join("") + `
+        <button type="button" class="narrow-tab nt-exit" data-narrow-exit
+                title="나가기" aria-label="나가기"><span class="nt-ico" aria-hidden="true">🚪</span></button>`;
       bar.addEventListener("click", (e) => {
+        /* 폰에는 머리말이 없어서 나가기 버튼이 아예 안 보였습니다.
+           그냥 창을 닫으면 서버가 눈치채는 데 시간이 걸려서, 남들 화면에
+           한동안 남습니다. 여기에 두면 제대로 인사하고 나갈 수 있어요. */
+        if (e.target.closest("[data-narrow-exit]")) {
+          try { window.leaveRoom?.(); } catch (err) {}
+          return;
+        }
         const b = e.target.closest("[data-narrow-tab]");
         if (b) setNarrowPanel(b.dataset.narrowTab);
       });

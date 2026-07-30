@@ -3711,6 +3711,17 @@ body.narrow-chat-focus .narrow-tabs{
   pointer-events: none;
 }
 .nt-badge.hidden{ display: none; }
+
+/* 나가기 — 탭이 아니라 동작이라, 조금 떼어놓고 붉게 */
+.nt-exit{
+  flex: 0 0 auto;
+  width: 40px;
+  margin-left: var(--sp-1);
+  border-left: 1px solid var(--border);
+  border-radius: var(--r-full);
+  opacity: .65;
+}
+.nt-exit:hover{ opacity: 1; background: rgba(255,59,48,.10); }
 /* 안 읽은 게 있으면 흐린 탭도 눈에 걸리게 */
 .narrow-tab:not(.active):has(.nt-badge:not(.hidden)){ opacity: .95; }
 
