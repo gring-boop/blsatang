@@ -146,6 +146,48 @@ ok(/class="card-conn/.test(fs.readFileSync(DIR+"script_realtime.js","utf8")),
 ok(/body\.conn-down .user-card\.is-me \.card-conn/.test(CSS), "내 카드 안테나는 소켓 상태를 따른다");
 ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
 
+/* 좁은 화면 — 창 하나 + 탭 */
+{
+  const lay = fs.readFileSync(DIR+"script_layout.js","utf8");
+  const ui  = fs.readFileSync(DIR+"script_ui.js","utf8");
+  ok(/function renderNarrowTabs/.test(lay), "좁은 화면 탭줄을 그린다");
+  ok(/window\.setNarrowPanel/.test(lay), "탭으로 창을 바꿀 수 있다");
+  ok(/window\.setNarrowDefault/.test(lay), "기본으로 열릴 창을 정할 수 있다");
+  ok(/id="set-narrow-panel"/.test(HTML), "설정에 고르는 칸이 있다");
+  ok(/set-narrow-panel/.test(ui), "설정 칸이 코드에 연결돼 있다");
+
+  /* 설정 칸의 값이 실제 창 id 와 맞는가 — 오타 한 자면 조용히 안 먹습니다 */
+  const panelIds = lay.match(/const PANELS = \[([\s\S]*?)\];/)[1]
+    .match(/id: "(\w+)"/g).map(x => x.slice(5, -1));
+  const optVals = (HTML.match(/id="set-narrow-panel"[\s\S]*?<\/select>/)[0]
+    .match(/value="(\w+)"/g) || []).map(x => x.slice(7, -1));
+  ok(optVals.length === panelIds.length && optVals.every(v => panelIds.includes(v)),
+     "설정 선택지가 실제 창 목록과 일치한다 ("+optVals.join(",")+")");
+
+  /* 서명에 좁은 화면 상태가 들어가야 탭이 먹습니다 */
+  const i = lay.indexOf("const sig = JSON.stringify");
+  ok(/isNarrow\(\)/.test(lay.slice(i, i+220)), "탭을 눌렀을 때 다시 그리도록 서명에 반영한다");
+  ok(/was !== on\) \{ try \{ window\.applyLayout/.test(ui),
+     "좁아지거나 넓어질 때 배치를 다시 짠다");
+
+  ok(/\.narrow-tabs\{/.test(CSS) && /\.narrow-tab\.active\{/.test(CSS), "탭 CSS 가 있다");
+  ok(!/body\.narrow-chat-focus \.pane,/.test(CSS),
+     "좁은 화면에서 .pane 을 통째로 숨기지 않는다 (고른 창이 .pane 일 수 있음)");
+  ok(!/body\.narrow-chat-focus \.split-root > \*\{[^}]*display: flex !important/.test(CSS),
+     "창의 display 를 강제하지 않는다 (안쪽 배치 깨짐 방지)");
+}
+
+/* 자리비움일 때 🍅 가 쌓이지 않는가 */
+{
+  const ui = fs.readFileSync(DIR+"script_ui.js","utf8");
+  const i = ui.indexOf("async function incrementTodayFocusSessions");
+  const seg = ui.slice(i, i + 1100);
+  ok(/if \(!_pomoParticipating\) return;/.test(seg), "미참여면 세지 않는다");
+  ok(/if \(st === "away"\) return;/.test(seg), "자리비움이면 세지 않는다");
+  ok(seg.indexOf('st === "away"') < seg.indexOf("_getTodaySessionCount() + 1"),
+     "세기 전에 걸러낸다");
+}
+
 /* PWA — 독립 창 설치 */
 {
   const mf = JSON.parse(fs.readFileSync(DIR+"manifest.json","utf8"));

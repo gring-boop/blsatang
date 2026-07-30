@@ -167,7 +167,13 @@
   function applyNarrowChatFocus() {
     const w = window.innerWidth || document.documentElement.clientWidth;
     const on = w <= 980;
+    const was = document.body.classList.contains("narrow-chat-focus");
     document.body.classList.toggle("narrow-chat-focus", on);
+
+    /* 좁아졌다 넓어질 때는 배치를 다시 짜야 합니다.
+       좁은 화면은 창 하나만 뿌리에 넣으므로, 넓어지면 다섯 칸을
+       도로 조립해야 하거든요. */
+    if (was !== on) { try { window.applyLayout?.(true); } catch (e) {} }
 
     if (on && typeof window.scrollChatToBottom === "function") {
       setTimeout(() => window.scrollChatToBottom(true), 50);
@@ -184,6 +190,7 @@
 
     if (isMobile) {
       document.body.classList.add("narrow-chat-focus");
+      try { window.applyLayout?.(true); } catch (e) {}
       if (typeof window.scrollChatToBottom === "function") {
         setTimeout(() => window.scrollChatToBottom(true), 50);
       }
@@ -798,6 +805,12 @@
       };
     }
 
+    const nsel = document.getElementById("set-narrow-panel");
+    if (nsel) {
+      nsel.value = window.narrowDefault?.() || "chat";
+      nsel.onchange = () => window.setNarrowDefault?.(nsel.value);
+    }
+
     const joinChk = document.getElementById("set-join-noti");
     if (joinChk) {
       joinChk.checked = _joinNoti;
@@ -1292,6 +1305,15 @@
        카드에 🍅 개수가 붙었어요.
        참여 중일 때만 세도록 막습니다. */
     if (!_pomoParticipating) return;
+
+    /* [FIX] 자리비움인데 🍅 가 쌓이던 문제
+
+       참여를 끄지 않은 채 자리를 비우면, 남이 돌린 타이머가 끝날 때마다
+       내 집중 횟수가 올라갔습니다. 자리에 없었으니 집중한 게 아닙니다.
+       휴식은 일부러 그대로 셉니다. 뽀모의 휴식 구간과 상태의 "휴식"이
+       겹치는 순간이 흔해서, 빼면 정상적으로 집중한 회차까지 사라집니다. */
+    const st = document.getElementById("db-status")?.value || "";
+    if (st === "away") return;
 
     const next = _getTodaySessionCount() + 1;
     _setTodaySessionCount(next);

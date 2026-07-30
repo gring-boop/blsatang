@@ -248,6 +248,80 @@
 
   let _lastSignature = "";
 
+  /* ---------------------------------------------------------------
+     좁은 화면 — 창 하나만 보여주고 탭으로 넘나듭니다
+
+     폭이 좁으면 다섯 칸을 나눠도 아무것도 못 읽습니다. 그래서 한 창만
+     띄우는데, 예전엔 그게 늘 채팅으로 못박혀 있었습니다. 폰으로 들어온
+     분은 오늘 목표를 적을 방법이 아예 없었죠.
+
+     이제 위쪽 탭으로 골라서 넘나들 수 있고, 처음에 열릴 창은 설정에서
+     정합니다. 쪼갬 나무를 건드리지 않고, 고른 창 하나만 뿌리에 직접
+     넣습니다 — 칸 나누기·손잡이 계산을 전부 건너뛰니 훨씬 단단합니다.
+     --------------------------------------------------------------- */
+  const NARROW_KEY  = "narrowPanel";     // 기본으로 열릴 창
+  const NARROW_CUR  = "narrowPanelCur";  // 마지막으로 보던 창
+
+  function narrowDefault() {
+    const v = localStorage.getItem(NARROW_KEY);
+    return PANEL_IDS.includes(v) ? v : "chat";
+  }
+  function narrowCurrent() {
+    const v = localStorage.getItem(NARROW_CUR);
+    return PANEL_IDS.includes(v) ? v : narrowDefault();
+  }
+  function isNarrow() {
+    return document.body.classList.contains("narrow-chat-focus");
+  }
+  window.narrowDefault = narrowDefault;
+  window.setNarrowDefault = function (id) {
+    if (!PANEL_IDS.includes(id)) return;
+    localStorage.setItem(NARROW_KEY, id);
+    /* 기본값을 바꾸면 지금 보는 것도 그리로 옮깁니다.
+       설정에서 고르자마자 화면이 안 바뀌면 안 먹힌 줄 알게 되니까요. */
+    localStorage.setItem(NARROW_CUR, id);
+    if (isNarrow()) applyLayout(true);
+  };
+
+  function setNarrowPanel(id) {
+    if (!PANEL_IDS.includes(id)) return;
+    localStorage.setItem(NARROW_CUR, id);
+    applyLayout(true);
+    if (id === "chat") setTimeout(() => window.scrollChatToBottom?.(true), 60);
+  }
+  window.setNarrowPanel = setNarrowPanel;
+
+  /** 좁은 화면 탭줄 — 없으면 만들고, 활성 표시만 갱신합니다 */
+  function renderNarrowTabs(active) {
+    const container = document.querySelector(".container");
+    const root = document.getElementById("split-root");
+    if (!container || !root) return;
+
+    let bar = document.getElementById("narrow-tabs");
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "narrow-tabs";
+      bar.className = "narrow-tabs";
+      bar.setAttribute("role", "tablist");
+      bar.setAttribute("aria-label", "볼 창 고르기");
+      bar.innerHTML = PANELS.map(p => `
+        <button type="button" class="narrow-tab" role="tab" data-narrow-tab="${p.id}"
+                title="${p.label}" aria-label="${p.label}">
+          <span class="nt-ico" aria-hidden="true">${p.icon}</span>
+        </button>`).join("");
+      bar.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-narrow-tab]");
+        if (b) setNarrowPanel(b.dataset.narrowTab);
+      });
+      container.insertBefore(bar, root);
+    }
+    bar.querySelectorAll("[data-narrow-tab]").forEach(b => {
+      const on = b.dataset.narrowTab === active;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+  }
+
   function applyLayout(force) {
     const root = document.getElementById("split-root");
     if (!root) return;
@@ -258,7 +332,10 @@
     const sizes = loadSizes(orient);
 
     // 같은 상태면 다시 만들지 않습니다 (화면 깜빡임 방지)
-    const sig = JSON.stringify([orient, chatRight, map]);
+    /* 좁은 화면 여부와 지금 보는 창도 서명에 넣습니다.
+       안 넣으면 탭을 눌러도 "같은 상태"로 보고 그냥 돌아갑니다. */
+    const sig = JSON.stringify([orient, chatRight, map,
+                                isNarrow(), isNarrow() ? narrowCurrent() : null]);
     if (!force && sig === _lastSignature) { syncSizes(); return; }
     _lastSignature = sig;
 
@@ -288,6 +365,32 @@
       if (shown.has(p.id)) continue;
       document.querySelectorAll(p.sel).forEach(el => el.classList.add("panel-off"));
     }
+
+    /* 좁은 화면 — 고른 창 하나만 */
+    if (isNarrow()) {
+      const want = narrowCurrent();
+      const p = PANELS.find(x => x.id === want) || PANELS[0];
+      const el = document.querySelector(p.sel);
+
+      root.innerHTML = "";
+      root.classList.remove("flip");
+      if (el) {
+        el.classList.remove("panel-off");
+        el.style.flex = "1 1 auto";
+        root.appendChild(el);
+      }
+      renderNarrowTabs(p.id);
+      renderHiddenChips(map);
+      renderSlotMap();
+      renderSlotPicker();
+      return;
+    }
+
+    /* 넓은 화면으로 돌아오면 좁은 화면에서 준 인라인 크기를 지웁니다 */
+    for (const p of PANELS) {
+      document.querySelectorAll(p.sel).forEach(el => { el.style.flex = ""; });
+    }
+    document.getElementById("narrow-tabs")?.remove();
 
     root.innerHTML = "";
     if (tree) {

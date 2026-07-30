@@ -32,7 +32,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
-  <link rel="stylesheet" href="styles.css?v=202607301246" />
+  <link rel="stylesheet" href="styles.css?v=202607301504" />
 </head>
 
 <body>
@@ -149,6 +149,21 @@
               </button>
             </div>
           </div>
+        </div>
+
+        <div class="set-block">
+          <div class="set-title">창이 좁아지면 보여줄 창</div>
+          <select id="set-narrow-panel" class="w-full">
+            <option value="chat">💬 채팅</option>
+            <option value="prof">👥 접속자 프로필</option>
+            <option value="pomo">🍅 뽀모도로</option>
+            <option value="stat">🎯 오늘 목표 / 상태</option>
+            <option value="todo">📌 나의 투두</option>
+          </select>
+          <p class="hint">
+            창 폭이 좁아지거나 폰으로 들어오면 칸을 나누지 않고 <b>한 창만</b> 띄워요.
+            그때 처음 열릴 창입니다. 화면 위쪽 <b>탭</b>으로 언제든 다른 창으로 넘어갈 수 있어요.
+          </p>
         </div>
 
         <div class="set-block">
@@ -592,17 +607,17 @@
 
 <!-- Core → UI → Chat → Data → Realtime → Profile 순서 -->
 <!-- script_profile.js는 다른 모듈의 함수를 감싸므로 반드시 마지막에 로드 -->
-<script src="fortune_data.js?v=202607301246"></script>
-<script src="script_core.js?v=202607301246"></script>
-<script src="script_ui.js?v=202607301246"></script>
-<script src="script_chat.js?v=202607301246"></script>
-<script src="script_data.js?v=202607301246"></script>
-<script src="script_realtime.js?v=202607301246"></script>
-<script src="script_layout.js?v=202607301246"></script>
-<script src="script_timelog.js?v=202607301246"></script>
-<script src="script_profile.js?v=202607301246"></script>
-<script src="script_reactions.js?v=202607301246"></script>
-<script src="script_manual.js?v=202607301246"></script>
+<script src="fortune_data.js?v=202607301504"></script>
+<script src="script_core.js?v=202607301504"></script>
+<script src="script_ui.js?v=202607301504"></script>
+<script src="script_chat.js?v=202607301504"></script>
+<script src="script_data.js?v=202607301504"></script>
+<script src="script_realtime.js?v=202607301504"></script>
+<script src="script_layout.js?v=202607301504"></script>
+<script src="script_timelog.js?v=202607301504"></script>
+<script src="script_profile.js?v=202607301504"></script>
+<script src="script_reactions.js?v=202607301504"></script>
+<script src="script_manual.js?v=202607301504"></script>
 
 <script>
   window.addEventListener("load", () => {
