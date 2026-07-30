@@ -292,6 +292,30 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
      "이름 줄만큼 프사를 내려 맞춘다");
 }
 
+/* 설정 창 안의 버튼이 배경에 묻히지 않는가
+
+   [왜] .set-block 과 .layout-opt 이 둘 다 var(--panel) 이었습니다.
+   판 위에 같은 색 판을 얹은 셈이라, 고르지 않은 버튼은 글자만 떠
+   있는 것처럼 보였습니다. 눌리는데도 "안 눌린다" 로 느껴졌어요. */
+{
+  const bare = CSS.replace(/\/\*[\s\S]*?\*\//g, "");
+  const rule = name => {
+    const i = bare.indexOf(name + "{");
+    return i < 0 ? "" : bare.slice(i, bare.indexOf("}", i));
+  };
+  const block = rule(".set-block");
+  const opt   = rule(".layout-opt");
+  const bg = seg => (seg.match(/background:\s*([^;]+)/) || [])[1];
+  ok(!!bg(block) && !!bg(opt), "두 규칙 모두 배경이 정해져 있다");
+  ok(bg(block).trim() !== bg(opt).trim(),
+     `설정 칸과 그 안의 버튼이 다른 배경을 쓴다 (${bg(block).trim()} vs ${bg(opt).trim()})`);
+  ok(/border:\s*1px solid var\(--border-strong/.test(opt), "버튼 테두리가 진하다");
+  ok(/\.layout-opt:hover/.test(bare) && /\.layout-opt:active/.test(bare),
+     "누를 수 있다는 반응이 있다");
+  const row = rule(".slot-row");
+  ok(!!bg(row) && bg(row).trim() !== bg(block).trim(), "자리 목록도 배경이 구분된다");
+}
+
 /* PWA — 독립 창 설치 */
 {
   const mf = JSON.parse(fs.readFileSync(DIR+"manifest.json","utf8"));
