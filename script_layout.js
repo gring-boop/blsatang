@@ -115,20 +115,20 @@
 
   function loadSlotMap(orient) {
     let raw = null;
-    try { raw = JSON.parse(localStorage.getItem(KEY[orient]) || "null"); } catch (e) {}
+    try { raw = JSON.parse(AppStore.getItem(KEY[orient]) || "null"); } catch (e) {}
     if (!raw) return { ...DEFAULT_MAP[orient] };
     return normalizeSlotMap(raw, orient);
   }
   function saveSlotMap(orient, map) {
-    try { localStorage.setItem(KEY[orient], JSON.stringify(map)); } catch (e) {}
+    try { AppStore.setItem(KEY[orient], JSON.stringify(map)); } catch (e) {}
   }
 
   function loadSizes(orient) {
-    try { return JSON.parse(localStorage.getItem(SKEY[orient]) || "{}") || {}; }
+    try { return JSON.parse(AppStore.getItem(SKEY[orient]) || "{}") || {}; }
     catch (e) { return {}; }
   }
   function saveSizes(orient, sizes) {
-    try { localStorage.setItem(SKEY[orient], JSON.stringify(sizes)); } catch (e) {}
+    try { AppStore.setItem(SKEY[orient], JSON.stringify(sizes)); } catch (e) {}
   }
 
   /* ---------------------------------------------------------------
@@ -263,11 +263,11 @@
   const NARROW_CUR  = "narrowPanelCur";  // 마지막으로 보던 창
 
   function narrowDefault() {
-    const v = localStorage.getItem(NARROW_KEY);
+    const v = AppStore.getItem(NARROW_KEY);
     return PANEL_IDS.includes(v) ? v : "chat";
   }
   function narrowCurrent() {
-    const v = localStorage.getItem(NARROW_CUR);
+    const v = AppStore.getItem(NARROW_CUR);
     return PANEL_IDS.includes(v) ? v : narrowDefault();
   }
   function isNarrow() {
@@ -276,16 +276,16 @@
   window.narrowDefault = narrowDefault;
   window.setNarrowDefault = function (id) {
     if (!PANEL_IDS.includes(id)) return;
-    localStorage.setItem(NARROW_KEY, id);
+    AppStore.setItem(NARROW_KEY, id);
     /* 기본값을 바꾸면 지금 보는 것도 그리로 옮깁니다.
        설정에서 고르자마자 화면이 안 바뀌면 안 먹힌 줄 알게 되니까요. */
-    localStorage.setItem(NARROW_CUR, id);
+    AppStore.setItem(NARROW_CUR, id);
     if (isNarrow()) applyLayout(true);
   };
 
   function setNarrowPanel(id) {
     if (!PANEL_IDS.includes(id)) return;
-    localStorage.setItem(NARROW_CUR, id);
+    AppStore.setItem(NARROW_CUR, id);
     applyLayout(true);
     if (id === "chat") setTimeout(() => window.scrollChatToBottom?.(true), 60);
   }

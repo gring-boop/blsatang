@@ -22,14 +22,14 @@
     const o = Number(order) === 1 ? 1 : -1;
     // 격자에서는 body 클래스 하나로 좌우가 통째로 뒤집힙니다.
     document.body.classList.toggle("chat-right", o === 1);
-    try { localStorage.setItem("sidebarOrder", String(o)); } catch (e) {}
+    try { AppStore.setItem("sidebarOrder", String(o)); } catch (e) {}
     window.applyLayout?.();     // 좌우가 바뀌면 배치 그림도 다시 만듭니다
   }
   window.setLayout = setLayout;
 
   function applySavedLayout() {
     let saved = -1;
-    try { saved = parseInt(localStorage.getItem("sidebarOrder") || "-1", 10) === 1 ? 1 : -1; } catch (e) {}
+    try { saved = parseInt(AppStore.getItem("sidebarOrder") || "-1", 10) === 1 ? 1 : -1; } catch (e) {}
     setLayout(saved);
   }
 
@@ -42,7 +42,7 @@
   function setOrientation(mode) {
     const portrait = mode === "portrait";
     document.body.classList.toggle("layout-portrait", portrait);
-    try { localStorage.setItem(ORIENT_KEY, portrait ? "portrait" : "landscape"); } catch (e) {}
+    try { AppStore.setItem(ORIENT_KEY, portrait ? "portrait" : "landscape"); } catch (e) {}
     /* 가로형과 세로형은 자리 배치를 따로 기억합니다 */
     window.applyLayout?.();
     renderLayoutPick();
@@ -50,7 +50,7 @@
   window.setOrientation = setOrientation;
 
   function currentOrientation() {
-    try { return localStorage.getItem(ORIENT_KEY) === "portrait" ? "portrait" : "landscape"; }
+    try { return AppStore.getItem(ORIENT_KEY) === "portrait" ? "portrait" : "landscape"; }
     catch (e) { return "landscape"; }
   }
   window.currentOrientation = currentOrientation;
@@ -64,13 +64,13 @@
      거절하면 다시 묻지 않아요. */
   function maybeSuggestPortrait() {
     try {
-      if (localStorage.getItem(ORIENT_ASKED_KEY)) return;
-      if (localStorage.getItem(ORIENT_KEY)) return;
+      if (AppStore.getItem(ORIENT_ASKED_KEY)) return;
+      if (AppStore.getItem(ORIENT_KEY)) return;
 
       const w = window.innerWidth, h = window.innerHeight;
       if (!(h > w * 1.15)) return;              // 세로로 충분히 길 때만
 
-      localStorage.setItem(ORIENT_ASKED_KEY, "1");
+      AppStore.setItem(ORIENT_ASKED_KEY, "1");
       setTimeout(() => {
         if (confirm("화면이 세로로 긴 것 같아요.\n세로 모니터용 배치로 바꿔드릴까요?\n\n(설정에서 언제든 다시 바꿀 수 있어요)")) {
           setOrientation("portrait");
@@ -92,7 +92,7 @@
 
     const orient = currentOrientation();
     let side = -1;
-    try { side = parseInt(localStorage.getItem("sidebarOrder") || "-1", 10) === 1 ? 1 : -1; } catch (e) {}
+    try { side = parseInt(AppStore.getItem("sidebarOrder") || "-1", 10) === 1 ? 1 : -1; } catch (e) {}
 
     /* [FIX] 버튼이 안 눌리던 문제
 
@@ -207,7 +207,7 @@
   // =====================================================
   // [1] 전역 상태
   // =====================================================
-  let currentTheme = localStorage.getItem("writerTheme") || "Light (iOS)"; // 로그인 전 기본값
+  let currentTheme = AppStore.getItem("writerTheme") || "Light (iOS)"; // 로그인 전 기본값
   let _soundPrefs = { enabled: true, volume: 60, workSound: "soft_bell", restSound: "calm_chime" };
   let _pomoParticipating = true;
 
@@ -743,8 +743,8 @@
 
   async function saveThemeForNick(themeName) {
     try {
-      localStorage.setItem(_nickKey("writerTheme"), themeName);
-      localStorage.setItem("writerTheme", themeName);
+      AppStore.setItem(_nickKey("writerTheme"), themeName);
+      AppStore.setItem("writerTheme", themeName);
     } catch(e) {}
 
     if (!myNick || !window.db) return;
@@ -761,7 +761,7 @@
 
   async function loadThemeForNick() {
     try {
-      const localNick = localStorage.getItem(_nickKey("writerTheme"));
+      const localNick = AppStore.getItem(_nickKey("writerTheme"));
       if (localNick) return localNick;
     } catch(e) {}
 
@@ -776,7 +776,7 @@
     }
 
     try {
-      return localStorage.getItem("writerTheme") || "Light (iOS)";
+      return AppStore.getItem("writerTheme") || "Light (iOS)";
     } catch(e) {
       return "Light (iOS)";
     }
@@ -785,8 +785,8 @@
   // =====================================================
   // Settings modal
   // =====================================================
-  let timerHidden = localStorage.getItem("timerHidden") === "true";
-  let warnMinutes = parseInt(localStorage.getItem("warnMinutes") || "10", 10);
+  let timerHidden = AppStore.getItem("timerHidden") === "true";
+  let warnMinutes = parseInt(AppStore.getItem("warnMinutes") || "10", 10);
 
   function openSettings() {
     if (window.isMobile) return;
@@ -800,7 +800,7 @@
       chk.checked = timerHidden;
       chk.onchange = () => {
         timerHidden = chk.checked;
-        localStorage.setItem("timerHidden", String(timerHidden));
+        AppStore.setItem("timerHidden", String(timerHidden));
         applyTimerVisibility();
       };
     }
@@ -816,7 +816,7 @@
       joinChk.checked = _joinNoti;
       joinChk.onchange = () => {
         _joinNoti = joinChk.checked;
-        localStorage.setItem("joinNoti", String(_joinNoti));
+        AppStore.setItem("joinNoti", String(_joinNoti));
         // 체크한 그 클릭이 곧 사용자 동작이라, 여기서 물어봐야 통과합니다
         /* 뽀모가 이미 한 번 물어봤다면 askNotifyPermissionOnce 는 그냥 돌아갑니다.
            여기서는 사용자가 직접 켠 것이니 다시 물어봅니다. */
@@ -834,7 +834,7 @@
       warnLabel.innerText = String(warnMinutes);
       warn.oninput = () => {
         warnMinutes = parseInt(warn.value, 10);
-        localStorage.setItem("warnMinutes", String(warnMinutes));
+        AppStore.setItem("warnMinutes", String(warnMinutes));
         warnLabel.innerText = String(warnMinutes);
       };
     }
@@ -998,8 +998,8 @@
     if (typeof Notification === "undefined") return;
     if (Notification.permission !== "default") return;      // 이미 허용/거부됨
     try {
-      if (localStorage.getItem(NOTI_ASKED_KEY)) return;     // 이미 물어봤음
-      localStorage.setItem(NOTI_ASKED_KEY, "1");
+      if (AppStore.getItem(NOTI_ASKED_KEY)) return;     // 이미 물어봤음
+      AppStore.setItem(NOTI_ASKED_KEY, "1");
     } catch (e) {}
     try { Notification.requestPermission(); } catch (e) {}
   }
@@ -1037,7 +1037,7 @@
        · 화면을 보고 있으면 뜨지 않습니다. 카드가 바로 생기니까요.
        · 태그를 공유해서, 여럿이 동시에 들어와도 알림이 쌓이지 않습니다.
      =================================================================== */
-  let _joinNoti = localStorage.getItem("joinNoti") === "true";
+  let _joinNoti = AppStore.getItem("joinNoti") === "true";
 
   function notifyJoin(nicks) {
     if (!_joinNoti) return;
@@ -1163,7 +1163,7 @@
     _pomoParticipating = !_pomoParticipating;
     _renderParticipationButton();
 
-    try { localStorage.setItem(_nickKey("pomoParticipating"), _pomoParticipating ? "true" : "false"); } catch(e) {}
+    try { AppStore.setItem(_nickKey("pomoParticipating"), _pomoParticipating ? "true" : "false"); } catch(e) {}
     await savePomoParticipationToFirebase(_pomoParticipating);
 
     try { await _unlockAudio(); } catch(e) {}
@@ -1181,7 +1181,7 @@
     detail.classList.toggle("collapsed", nextCollapsed);
     btn.textContent = "🎵";
 
-    try { localStorage.setItem(_nickKey("pomoDetailCollapsed"), nextCollapsed ? "true" : "false"); } catch(e) {}
+    try { AppStore.setItem(_nickKey("pomoDetailCollapsed"), nextCollapsed ? "true" : "false"); } catch(e) {}
   }
   window.togglePomoDetail = togglePomoDetail;
 
@@ -1282,12 +1282,12 @@
 
   function _getTodaySessionCount() {
     const key = `pomoSessions_${_todayKey()}`;
-    return Number(localStorage.getItem(key) || 0);
+    return Number(AppStore.getItem(key) || 0);
   }
 
   function _setTodaySessionCount(v) {
     const key = `pomoSessions_${_todayKey()}`;
-    localStorage.setItem(key, String(Math.max(0, Number(v || 0))));
+    AppStore.setItem(key, String(Math.max(0, Number(v || 0))));
   }
 
   /* 화면 표시는 없앴지만 집계는 계속 쌓입니다(추후 통계용). */
@@ -1400,7 +1400,7 @@
     if (tag) tag.textContent = (mode === "rest") ? "☕ 휴식 중" : "🍅 집중 세션 중";
     if (digits) digits.textContent = _fmtMMSS(remain);
 
-    const warnMin = parseInt(localStorage.getItem("warnMinutes") || "10", 10);
+    const warnMin = parseInt(AppStore.getItem("warnMinutes") || "10", 10);
     line.classList.toggle("pomo-mega-warn", remain <= warnMin * 60);
   }
 
@@ -1454,7 +1454,7 @@
   function setFontSize(px) {
     const next = Math.max(FONT_MIN, Math.min(FONT_MAX, px));
     document.documentElement.style.setProperty("--font-size", `${next}px`);
-    localStorage.setItem("writerFontSize", String(next));
+    AppStore.setItem("writerFontSize", String(next));
     updateFontPill(next);
   }
 
@@ -1486,7 +1486,7 @@
      카드 폭은 styles.css 의 --card-w 값(214px)으로 고정됩니다.
      저장돼 있던 값이 남아 화면이 예전 크기로 나오지 않도록 지워줍니다. */
   function applySavedCardScale() {
-    try { localStorage.removeItem("writerCardScale"); } catch (e) {}
+    try { AppStore.removeItem("writerCardScale"); } catch (e) {}
     document.documentElement.style.removeProperty("--card-w");
   }
   window.applySavedCardScale = applySavedCardScale;
@@ -1495,7 +1495,7 @@
   function decreaseFont() { setFontSize(getCurrentFontSize() - FONT_STEP); }
 
   function applySavedFontSize() {
-    const saved = parseInt(localStorage.getItem("writerFontSize") || "", 10);
+    const saved = parseInt(AppStore.getItem("writerFontSize") || "", 10);
     if (Number.isFinite(saved)) setFontSize(saved);
     else updateFontPill(getCurrentFontSize());
   }
@@ -1505,12 +1505,12 @@
   // =====================================================
   window.afterJoinInitSoundPrefs = async function() {
     try {
-      const v = localStorage.getItem(_nickKey("pomoParticipating"));
+      const v = AppStore.getItem(_nickKey("pomoParticipating"));
       if (v === "true" || v === "false") _pomoParticipating = (v === "true");
     } catch(e) {}
 
     try {
-      const c = localStorage.getItem(_nickKey("pomoDetailCollapsed"));
+      const c = AppStore.getItem(_nickKey("pomoDetailCollapsed"));
       if (c === "true" || c === "false") {
         const detail = document.getElementById("pomo-detail");
         const btn = document.getElementById("pomo-detail-toggle");
@@ -1532,7 +1532,7 @@
   window.afterJoinLoadNickTheme = async function() {
     const theme = await loadThemeForNick();
     applyTheme(theme);
-    try { localStorage.setItem("writerTheme", theme); } catch(e) {}
+    try { AppStore.setItem("writerTheme", theme); } catch(e) {}
   };
 
   // =====================================================
@@ -1563,7 +1563,7 @@
     _renderParticipationButton();
 
     // chat width 복원(있으면)
-    const cw = parseInt(localStorage.getItem("chatWidth") || "", 10);
+    const cw = parseInt(AppStore.getItem("chatWidth") || "", 10);
     if (Number.isFinite(cw)) resizeChat(cw);
   });
 
@@ -1607,7 +1607,7 @@
     const clearBtn = document.getElementById("admin-clear-btn");
     if (!egg) return;
 
-    const isLoggedIn = sessionStorage.getItem("adminPinOk") === "true";
+    const isLoggedIn = AppSession.getItem("adminPinOk") === "true";
     _adminLoggedIn = isLoggedIn;
 
     if (loginBtn) loginBtn.classList.toggle("hidden", isLoggedIn);
