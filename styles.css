@@ -2157,8 +2157,20 @@ body.pomo-nonpart .pomo-status-line{
   display: flex;
   gap: var(--sp-2);
   max-width: 92%;
-  align-items: flex-end;
+  /* [FIX] 반응(❤️1)을 붙이면 프사가 아래로 밀려 내려가던 문제
+
+     align-items: flex-end 였습니다. 말풍선 한 줄일 때는 프사와 말풍선의
+     아래가 나란히 맞아 예쁜데, 아래에 반응 줄이 생기면 그만큼 프사도
+     같이 내려갔습니다. 이름 옆에 있어야 할 프사가 반응 옆으로 가버린
+     셈이죠.
+
+     프사는 말풍선 덩어리의 "위"에 맞추는 것이 맞습니다. 이름과 첫
+     말풍선 옆에 붙고, 아래에 무엇이 더 붙어도 움직이지 않습니다. */
+  align-items: flex-start;
 }
+/* 이름 줄만큼 프사를 내려서 첫 말풍선과 나란히 맞춥니다 */
+.chat-item.other:not(.grouped) .chat-avatar,
+.chat-item.other:not(.grouped) .profile-emoji{ margin-top: 1.15em; }
 .chat-item.me{ align-self: flex-end; flex-direction: row-reverse; }
 .chat-item.grouped .profile-emoji{ visibility: hidden; }
 .chat-item.grouped .user-name{ display: none; }

@@ -239,6 +239,24 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
      "세기 전에 걸러낸다");
 }
 
+/* 채팅 반응을 붙였을 때 프사가 안 내려가는가
+
+   [왜] .chat-item 이 align-items: flex-end 였습니다. 말풍선 아래에
+   반응 줄이 생기면 그만큼 프사도 같이 내려가, 이름 옆이 아니라 반응
+   옆에 붙었습니다. 위쪽 정렬로 바꾸고, 이름 줄만큼만 내려서 첫
+   말풍선과 맞춥니다. */
+{
+  /* 주석에 옛 값을 설명으로 적어두었으므로, 주석을 걷어내고 봅니다.
+     (예전에 이 함정에 한 번 걸렸습니다) */
+  const bare = CSS.replace(/\/\*[\s\S]*?\*\//g, "");
+  const i = bare.indexOf(".chat-item{");
+  const seg = bare.slice(i, bare.indexOf("}", i));
+  ok(/align-items:\s*flex-start/.test(seg), "채팅 줄은 위쪽 정렬이다");
+  ok(!/align-items:\s*flex-end/.test(seg), "아래쪽 정렬이 남아 있지 않다");
+  ok(/\.chat-item\.other:not\(\.grouped\) \.chat-avatar/.test(CSS),
+     "이름 줄만큼 프사를 내려 맞춘다");
+}
+
 /* PWA — 독립 창 설치 */
 {
   const mf = JSON.parse(fs.readFileSync(DIR+"manifest.json","utf8"));
