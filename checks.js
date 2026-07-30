@@ -145,6 +145,22 @@ ok(/class="card-conn/.test(fs.readFileSync(DIR+"script_realtime.js","utf8")),
   ok(new RegExp("\\."+c+"[^a-zA-Z0-9_-]").test(CSS), `CSS 에 .${c} 가 있다`));
 ok(/body\.conn-down .user-card\.is-me \.card-conn/.test(CSS), "내 카드 안테나는 소켓 상태를 따른다");
 ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
+{
+  /* 받침 — 카드 배경색이 비쳐 올라와 안테나가 묻히던 문제 */
+  const i = CSS.indexOf(".card-conn{");
+  const seg = CSS.slice(i, CSS.indexOf("}", i));
+  ok(/background: rgba\(255,255,255,/.test(seg), "안테나에 받침이 깔려 있다");
+  ok(/border-radius/.test(seg), "받침 모서리가 둥글다");
+  ok(/box-shadow/.test(seg), "받침에 얇은 테두리가 있다");
+
+  /* 어두운 테마 선택자가 실제로 붙는 표식과 맞는지 —
+     예전에 안 쓰는 선택자를 써서 조용히 안 먹은 적이 있습니다. */
+  const ui = fs.readFileSync(DIR+"script_ui.js","utf8");
+  const m = ui.match(/setAttribute\("data-is-dark",\s*isDark \? "(\w+)"/);
+  ok(!!m, "applyTheme 이 data-is-dark 를 쓴다");
+  ok(CSS.includes(`html[data-is-dark="${m[1]}"] .card-conn`),
+     "받침의 어두운 테마 선택자가 실제 표식과 일치한다");
+}
 
 /* 좁은 화면 — 창 하나 + 탭 */
 {
@@ -171,6 +187,26 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
      "좁아지거나 넓어질 때 배치를 다시 짠다");
 
   ok(/\.narrow-tabs\{/.test(CSS) && /\.narrow-tab\.active\{/.test(CSS), "탭 CSS 가 있다");
+
+  /* 안 읽은 채팅 배지 */
+  const prof = fs.readFileSync(DIR+"script_profile.js","utf8");
+  ok(/window\.noteNarrowChatUnread/.test(lay), "안 읽은 개수를 세는 함수가 있다");
+  ok(/window\.noteNarrowChatUnread\?\.\(\)/.test(prof), "새 메시지가 오면 실제로 부른다");
+  ok(/nt-badge/.test(lay) && /\.nt-badge\{/.test(CSS), "💬 탭에 배지가 붙는다");
+  {
+    const i = lay.indexOf("window.noteNarrowChatUnread = function");
+    const seg = lay.slice(i, i + 400);
+    ok(/if \(!isNarrow\(\)\) return;/.test(seg), "넓은 화면에서는 세지 않는다");
+    ok(/narrowCurrent\(\) === "chat"\) return;/.test(seg), "채팅을 보고 있으면 세지 않는다");
+  }
+  ok(/if \(p\.id === "chat"\) _narrowUnread = 0;/.test(lay), "채팅을 열면 개수를 지운다");
+  /* 내 메시지와 시스템 메시지는 세지 않아야 합니다 (기존 훅 조건을 함께 씁니다) */
+  {
+    const i = prof.indexOf("noteChatMessageWhileCollapsed();");
+    const seg = prof.slice(Math.max(0, i - 200), i + 200);
+    ok(/data\.type !== "system" && data\.user !== myNick/.test(seg),
+       "내 메시지와 입퇴장 알림은 세지 않는다");
+  }
   ok(!/body\.narrow-chat-focus \.pane,/.test(CSS),
      "좁은 화면에서 .pane 을 통째로 숨기지 않는다 (고른 창이 .pane 일 수 있음)");
   ok(!/body\.narrow-chat-focus \.split-root > \*\{[^}]*display: flex !important/.test(CSS),

@@ -1018,6 +1018,8 @@ window.bindCardEditDelegate = bindCardEditDelegate;
       try {
         if (data && data.type !== "system" && data.user !== myNick) {
           noteChatMessageWhileCollapsed();
+          /* 좁은 화면에서 다른 창을 보고 있을 때 쌓인 개수 */
+          window.noteNarrowChatUnread?.();
         }
       } catch (e) {}
       return r;

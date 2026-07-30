@@ -291,6 +291,27 @@
   }
   window.setNarrowPanel = setNarrowPanel;
 
+  /* 좁은 화면에서 채팅을 안 보고 있을 때 쌓인 개수.
+     접어둔 채팅의 레일 배지와 같은 발상인데, 좁은 화면에는 레일이
+     아예 없어서 따로 셉니다. */
+  let _narrowUnread = 0;
+
+  function renderNarrowBadge() {
+    const el = document.querySelector('[data-narrow-tab="chat"] .nt-badge');
+    if (!el) return;
+    const n = _narrowUnread;
+    el.textContent = n > 99 ? "99+" : String(n);
+    el.classList.toggle("hidden", n <= 0);
+  }
+
+  /** 새 메시지가 왔을 때 (script_profile.js 가 부릅니다) */
+  window.noteNarrowChatUnread = function () {
+    if (!isNarrow()) return;            // 넓은 화면이면 채팅이 보이고 있습니다
+    if (narrowCurrent() === "chat") return;
+    _narrowUnread += 1;
+    renderNarrowBadge();
+  };
+
   /** 좁은 화면 탭줄 — 없으면 만들고, 활성 표시만 갱신합니다 */
   function renderNarrowTabs(active) {
     const container = document.querySelector(".container");
@@ -308,6 +329,7 @@
         <button type="button" class="narrow-tab" role="tab" data-narrow-tab="${p.id}"
                 title="${p.label}" aria-label="${p.label}">
           <span class="nt-ico" aria-hidden="true">${p.icon}</span>
+          ${p.id === "chat" ? '<span class="nt-badge hidden" aria-live="polite">0</span>' : ""}
         </button>`).join("");
       bar.addEventListener("click", (e) => {
         const b = e.target.closest("[data-narrow-tab]");
@@ -379,7 +401,10 @@
         el.style.flex = "1 1 auto";
         root.appendChild(el);
       }
+      /* 채팅을 열면 쌓인 개수를 지웁니다 */
+      if (p.id === "chat") _narrowUnread = 0;
       renderNarrowTabs(p.id);
+      renderNarrowBadge();
       renderHiddenChips(map);
       renderSlotMap();
       renderSlotPicker();

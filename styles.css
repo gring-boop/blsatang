@@ -495,8 +495,8 @@ body.split-dragging #chat-box{ user-select: none; }
    ===================================================================== */
 .card-conn{
   position: absolute;
-  top: 5px;
-  left: 7px;
+  top: 4px;
+  left: 5px;
   display: inline-flex;
   align-items: flex-end;
   gap: 1.5px;
@@ -504,6 +504,19 @@ body.split-dragging #chat-box{ user-select: none; }
   color: #2E8B6B;
   pointer-events: none;
   z-index: 2;
+
+  /* 받침 — 각자 고른 배경색이 반투명 상자를 뚫고 올라와서
+     초록이 초록으로 안 읽히던 문제를 막습니다.
+     흰색을 옅게 깔면 어떤 배경에서도 대비가 생깁니다. */
+  padding: 2px 3px;
+  border-radius: 4px;
+  background: rgba(255,255,255,.72);
+  box-shadow: 0 0 0 .5px rgba(0,0,0,.06);
+}
+/* 어두운 테마에서는 흰 받침이 튀므로 뒤집습니다 */
+html[data-is-dark="true"] .card-conn{
+  background: rgba(20,22,26,.60);
+  box-shadow: 0 0 0 .5px rgba(255,255,255,.10);
 }
 .card-conn i{
   display: block;
@@ -519,7 +532,11 @@ body.split-dragging #chat-box{ user-select: none; }
 
 /* 끊김 — 붉게 바꾸고, 높은 막대 둘은 흐리게 죽입니다.
    색을 못 가리는 분도 "막대가 줄었다"로 알 수 있게요. */
-.card-conn.off{ color: #C0392B; }
+.card-conn.off{
+  color: #C0392B;
+  background: rgba(255,241,240,.88);
+  box-shadow: 0 0 0 .5px rgba(192,57,43,.35);
+}
 .card-conn.off i:nth-child(3),
 .card-conn.off i:nth-child(4){ opacity: .22; }
 .card-conn.off{ animation: connBlink 1.2s ease-in-out infinite; }
@@ -3655,6 +3672,7 @@ body.narrow-chat-focus .narrow-tabs{
   background: var(--glass);
 }
 .narrow-tab{
+  position: relative;      /* 배지 기준점 */
   flex: 1 1 0;
   min-width: 0;
   padding: 7px 0;
@@ -3674,6 +3692,27 @@ body.narrow-chat-focus .narrow-tabs{
   box-shadow: 0 1px 3px rgba(0,0,0,.10);
 }
 .narrow-tab:focus-visible{ outline: 2px solid var(--accent-ring); outline-offset: 1px; }
+
+/* 안 읽은 채팅 개수 — 💬 탭 오른쪽 위 */
+.nt-badge{
+  position: absolute;
+  top: 1px;
+  right: 50%;
+  transform: translateX(20px);
+  min-width: 17px;
+  padding: 0 4px;
+  border-radius: var(--r-full);
+  background: #E5484D;
+  color: #fff;
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  line-height: 17px;
+  text-align: center;
+  pointer-events: none;
+}
+.nt-badge.hidden{ display: none; }
+/* 안 읽은 게 있으면 흐린 탭도 눈에 걸리게 */
+.narrow-tab:not(.active):has(.nt-badge:not(.hidden)){ opacity: .95; }
 
 /* =====================================================================
    [16] 고대비 모드 대응
