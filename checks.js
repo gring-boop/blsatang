@@ -639,6 +639,23 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
      "가이드의 펫 시간이 지금과 같다");
   ok(!/WORK 시작!<\/b> 버튼/.test(man), "없앤 버튼을 설명하지 않는다");
   ok(/닉네임 앞/.test(man), "업적 배지 자리를 알려준다");
+
+  /* 큰 뽀모 시계는 글자수 칸 아래에 붙습니다.
+     채팅 위에 있으면 대화를 가리고, 채팅을 접으면 시계도 같이 사라졌어요. */
+  const ui = fs.readFileSync(DIR+"script_ui.js","utf8");
+  ok(/getElementById\("wordcount-block"\)/.test(ui), "큰 시계가 글자수 칸을 찾는다");
+  const seg = ui.slice(ui.indexOf("function _ensurePomoStatusLine"), ui.indexOf("function _fmtMMSS"));
+  ok(seg.indexOf('getElementById("wordcount-block")') < seg.indexOf('querySelector(".chat-sidebar")'),
+     "글자수 칸을 먼저 찾고, 없을 때만 채팅 위로 간다");
+  ok(/in-wordcount/.test(seg) && /in-wordcount/.test(one), "그 자리 전용 스타일이 있다");
+  ok(/\.pomo-status-line\.in-wordcount \.pomo-mega-digits\{[^}]*clamp\(33px, 7\.48vw, 60px\)/.test(one),
+     "글자수 칸에서는 80% 크기다 (원래 clamp 의 0.8배)");
+
+  /* 세로 보기에서 뽀모가 아래 여백을 만들지 않게, 위쪽에 둡니다.
+     한 줄의 마지막 칸이 남는 높이를 다 가져가는데, 뽀모는 내용이 짧아요. */
+  ok(/portrait:  \{ s1: "pomo"/.test(lay), "세로 보기에서 뽀모가 위쪽이다");
+  ok(/s3: "chat"/.test(lay.slice(lay.indexOf('portrait:  { s1: "pomo"'))),
+     "세로 보기에서 채팅이 남는 높이를 받는다");
   ok(!/>⏰ 타이머</.test(H), "옛 이름(타이머)이 남아 있지 않다");
 
   /* ★ 팝업은 평소에 감춰져 있어야 합니다.

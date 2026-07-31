@@ -50,7 +50,12 @@
 
   const DEFAULT_MAP = {
     landscape: { s1: "chat", s2: "prof", s3: "pomo", s4: "word" },
-    portrait:  { s1: "chat", s2: "prof", s3: "pomo", s4: "word" }
+    /* 세로 보기는 뽀모를 **위**에 둡니다.
+
+       한 줄에서 마지막 칸이 남는 높이를 다 가져갑니다. 뽀모는 내용이
+       짧아서 아래가 텅 비었어요. 대신 채팅과 글자수는 목록이 길어질 수
+       있으니 남는 높이를 받으면 오히려 좋습니다. */
+    portrait:  { s1: "pomo", s2: "prof", s3: "chat", s4: "word" }
   };
 
   /* 저장 키를 새로 팠습니다 — 칸이 다섯에서 넷으로 줄어 옛 값의 뜻이

@@ -1353,18 +1353,33 @@
     let el = document.getElementById("pomo-status-line");
     if (el) return el;
 
-    const chatSidebar = document.querySelector(".chat-sidebar");
-    const header = chatSidebar ? chatSidebar.querySelector(".header") : null;
-    if (!chatSidebar || !header) return null;
+    /* [변경] 큰 타이머의 자리를 채팅 위 → **글자수 칸 아래**로 옮겼습니다.
+
+       채팅 맨 위에 있으면 대화를 가리고, 채팅을 접으면 시계까지 같이
+       사라졌습니다. 글자수 칸 아래는 늘 비어 있는 자리라 가릴 것이
+       없고, 뽀모와 글자수가 한 줄에 모여 "작업 계기판"처럼 읽힙니다.
+
+       글자수 칸이 아직 없으면(그럴 일은 거의 없지만) 예전처럼 채팅
+       위에 붙입니다 — 시계가 아예 안 보이는 것보다 낫습니다. */
+    const host = document.getElementById("wordcount-block");
 
     el = document.createElement("div");
     el.id = "pomo-status-line";
     el.className = "pomo-status-line hidden";
-    // ✅ 채팅 상단 초대형 고정 타이머: 태그(모드 표시) + 큰 숫자
     el.innerHTML = `
       <span class="tag" id="pomo-mega-tag">🍅 집중 세션 중</span>
       <span class="pomo-mega-digits" id="pomo-mega-digits">00:00</span>
     `;
+
+    if (host) {
+      el.classList.add("in-wordcount");
+      host.appendChild(el);
+      return el;
+    }
+
+    const chatSidebar = document.querySelector(".chat-sidebar");
+    const header = chatSidebar ? chatSidebar.querySelector(".header") : null;
+    if (!chatSidebar || !header) return null;
     header.insertAdjacentElement("afterend", el);
     return el;
   }

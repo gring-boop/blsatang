@@ -4233,3 +4233,29 @@ body.narrow-chat-focus .narrow-tabs{
   overflow: auto;
 }
 .in-popup .panel-close{ display: none; }
+
+/* =====================================================================
+   큰 뽀모 시계가 글자수 칸 안에 들어갔을 때
+
+   채팅 위에 있을 때보다 **80% 크기**로 줄입니다. 옆에 다른 것들이
+   함께 있어서, 원래 크기면 칸을 혼자 다 먹습니다.
+   em 이 아니라 %로 줄인 이유: 원래 값이 어디에 정의돼 있든
+   비율로만 깎으면 나중에 원본이 바뀌어도 관계가 유지됩니다.
+   ===================================================================== */
+.pomo-status-line.in-wordcount{
+  margin-top: auto;            /* 글자수 칸의 맨 아래에 붙습니다 */
+  flex: none;
+  border-radius: var(--r-md);
+  padding: 6px 10px;
+}
+.pomo-status-line.in-wordcount .pomo-mega-digits{
+  /* 원래 값 clamp(41px, 9.35vw, 75px) 의 80%.
+     고정 크기로 바꾸지 않고 clamp 를 그대로 유지합니다 —
+     칸이 좁아졌을 때 숫자가 넘치지 않게 하려던 원래 뜻을 지키려고요. */
+  font-size: clamp(33px, 7.48vw, 60px);
+  line-height: 1.05;
+}
+.pomo-status-line.in-wordcount .tag{
+  font-size: var(--fs-2xs);
+}
+.pomo-status-line.in-wordcount.hidden{ display: none; }
