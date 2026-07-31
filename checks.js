@@ -639,6 +639,31 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
      "가이드의 펫 시간이 지금과 같다");
   ok(!/WORK 시작!<\/b> 버튼/.test(man), "없앤 버튼을 설명하지 않는다");
   ok(/닉네임 앞/.test(man), "업적 배지 자리를 알려준다");
+  ok(/42종 42칸/.test(man) && !/20종 20칸/.test(man), "가이드의 펫 종류 수가 지금과 같다");
+
+  /* 펫 42종 */
+  {
+    const Pet = require(DIR + "script_pet.js");
+    ok(Pet.SPECIES_IDS.length === 42, `42종이다 (${Pet.SPECIES_IDS.length})`);
+    ok(new Set(Pet.SPECIES.map(x => x.label)).size === 42, "이름이 겹치지 않는다");
+    let broken = 0;
+    for (const sp of Pet.SPECIES_IDS)
+      for (let lv = 1; lv <= Pet.MAX_LEVEL; lv++)
+        if (/NaN|undefined/.test(Pet.petSvg(sp, lv, 56, lv === Pet.MAX_LEVEL))) broken++;
+    ok(broken === 0, `펫 그림 ${42 * Pet.MAX_LEVEL}가지가 온전하다`);
+    /* 옛 "꽃"을 키우던 분이 용으로 바뀌지 않아야 합니다 */
+    ok(Pet.speciesLabel("flower") === "장미", "옛 이름 '꽃'이 장미로 이어진다");
+  }
+
+  /* 설정 → 나의 기록 */
+  const tl = fs.readFileSync(DIR+"script_timelog.js","utf8");
+  ok(/id="panel-record"/.test(H), "설정에 나의 기록 자리가 있다");
+  ok(/name === "record"/.test(fs.readFileSync(DIR+"script_profile.js","utf8")),
+     "그 탭을 열면 내용을 그린다");
+  ok(/function recordHtml\(rows\)/.test(tl), "기록 화면을 만드는 함수가 하나로 떼어져 있다");
+  ok((tl.match(/rec-today/g) || []).length === 1, "기록 화면 뼈대가 한 곳에만 있다 (복사본 없음)");
+  ok(/Wordcount\?\.myWeekHtml/.test(tl), "글자수 요약도 함께 보여준다");
+  ok(/🔥집중/.test(tl) && !/🔥초집중/.test(tl), "상태 이름이 벨사탕 것이다");
 
   /* 파일이 빠졌을 때 뜨는 안내가 실제 파일 목록과 맞아야 합니다.
      예전에는 "9개가 있어야 한다"고 적혀 있었는데 실제로는 14개였어요.

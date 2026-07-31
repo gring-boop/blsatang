@@ -4266,3 +4266,8 @@ body.narrow-chat-focus .narrow-tabs{
   margin-top: 0;
   margin-bottom: var(--sp-2);
 }
+
+/* 설정 → 📊 나의 기록 — 팝업에서 쓰던 조각을 그대로 씁니다. */
+#panel-record .rec-today{ margin-top: 2px; }
+#panel-record .rec-week{ margin-bottom: 4px; }
+#panel-record .set-block + .set-block{ margin-top: var(--sp-3); }
