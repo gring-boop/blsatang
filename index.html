@@ -33,7 +33,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
 
-  <link rel="stylesheet" href="styles.css?v=202608010233" />
+  <link rel="stylesheet" href="styles.css?v=202608010247" />
 </head>
 
 <body>
@@ -711,21 +711,21 @@
 
 <!-- Core → UI → Chat → Data → Realtime → Profile 순서 -->
 <!-- script_profile.js는 다른 모듈의 함수를 감싸므로 반드시 마지막에 로드 -->
-<script src="fortune_data.js?v=202608010233"></script>
-<script src="script_core.js?v=202608010233"></script>
-<script src="script_auth.js?v=202608010233"></script>
-<script src="script_ui.js?v=202608010233"></script>
-<script src="script_chat.js?v=202608010233"></script>
-<script src="script_data.js?v=202608010233"></script>
-<script src="script_realtime.js?v=202608010233"></script>
-<script src="script_layout.js?v=202608010233"></script>
-<script src="script_pet.js?v=202608010233"></script>
-<script src="script_pet_ui.js?v=202608010233"></script>
-<script src="script_wordcount.js?v=202608010233"></script>
-<script src="script_timelog.js?v=202608010233"></script>
-<script src="script_profile.js?v=202608010233"></script>
-<script src="script_reactions.js?v=202608010233"></script>
-<script src="script_manual.js?v=202608010233"></script>
+<script src="fortune_data.js?v=202608010247"></script>
+<script src="script_core.js?v=202608010247"></script>
+<script src="script_auth.js?v=202608010247"></script>
+<script src="script_ui.js?v=202608010247"></script>
+<script src="script_chat.js?v=202608010247"></script>
+<script src="script_data.js?v=202608010247"></script>
+<script src="script_realtime.js?v=202608010247"></script>
+<script src="script_layout.js?v=202608010247"></script>
+<script src="script_pet.js?v=202608010247"></script>
+<script src="script_pet_ui.js?v=202608010247"></script>
+<script src="script_wordcount.js?v=202608010247"></script>
+<script src="script_timelog.js?v=202608010247"></script>
+<script src="script_profile.js?v=202608010247"></script>
+<script src="script_reactions.js?v=202608010247"></script>
+<script src="script_manual.js?v=202608010247"></script>
 
 <script>
   window.addEventListener("load", () => {
@@ -767,12 +767,15 @@
       if (panel && missing.includes("script_profile.js")) {
         panel.innerHTML =
           '<div class="set-block">' +
-          '<div class="set-title">⚠️ 프로필 기능을 불러오지 못했어요</div>' +
-          '<p class="hint"><b>script_profile.js</b> 파일이 index.html과 같은 폴더에 없어요.<br>' +
-          '압축을 풀 때 파일이 누락됐을 수 있어요. 폴더 안에 아래 9개가 모두 있어야 합니다.<br><br>' +
-          'index.html · styles.css · fortune_data.js · script_core.js ·<br>' +
-          'script_ui.js · script_chat.js · script_data.js ·<br>' +
-          'script_realtime.js · <b>script_profile.js</b></p></div>';
+          '<div class="set-title">⚠️ 일부 기능을 불러오지 못했어요</div>' +
+          '<p class="hint">아래 파일이 서버에 없거나 읽히지 않았어요.<br><br>' +
+          '<b>' + missing.join(' · ') + '</b><br><br>' +
+          '<b>방장님께.</b> 주소창의 주소 뒤에 파일 이름을 붙여 열어보세요. ' +
+          '예를 들어 <b>…/script_profile.js</b> 처럼요. ' +
+          '404 가 나오면 그 파일이 안 올라간 것이니 다시 올리시면 됩니다.<br><br>' +
+          '<b>쓰시는 분께.</b> 주소가 맞는지 먼저 확인해 주세요. ' +
+          '예전 주소로 들어오면 옛 화면이 그대로 보입니다. ' +
+          '주소가 맞다면 새로고침(윈도우 Ctrl+Shift+R · 맥 ⌘+Shift+R)을 해보세요.</p></div>';
       }
     }
   });
