@@ -4259,3 +4259,10 @@ body.narrow-chat-focus .narrow-tabs{
   font-size: var(--fs-2xs);
 }
 .pomo-status-line.in-wordcount.hidden{ display: none; }
+
+/* 큰 시계를 글자수 칸 **위**에 붙였을 때.
+   margin-top:auto 를 풀어야 위로 올라붙습니다. */
+.pomo-status-line.in-wordcount.at-top{
+  margin-top: 0;
+  margin-bottom: var(--sp-2);
+}

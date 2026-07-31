@@ -651,6 +651,22 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
   ok(/\.pomo-status-line\.in-wordcount \.pomo-mega-digits\{[^}]*clamp\(33px, 7\.48vw, 60px\)/.test(one),
      "글자수 칸에서는 80% 크기다 (원래 clamp 의 0.8배)");
 
+  /* 위·아래를 고를 수 있어야 합니다.
+     가로 보기는 아래에 있으면 밑동에 깔리고, 세로 보기는 위에 있으면
+     글자수를 밀어냅니다. 어느 한쪽이 늘 옳지 않아서 고르게 뒀어요. */
+  ok(/id="set-pomo-clock-pos"/.test(H), "설정에 큰 시계 자리를 고르는 칸이 있다");
+  const opts = (H.match(/id="set-pomo-clock-pos"[\s\S]*?<\/select>/)[0]
+    .match(/value="(\w+)"/g) || []).map(x => x.slice(7, -1));
+  ok(opts.length === 2 && opts.includes("top") && opts.includes("bottom"),
+     "위와 아래 둘 다 고를 수 있다");
+  ok(/window\.setPomoClockPos/.test(ui), "고른 값을 반영하는 함수가 있다");
+  ok(/AppStore\.getItem\(CLOCK_POS_KEY\)/.test(ui), "고른 값을 이 기기에 기억한다");
+  ok(/insertBefore\(el, host\.firstChild\)/.test(ui) && /host\.appendChild\(el\)/.test(ui),
+     "위면 맨 앞에, 아래면 맨 뒤에 붙인다");
+  ok(/\.pomo-status-line\.in-wordcount\.at-top\{[^}]*margin-top: 0/.test(one),
+     "위로 붙였을 때 아래로 밀어내던 여백을 푼다");
+  ok(/set-pomo-clock-pos/.test(ui), "설정 칸이 코드에 연결돼 있다");
+
   /* 세로 보기에서 뽀모가 아래 여백을 만들지 않게, 위쪽에 둡니다.
      한 줄의 마지막 칸이 남는 높이를 다 가져가는데, 뽀모는 내용이 짧아요. */
   ok(/portrait:  \{ s1: "pomo"/.test(lay), "세로 보기에서 뽀모가 위쪽이다");

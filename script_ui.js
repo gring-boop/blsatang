@@ -1373,7 +1373,7 @@
 
     if (host) {
       el.classList.add("in-wordcount");
-      host.appendChild(el);
+      placeClock(host, el);
       return el;
     }
 
@@ -1382,6 +1382,46 @@
     if (!chatSidebar || !header) return null;
     header.insertAdjacentElement("afterend", el);
     return el;
+  }
+
+  /* 큰 시계를 글자수 칸의 위/아래 중 어디에 붙일지.
+
+     가로 보기에서는 아래에 있으면 화면 밑동에 깔려 눈에 잘 안 띄고,
+     세로 보기에서는 위에 있으면 글자수 내용을 밀어냅니다. 어느 한쪽이
+     늘 옳지 않아서 고르게 두었습니다. 이 기기에만 저장합니다. */
+  const CLOCK_POS_KEY = "pomoClockPos";
+
+  function clockPos() {
+    return AppStore.getItem(CLOCK_POS_KEY) === "top" ? "top" : "bottom";
+  }
+
+  function placeClock(host, el) {
+    const top = clockPos() === "top";
+    el.classList.toggle("at-top", top);
+    if (top) host.insertBefore(el, host.firstChild);
+    else host.appendChild(el);
+  }
+
+  function setPomoClockPos(pos) {
+    AppStore.setItem(CLOCK_POS_KEY, pos === "top" ? "top" : "bottom");
+    const el   = document.getElementById("pomo-status-line");
+    const host = document.getElementById("wordcount-block");
+    if (el && host && el.parentNode === host) placeClock(host, el);
+  }
+  window.setPomoClockPos = setPomoClockPos;
+
+  /* 설정 칸을 저장된 값에 맞춰 두고, 바꾸면 바로 옮깁니다 */
+  function bindClockPos() {
+    const sel = document.getElementById("set-pomo-clock-pos");
+    if (!sel || sel._bound) return;
+    sel._bound = true;
+    sel.value = clockPos();
+    sel.addEventListener("change", () => setPomoClockPos(sel.value));
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindClockPos);
+  } else {
+    bindClockPos();
   }
 
   function _fmtMMSS(sec) {

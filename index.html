@@ -33,7 +33,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
 
-  <link rel="stylesheet" href="styles.css?v=202608010224" />
+  <link rel="stylesheet" href="styles.css?v=202608010233" />
 </head>
 
 <body>
@@ -237,6 +237,19 @@
 
       <!-- ── 타이머 ── -->
       <div class="panel" id="panel-timer" role="tabpanel">
+        <div class="set-block">
+          <div class="set-title">큰 시계 자리</div>
+          <label class="sr-only" for="set-pomo-clock-pos">큰 시계를 붙일 자리</label>
+          <select id="set-pomo-clock-pos" class="w-full">
+            <option value="bottom">✍️ 글자수 칸 아래</option>
+            <option value="top">✍️ 글자수 칸 위</option>
+          </select>
+          <p class="hint">
+            뽀모가 돌 때 나오는 큰 숫자를 글자수 칸의 <b>위</b>에 붙일지 <b>아래</b>에 붙일지 고릅니다.<br>
+            세로 보기는 아래가, 가로 보기는 위가 눈에 잘 들어오는 편이에요. 이 설정은 <b>이 기기에만</b> 저장됩니다.
+          </p>
+        </div>
+
         <div class="set-block">
           <div class="set-title">타이머 표시</div>
           <label class="set-check">
@@ -698,21 +711,21 @@
 
 <!-- Core → UI → Chat → Data → Realtime → Profile 순서 -->
 <!-- script_profile.js는 다른 모듈의 함수를 감싸므로 반드시 마지막에 로드 -->
-<script src="fortune_data.js?v=202608010224"></script>
-<script src="script_core.js?v=202608010224"></script>
-<script src="script_auth.js?v=202608010224"></script>
-<script src="script_ui.js?v=202608010224"></script>
-<script src="script_chat.js?v=202608010224"></script>
-<script src="script_data.js?v=202608010224"></script>
-<script src="script_realtime.js?v=202608010224"></script>
-<script src="script_layout.js?v=202608010224"></script>
-<script src="script_pet.js?v=202608010224"></script>
-<script src="script_pet_ui.js?v=202608010224"></script>
-<script src="script_wordcount.js?v=202608010224"></script>
-<script src="script_timelog.js?v=202608010224"></script>
-<script src="script_profile.js?v=202608010224"></script>
-<script src="script_reactions.js?v=202608010224"></script>
-<script src="script_manual.js?v=202608010224"></script>
+<script src="fortune_data.js?v=202608010233"></script>
+<script src="script_core.js?v=202608010233"></script>
+<script src="script_auth.js?v=202608010233"></script>
+<script src="script_ui.js?v=202608010233"></script>
+<script src="script_chat.js?v=202608010233"></script>
+<script src="script_data.js?v=202608010233"></script>
+<script src="script_realtime.js?v=202608010233"></script>
+<script src="script_layout.js?v=202608010233"></script>
+<script src="script_pet.js?v=202608010233"></script>
+<script src="script_pet_ui.js?v=202608010233"></script>
+<script src="script_wordcount.js?v=202608010233"></script>
+<script src="script_timelog.js?v=202608010233"></script>
+<script src="script_profile.js?v=202608010233"></script>
+<script src="script_reactions.js?v=202608010233"></script>
+<script src="script_manual.js?v=202608010233"></script>
 
 <script>
   window.addEventListener("load", () => {
