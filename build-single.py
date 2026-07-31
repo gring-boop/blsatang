@@ -17,9 +17,9 @@ import os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ORDER = [
-    "fortune_data.js", "script_core.js", "script_ui.js",
+    "fortune_data.js", "script_core.js", "script_auth.js", "script_ui.js",
     "script_chat.js", "script_data.js", "script_realtime.js",
-    "script_layout.js", "script_timelog.js", "script_profile.js", "script_reactions.js", "script_manual.js",
+    "script_layout.js", "script_pet.js", "script_pet_ui.js", "script_wordcount.js", "script_timelog.js", "script_profile.js", "script_reactions.js", "script_manual.js",
 ]
 OUT = "index-단일파일.html"
 

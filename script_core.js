@@ -99,15 +99,24 @@ window.AppSession = AppSession;
   // =====================================================
   // Firebase config
   // =====================================================
+  /* 벨사탕 작업실 전용 파이어베이스.
+
+     [왜 바꿨나]
+     예전에는 처음 만드신 분의 `writer-chat` 프로젝트를 쓰고 있었습니다.
+     남의 서버 위에 얹혀 있으면, 그쪽에서 프로젝트를 지우거나 규칙을
+     바꿀 때 이 방이 예고 없이 멈춥니다. 손쓸 방법도 없고요.
+     그래서 이 방만의 프로젝트(blsatang)로 옮겼습니다.
+
+     더마감(themagam-158f7)과도 완전히 다른 프로젝트입니다.
+     두 방의 데이터는 어떤 경우에도 섞이지 않습니다. */
   const firebaseConfig = {
-    apiKey: "AIzaSyCzkYB9Q4E2B3mrF1tL55HtUhIV0BffXQM",
-    authDomain: "writer-chat.firebaseapp.com",
-    databaseURL: "https://writer-chat-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "writer-chat",
-    storageBucket: "writer-chat.firebasestorage.app",
-    messagingSenderId: "165593059767",
-    appId: "1:165593059767:web:112c0aef5e47b1f6941832",
-    measurementId: "G-BGBC8BJQLB"
+    apiKey: "AIzaSyAehU1VdOmIWuioo0XSWe_K0cALBla2-tM",
+    authDomain: "blsatang.firebaseapp.com",
+    databaseURL: "https://blsatang-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "blsatang",
+    storageBucket: "blsatang.firebasestorage.app",
+    messagingSenderId: "695081273479",
+    appId: "1:695081273479:web:2983d4614af102b02bd022"
   };
 
   try {

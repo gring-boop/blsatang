@@ -31,8 +31,9 @@
   <!-- Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
 
-  <link rel="stylesheet" href="styles.css?v=202607310020" />
+  <link rel="stylesheet" href="styles.css?v=202608010143" />
 </head>
 
 <body>
@@ -57,7 +58,26 @@
       enterkeyhint="go"
     >
     <div class="spacer-sm"></div>
+
+    <label class="sr-only" for="pw-input">비밀번호</label>
+    <input
+      type="password"
+      id="pw-input"
+      class="w-full"
+      placeholder="비밀번호 (6자 이상)"
+      autocomplete="current-password"
+      enterkeyhint="go"
+    >
+
+    <div id="join-msg" class="join-msg" role="status" style="display:none"></div>
+
+    <div class="spacer-sm"></div>
     <button id="join-btn" class="ghost-btn primary w-full" onclick="join()">입장하기</button>
+    <p class="hint">
+      비밀번호는 <b>내 필명을 남이 쓰지 못하게</b> 하는 자물쇠예요.
+      다른 곳에서 쓰는 비밀번호는 쓰지 마세요.<br>
+      잊어버리면 스스로 되돌릴 수 없어서, 방장에게 말해야 합니다.
+    </p>
   </div>
 </div>
 
@@ -106,6 +126,18 @@
   </div>
 </div>
 
+<div id="goals-modal" onclick="closeGoals()" role="dialog" aria-modal="true" aria-labelledby="goals-title">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <!-- 제목은 화면에서 감춥니다. 안에 이미 "🎯 오늘 목표"와 "📌 나의 투두"
+         소제목이 있어서 같은 말이 두 번 나옵니다.
+         지우지 않고 감추는 이유는 aria-labelledby 가 이걸 가리키기 때문입니다 —
+         지우면 화면 낭독기가 이 팝업을 뭐라고 불러야 할지 모릅니다. -->
+    <h2 class="modal-title sr-only" id="goals-title">오늘 목표 · 나의 투두</h2>
+    <div id="goals-body"></div>
+    <button class="ghost-btn w-full" type="button" onclick="closeGoals()" style="margin-top:14px;">닫기</button>
+  </div>
+</div>
+
 <!-- =====================================================================
      설정 모달
      ===================================================================== -->
@@ -117,6 +149,8 @@
     <div class="tabs" role="tablist" aria-label="설정 탭">
       <button class="tab active" data-tab="chat"    role="tab" aria-selected="true"  aria-controls="panel-chat"    onclick="openTab('chat')">💬 채팅</button>
       <button class="tab"        data-tab="profile" role="tab" aria-selected="false" aria-controls="panel-profile" onclick="openTab('profile')">👤 프로필</button>
+      <button class="tab"        data-tab="goals"   role="tab" aria-selected="false" aria-controls="panel-goals"   onclick="openTab('goals')">🎯 목표 · 투두</button>
+      <button class="tab"        data-tab="pet"     role="tab" aria-selected="false" aria-controls="panel-pet"     onclick="openTab('pet')">🐾 펫</button>
       <button class="tab"        data-tab="theme"   role="tab" aria-selected="false" aria-controls="panel-theme"   onclick="openTab('theme')">🎨 테마</button>
       <button class="tab"        data-tab="timer"   role="tab" aria-selected="false" aria-controls="panel-timer"   onclick="openTab('timer')">⏰ 타이머</button>
       <button class="tab"        data-tab="privacy" role="tab" aria-selected="false" aria-controls="panel-privacy" onclick="openTab('privacy')">🔒 개인정보</button>
@@ -155,10 +189,9 @@
           <div class="set-title">창이 좁아지면 보여줄 창</div>
           <select id="set-narrow-panel" class="w-full">
             <option value="chat">💬 채팅</option>
-            <option value="prof">👥 접속자 프로필</option>
+            <option value="prof">👥 접속자</option>
             <option value="pomo">🍅 뽀모도로</option>
-            <option value="stat">🎯 오늘 목표 / 상태</option>
-            <option value="todo">📌 나의 투두</option>
+            <option value="word">✍️ 글자수</option>
           </select>
           <p class="hint">
             창 폭이 좁아지거나 폰으로 들어오면 칸을 나누지 않고 <b>한 창만</b> 띄워요.
@@ -185,6 +218,12 @@
 
       <!-- ── 프로필 (script_profile.js가 렌더) ── -->
       <div class="panel" id="panel-profile" role="tabpanel"></div>
+
+      <!-- 목표 · 투두 (내용은 script_profile.js 가 옮겨 넣습니다) -->
+      <div class="panel" id="panel-goals" role="tabpanel"></div>
+
+      <!-- 펫 (내용은 script_pet_ui.js 가 그립니다) -->
+      <div class="panel" id="panel-pet" role="tabpanel"></div>
 
       <!-- ── 테마 ── -->
       <div class="panel" id="panel-theme" role="tabpanel">
@@ -473,18 +512,24 @@
   <!-- 뽀모도로 -->
   <section class="pane pane-pomo" id="pomo-block" aria-label="뽀모도로">
     <div id="timer-wrap">
-      <!-- [1줄] 상태 문구 -->
-      <div class="pomo-row pomo-row-1">
-        <div id="timer-pill" role="status" aria-live="polite">
-          <span id="timer-text" class="pill-muted">🍅 뽀모도로 대기 중… 🍅</span>
-        </div>
-      </div>
+      <!-- [1줄] 상태 알약 = 진행 바
 
-      <!-- [2줄] 진행 바 -->
-      <div class="pomo-row pomo-row-3">
-        <div class="pomo-progress" role="progressbar" aria-label="현재 세션 진행률"
-             aria-valuemin="0" aria-valuemax="100">
-          <div id="pomo-bar"></div>
+           [변경] 예전에는 "대기 중" 알약과 진행 바가 따로 있었습니다.
+           두 줄이 같은 이야기를 하고 있어서 자리만 먹었어요.
+
+           이제 알약 **안쪽이 차오릅니다.** 글자는 그 위에 얹혀 있고,
+           채워진 부분만 색이 바뀝니다. 줄 하나로 "지금 무슨 시간인지"와
+           "얼마나 남았는지"를 같이 보여줍니다.
+
+           #pomo-bar 는 그대로 둡니다 — 폭을 %로 바꾸는 코드가 이미
+           있어서, 자리만 옮기면 손댈 곳이 없습니다. -->
+      <div class="pomo-row pomo-row-1">
+        <div id="timer-pill" class="is-fillable" role="status" aria-live="polite">
+          <div class="pomo-progress" role="progressbar" aria-label="현재 세션 진행률"
+               aria-valuemin="0" aria-valuemax="100" aria-hidden="true">
+            <div id="pomo-bar"></div>
+          </div>
+          <span id="timer-text" class="pill-muted">🍅 뽀모도로 대기 중… 🍅</span>
         </div>
       </div>
 
@@ -541,7 +586,48 @@
               </div>
             </div>
           </div>
-  </section>
+    </section>
+
+    <!-- =================================================================
+         글자수 기록 — 뽀모 아래 칸
+
+         뽀모와 한 줄에 세로로 붙어 있습니다. 자리를 따로 만들지 않은
+         이유는, 칸이 넷이 되면 배치 고르기가 복잡해지기 때문이에요.
+         "뽀모 줄" 하나에 시계와 글자수가 같이 사는 편이 단순합니다.
+         ================================================================= */ -->
+  <section class="pane pane-word" id="wordcount-block" aria-label="글자수">
+      <div class="wc-head">
+        <span class="wc-title">✍️ 글자수</span>
+        <div class="wc-tabs" role="tablist" aria-label="글자수 보기">
+          <button class="wc-tab on" type="button" data-wc-tab="today" role="tab" aria-selected="true">오늘</button>
+          <button class="wc-tab" type="button" data-wc-tab="me"    role="tab" aria-selected="false">내 기록</button>
+        </div>
+      </div>
+
+      <div class="wc-mine">
+        <span class="wc-big" id="wc-big">0</span>
+        <span class="wc-unit" id="wc-unit">자</span>
+      </div>
+
+      <div class="wc-rows" id="wc-rows"></div>
+
+      <p class="wc-log" id="wc-log" role="status" aria-live="polite"></p>
+
+      <div class="wc-inputline">
+        <label class="sr-only" for="wc-input">지금 원고의 전체 글자수</label>
+        <input type="number" id="wc-input" placeholder="지금 전체 글자수" inputmode="numeric" min="0" step="1">
+        <button class="ghost-btn compact primary" type="button" id="wc-send">기록</button>
+      </div>
+
+      <div class="wc-minirow">
+        <button class="ghost-btn compact" type="button" id="wc-base"  title="지금 글자수를 출발선으로 삼아요">▶ 기준</button>
+        <button class="ghost-btn compact" type="button" id="wc-reset" title="오늘 누적을 0으로 되돌려요">🧹 초기화</button>
+        <button class="ghost-btn compact" type="button" id="wc-fresh" title="빈 문서에서 새로 시작해요">🆕 새 편</button>
+      </div>
+
+      <p class="hint" id="wc-hint"></p>
+    </div>
+</section>
 
   <!-- 오늘 목표 / 상태 -->
   <section class="pane pane-status" id="status-block" aria-label="오늘 목표와 상태">
@@ -573,8 +659,7 @@
       <button id="status-quick-btn" class="ghost-btn primary compact" onclick="toggleWritingStatus()">✍️ WORK 시작!</button>
     </div>
     </div>
-    </div>
-  </section>
+    </section>
 
   <!-- 나의 할일 -->
   <section class="pane pane-todo" id="todo-block" aria-label="나의 할일">
@@ -607,17 +692,21 @@
 
 <!-- Core → UI → Chat → Data → Realtime → Profile 순서 -->
 <!-- script_profile.js는 다른 모듈의 함수를 감싸므로 반드시 마지막에 로드 -->
-<script src="fortune_data.js?v=202607310020"></script>
-<script src="script_core.js?v=202607310020"></script>
-<script src="script_ui.js?v=202607310020"></script>
-<script src="script_chat.js?v=202607310020"></script>
-<script src="script_data.js?v=202607310020"></script>
-<script src="script_realtime.js?v=202607310020"></script>
-<script src="script_layout.js?v=202607310020"></script>
-<script src="script_timelog.js?v=202607310020"></script>
-<script src="script_profile.js?v=202607310020"></script>
-<script src="script_reactions.js?v=202607310020"></script>
-<script src="script_manual.js?v=202607310020"></script>
+<script src="fortune_data.js?v=202608010143"></script>
+<script src="script_core.js?v=202608010143"></script>
+<script src="script_auth.js?v=202608010143"></script>
+<script src="script_ui.js?v=202608010143"></script>
+<script src="script_chat.js?v=202608010143"></script>
+<script src="script_data.js?v=202608010143"></script>
+<script src="script_realtime.js?v=202608010143"></script>
+<script src="script_layout.js?v=202608010143"></script>
+<script src="script_pet.js?v=202608010143"></script>
+<script src="script_pet_ui.js?v=202608010143"></script>
+<script src="script_wordcount.js?v=202608010143"></script>
+<script src="script_timelog.js?v=202608010143"></script>
+<script src="script_profile.js?v=202608010143"></script>
+<script src="script_reactions.js?v=202608010143"></script>
+<script src="script_manual.js?v=202608010143"></script>
 
 <script>
   window.addEventListener("load", () => {

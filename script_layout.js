@@ -29,37 +29,37 @@
   /* ---------------------------------------------------------------
      [1] 창과 자리
      --------------------------------------------------------------- */
+  /* [변경] 다섯 칸 → 네 칸
+
+     오늘 목표와 나의 투두는 창에서 빼고, 프로필 카드 아래를 누르면
+     뜨는 팝업 안으로 옮겼습니다. 대신 글자수 칸이 새로 들어왔어요.
+     창이 넷이면 배치 고르기도 훨씬 단순해집니다. */
   const PANELS = [
-    { id: "chat", label: "💬 채팅",            icon: "💬", sel: ".chat-sidebar" },
-    { id: "prof", label: "👥 접속자 프로필",    icon: "👥", sel: ".cards-area"   },
-    { id: "pomo", label: "🍅 뽀모도로",        icon: "🍅", sel: "#pomo-block"   },
-    { id: "stat", label: "🎯 오늘 목표 / 상태", icon: "🎯", sel: "#status-block" },
-    { id: "todo", label: "📌 나의 투두",       icon: "📌", sel: "#todo-block"   }
+    { id: "chat", label: "💬 채팅",         icon: "💬", sel: ".chat-sidebar"    },
+    { id: "prof", label: "👥 접속자",       icon: "👥", sel: ".cards-area"      },
+    { id: "pomo", label: "🍅 뽀모도로",     icon: "🍅", sel: "#pomo-block"      },
+    { id: "word", label: "✍️ 글자수",       icon: "✍️", sel: "#wordcount-block" }
   ];
   const PANEL_IDS = PANELS.map(p => p.id);
-  const SLOT_IDS  = ["s1", "s2", "s3", "s4", "s5"];
+  const SLOT_IDS  = ["s1", "s2", "s3", "s4"];
 
   const SLOT_LABELS = {
-    landscape: {
-      s1: "왼쪽 칸", s2: "가운데 칸",
-      s3: "오른쪽 위", s4: "오른쪽 가운데", s5: "오른쪽 아래"
-    },
-    portrait: {
-      s1: "왼쪽 위", s2: "오른쪽 위",
-      s3: "왼쪽 아래", s4: "오른쪽 가운데", s5: "오른쪽 아래"
-    }
+    landscape: { s1: "왼쪽", s2: "가운데", s3: "오른쪽 위", s4: "오른쪽 아래" },
+    portrait:  { s1: "첫째", s2: "둘째",   s3: "셋째",      s4: "넷째"       }
   };
 
   const DEFAULT_MAP = {
-    landscape: { s1: "chat", s2: "prof", s3: "pomo", s4: "stat", s5: "todo" },
-    portrait:  { s1: "chat", s2: "prof", s3: "todo", s4: "pomo", s5: "stat" }
+    landscape: { s1: "chat", s2: "prof", s3: "pomo", s4: "word" },
+    portrait:  { s1: "chat", s2: "prof", s3: "pomo", s4: "word" }
   };
 
-  const KEY  = { landscape: "slotMapLand", portrait: "slotMapPort" };
+  /* 저장 키를 새로 팠습니다 — 칸이 다섯에서 넷으로 줄어 옛 값의 뜻이
+     달라졌기 때문입니다. 그대로 쓰면 엉뚱한 창이 엉뚱한 자리에 갑니다. */
+  const KEY  = { landscape: "slotMapLand4", portrait: "slotMapPort4" };
   /* 저장 키에 2를 붙인 이유 — 세로 보기의 쪼개는 순서가 바뀌면서
      "portrait/0" 같은 키의 뜻이 달라졌습니다(예전엔 위쪽 높이, 지금은 왼쪽 폭).
      예전 값을 그대로 쓰면 엉뚱한 크기가 들어가므로 새 키로 시작합니다. */
-  const SKEY = { landscape: "splitSizeLand2", portrait: "splitSizePort2" };
+  const SKEY = { landscape: "splitSizeLand4", portrait: "splitSizePort4" };
 
   /* ---------------------------------------------------------------
      [2] 배치 나무 — 어떤 자리를 어떻게 쪼갤지
@@ -67,33 +67,28 @@
        h : 가로로 쪼갬(좌우)   v : 세로로 쪼갬(위아래)
        각 가지는 자리 이름이거나, 또 다른 쪼갬입니다.
      --------------------------------------------------------------- */
+  /* 가로 : 채팅 | 접속자 | (뽀모 위 / 글자수 아래)
+     세로 : 그냥 넷을 위에서 아래로
+
+     세로 보기가 오래 문제였습니다. 예전에는 좌우로 먼저 쪼개서,
+     "세로 보기"인데 화면이 두 줄로 보였어요. 칸이 넷으로 줄어든 김에
+     그냥 네 덩이를 세로로 쌓습니다. 세로 모니터에서 자연스럽습니다. */
   const TREES = {
-    landscape: { dir: "h", kids: ["s1", "s2", { dir: "v", kids: ["s3", "s4", "s5"] }] },
-
-    /* [변경] 세로 보기는 "먼저 좌우로 쪼개고, 각 칸을 위아래로 쪼갠다"
-
-       예전에는 위아래로 먼저 쪼갰습니다. 그러면 위쪽 덩어리와 아래쪽
-       덩어리를 가르는 선이 화면을 가로질러 하나뿐이라, ①의 아래 끝과
-       ②의 아래 끝이 항상 같이 움직였습니다.
-
-       좌우로 먼저 쪼개면 왼쪽 줄과 오른쪽 줄이 각자 자기 안에서
-       위아래를 나눕니다. ①③ 사이와 ②④ 사이가 따로 놀게 됩니다. */
-    portrait:  { dir: "h", kids: [
-                   { dir: "v", kids: ["s1", "s3"] },
-                   { dir: "v", kids: ["s2", "s4", "s5"] }
-                 ] }
+    landscape: { dir: "h", kids: ["s1", "s2", { dir: "v", kids: ["s3", "s4"] }] },
+    portrait:  { dir: "v", kids: ["s1", "s2", "s3", "s4"] }
   };
 
   /* 처음 열었을 때의 크기 (px). 마지막 가지는 남는 만큼 차지합니다. */
   const DEFAULT_SIZE = {
-    "landscape/0": 300,      // 왼쪽 칸 폭
-    "landscape/1": 620,      // 가운데 칸 폭
-    "landscape/2/0": 150,    // 오른쪽 위 높이
-    "landscape/2/1": 200,    // 오른쪽 가운데 높이
-    "portrait/0": 480,       // 왼쪽 줄 폭
-    "portrait/0/0": 420,     // ① 높이
-    "portrait/1/0": 380,     // ② 높이
-    "portrait/1/1": 220      // ④ 높이
+    /* 창을 따라가는 기본 크기 */
+    "panel/chat": 320,
+    "panel/prof": 700,
+    "panel/pomo": 230,      // 뽀모 — 시계와 버튼이 들어갈 만큼
+    "panel/word": 320,
+    /* 위치를 따라가는 값 */
+    "landscape/0": 320,
+    "landscape/1": 700,
+    "landscape/2/0": 230
   };
 
   const MIN_PX = 120;        // 어떤 칸도 이보다 작아지지 않습니다
@@ -611,11 +606,11 @@
      세로 보기는 세로로 길쭉하게 세워야 "세로 모니터"라는 게 눈에 들어옵니다. */
   const MAP_SHAPE = {
     landscape: "height:150px; max-width:100%;" +
-               "grid-template-columns: 0.9fr 1.5fr 1fr; grid-template-rows: 1fr 1fr 1fr;" +
-               "grid-template-areas:'s1 s2 s3' 's1 s2 s4' 's1 s2 s5';",
-    portrait:  "height:300px; max-width:230px; margin-left:auto; margin-right:auto;" +
-               "grid-template-columns: 1fr 1.05fr; grid-template-rows: 1.2fr 1fr 1fr;" +
-               "grid-template-areas:'s1 s2' 's3 s4' 's3 s5';"
+               "grid-template-columns: 1fr 1.7fr 1fr; grid-template-rows: 1fr 1fr;" +
+               "grid-template-areas:'s1 s2 s3' 's1 s2 s4';",
+    portrait:  "height:260px; max-width:190px; margin-left:auto; margin-right:auto;" +
+               "grid-template-columns: 1fr; grid-template-rows: 1fr 1.3fr 1fr 1fr;" +
+               "grid-template-areas:'s1' 's2' 's3' 's4';"
   };
 
   function renderSlotMap() {

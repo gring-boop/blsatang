@@ -1,0 +1,67 @@
+{
+  "rules": {
+    "messages": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "reactions": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "chatMeta": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "pomodoro": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "attendance": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "config": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "achievementOverrides": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "nickOwner": {
+      ".read": true,
+      "$nick": {
+        ".write": "auth != null && !data.exists() && newData.val() === auth.uid",
+        ".validate": "newData.isString()"
+      }
+    },
+    "users": {
+      ".read": true,
+      "$nick": {
+        ".write": "auth != null && root.child('nickOwner').child($nick).val() === auth.uid"
+      }
+    },
+    "status": {
+      ".read": true,
+      "$nick": {
+        ".write": "auth != null && root.child('nickOwner').child($nick).val() === auth.uid"
+      }
+    },
+    "wordlog": {
+      ".read": true,
+      "$day": {
+        "$nick": {
+          ".write": "auth != null && root.child('nickOwner').child($nick).val() === auth.uid"
+        }
+      }
+    },
+    "wordfeed": {
+      ".read": true,
+      "$day": {
+        "$id": {
+          ".write": "auth != null && !data.exists() && root.child('nickOwner').child(newData.child('nick').val()).val() === auth.uid"
+        }
+      }
+    }
+  }
+}

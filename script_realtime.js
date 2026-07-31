@@ -360,39 +360,73 @@
                </div>`
             : "";
 
-          // 배지 줄 — 왼쪽 업적(트로피·왕관), 오른쪽 상태
+          /* 업적 배지 — 이제 닉네임 **앞**에 붙습니다.
+
+             예전에는 상태표 옆에 따로 줄을 두었는데, 상태표가 위로
+             올라가면서 그 줄이 애매해졌습니다. 이름 앞에 두면 "누구의
+             업적인지"가 바로 읽히고, 자리도 아낍니다.
+             크기는 CSS에서 닉네임 글자에 맞춰 놓았습니다. */
           const achChips =
             (streakN >= 3 ? `<span class="card-ach" title="연속 ${streakN}일 출석">🏆</span>` : "") +
             (effAch.weeklyFull ? `<span class="card-ach" title="지난주 매일 출석">👑</span>` : "");
 
+          /* 펫 — status 에 실려 온 요약으로 그립니다.
+             남의 누적 시간을 매번 계산하면 무거워지므로, 각자 자기 값을
+             status 에 적어 보냅니다. */
+          const petHtml = (() => {
+            if (!window.Pet) return "";
+            const sp = row.petSpecies;
+            if (!sp) return "";
+            /* 만렙 값을 여기에 또 적지 않습니다. 예전에 10 을 박아뒀다가
+               20레벨로 올린 뒤에도 카드가 10에서 잘렸습니다. */
+            const lv = Math.max(1, Math.min(window.Pet.MAX_LEVEL, Number(row.petLevel) || 1));
+            const mx = !!row.petMax;
+            const pct = Math.max(0, Math.min(100, Number(row.petPct) || 0));
+            return `
+              <div class="card-pet${isMine ? " is-clickable" : ""}"${
+                isMine ? ' data-open-pet="1" role="button" tabindex="0"' : ""
+              } title="${lv <= 1
+                  ? "아직 안 태어났어요"
+                  : escapeHtml(window.Pet.speciesLabel(sp)) + " Lv." + lv + (mx ? " 만렙" : "")}${isMine ? " · 눌러서 펫 관리" : ""}">
+                ${window.Pet.petSvg(sp, lv, 58, mx)}
+                <div class="card-pet-lv">${lv <= 1 ? "🥚" : `Lv.${lv}`}${mx ? " <b>만렙</b>" : ""}</div>
+                <div class="card-pet-bar"><i style="width:${pct}%"></i></div>
+              </div>`;
+          })();
+
           parts.push(`
             <div class="user-card ${cls}${goldCls}${patCls}${bgCls}${isMine ? " is-me" : ""}"${cardStyle}>
               <div class="card-body">
-                <div class="card-avatar-wrap">
+                <div class="card-avatar-wrap${isMine ? " is-clickable" : ""}"${
+                  isMine ? ' data-edit-profile="1" role="button" tabindex="0"'
+                         + ' title="프로필 설정 (사진·색·무늬)"' : ""}>
                   ${avatar}
                   ${editBtn}
                 </div>
 
                 <div class="card-side">
-                  <div class="card-chips">${achChips}</div>
                   <div class="card-state-row">
-                    <span class="card-state ${cls}">${escapeHtml(row.statusLabel || statusLabel(st))}</span>
+                    <span class="card-state ${cls}${isMine ? " is-clickable" : ""}"${
+                      isMine ? ' data-pick-status="1" role="button" tabindex="0" title="상태 바꾸기"' : ""
+                    }>${escapeHtml(row.statusLabel || statusLabel(st))}</span>
                     <!-- 폭 기준자 — 눈에는 안 보이지만 자리는 차지합니다.
                          가장 긴 상태(🔥WORK🔥)를 모든 카드에 똑같이 심어 두면,
                          상태가 짧은 사람의 카드도 오른쪽 칸 폭이 같아집니다.
                          덕분에 카드마다 프사 크기가 들쭉날쭉해지지 않아요. -->
                     <span class="card-state-ghost" aria-hidden="true">🔥WORK🔥</span>
                   </div>
+                  ${petHtml}
                 </div>
               </div>
 
               <div class="card-foot" data-record-of="${escapeHtml(u)}"
-                   role="button" tabindex="0" title="${escapeHtml(u)} 님의 기록 보기">
+                   role="button" tabindex="0"
+                   title="${isMine ? "오늘 목표와 나의 투두" : escapeHtml(u) + " 님의 기록 보기"}">
                 <span class="card-conn${connOk ? "" : " off"}" aria-hidden="true"
                       title="${connOk ? "연결됨" : "연결이 끊겼어요 (곧 돌아올 수 있어요)"}">
                   <i></i><i></i><i></i><i></i>
                 </span>
-                <div class="card-name">${escapeHtml(u)}</div>
+                <div class="card-name">${achChips}${escapeHtml(u)}</div>
                 <div class="card-goal" title="${escapeHtml(row.todayGoalText || "")}"><div class="goal-line">🎯 ${goalText}</div></div>
                 ${metaBlock}
               </div>
@@ -450,6 +484,7 @@
     const todoTotal = _todos.length;
     const todoDone = _todos.filter(t => t && t.done).length;
     const pomoCount = Number(window.getTodayFocusSessions?.() || 0);
+    const _pet = window.petState?.() || null;
 
     if (force) {
       window.saveDailyLog?.();
@@ -467,6 +502,12 @@
       pomoCount,
       streakDays: Number(window._myAch?.streak || 0),
       weeklyFull: !!window._myAch?.weeklyFull,
+      /* 펫 요약 — 남들 카드에도 보이게.
+         남의 누적 시간을 매번 계산하면 무거우므로 각자 자기 값을 실어 보냅니다. */
+      petSpecies: _pet?.species || null,
+      petLevel:   _pet?.level   || 1,
+      petMax:     !!_pet?.isMax,
+      petPct:     Math.round((_pet?.ratio || 0) * 100),
       // ✅ 서버 시각으로 기록 — 각자 PC 시계가 달라도 판정이 흔들리지 않음
       lastSeen: firebase.database.ServerValue.TIMESTAMP,
       // 살아 있다는 뜻 — 끊김 표시를 지웁니다

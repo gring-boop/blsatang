@@ -78,7 +78,8 @@ const SLOTS=L.SLOT_IDS, PANELS=L.PANELS.map(p=>p.id);
 const leaves=(n,a=[])=>{ if(typeof n==="string"){a.push(n);return a;} n.kids.forEach(k=>leaves(k,a)); return a; };
 for(const [name,tree] of Object.entries(L.TREES)){
   const lv=leaves(tree);
-  ok(lv.length===5 && new Set(lv).size===5, `[${name}] 자리 5개가 중복 없이 있다`);
+  ok(lv.length===SLOTS.length && new Set(lv).size===SLOTS.length,
+     `[${name}] 자리 ${SLOTS.length}개가 중복 없이 있다`);
 }
 const perms=a=>{ if(a.length<=1) return [a]; const o=[];
   a.forEach((v,i)=>{ perms([...a.slice(0,i),...a.slice(i+1)]).forEach(p=>o.push([v,...p])); }); return o; };
@@ -520,6 +521,96 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
   ok(/visibilityState === "visible"\) return/.test(u.slice(i,i+600)), "보고 있을 때는 알림을 띄우지 않는다");
   ok(/askNotifyPermissionOnce/.test(r), "시작 버튼에서 권한을 물어본다");
   ok(/AppStore\.getItem\(NOTI_ASKED_KEY\)/.test(u), "한 번 물어본 뒤엔 다시 묻지 않는다");
+}
+
+/* ---- 벨사탕이 더마감에서 가져온 것들 ---- */
+{
+  const H   = fs.readFileSync(DIR+"index.html","utf8");
+  const css = fs.readFileSync(DIR+"styles.css","utf8");
+  const one = css.replace(/\s+/g, " ");
+  const rt  = fs.readFileSync(DIR+"script_realtime.js","utf8");
+  const lay = fs.readFileSync(DIR+"script_layout.js","utf8");
+
+  /* 파이어베이스 — 이 방 전용 프로젝트여야 합니다.
+     예전에는 남의 프로젝트(writer-chat)를 쓰고 있었습니다. */
+  const core = fs.readFileSync(DIR+"script_core.js","utf8");
+  /* 주석에는 옛 프로젝트 이름이 설명으로 남아 있습니다.
+     그래서 설정 덩어리만 잘라내서 봅니다 — 예전에 주석을 보고
+     실패로 판정한 적이 있어서요. */
+  const cfg = core.slice(core.indexOf("const firebaseConfig = {"),
+                         core.indexOf("};", core.indexOf("const firebaseConfig = {")));
+  ok(/projectId: "blsatang"/.test(cfg), "벨사탕 전용 프로젝트를 쓴다");
+  ok(!/writer-chat/.test(cfg), "옛 프로젝트(writer-chat)가 남아 있지 않다");
+  ok(!/themagam/.test(cfg), "더마감 프로젝트가 섞여 있지 않다");
+  ok(/blsatang-default-rtdb/.test(cfg), "데이터베이스 주소가 벨사탕 것이다");
+  ok(/apiKey: "AIza/.test(cfg), "apiKey 가 들어 있다");
+  ["apiKey","authDomain","databaseURL","projectId","storageBucket",
+   "messagingSenderId","appId"].forEach(k =>
+    ok(new RegExp(k + ':').test(cfg), `설정에 ${k} 가 있다`));
+
+  /* 로그인 */
+  ok(/firebase-auth-compat\.js/.test(H), "firebase-auth 를 읽어온다");
+  const tags = (H.match(/<script src="(script_[\w.-]+)/g) || []).map(t => t.split('"')[1]);
+  ok(tags.indexOf("script_auth.js") === tags.indexOf("script_core.js") + 1,
+     "script_auth.js 가 script_core.js 바로 뒤다");
+  ok(tags.indexOf("script_auth.js") < tags.indexOf("script_profile.js"),
+     "로그인 → 입장 → 프로필 순서다");
+  ok(/id="pw-input"/.test(H), "비밀번호 칸이 있다");
+  const auth = fs.readFileSync(DIR+"script_auth.js","utf8");
+  ok(/belsatang\.local/.test(auth), "가짜 이메일 도메인이 벨사탕 것이다");
+  ok(!/themagam\.local/.test(auth), "더마감 도메인이 남아 있지 않다");
+  ok(/Persistence\.SESSION/.test(auth), "로그인이 탭 단위다");
+
+  /* 보안 규칙 */
+  const rules = JSON.parse(fs.readFileSync(DIR+"보안규칙.json","utf8")).rules;
+  ok(rules.nickOwner && /!data\.exists\(\)/.test(rules.nickOwner.$nick[".write"]),
+     "필명 도장은 덮어쓸 수 없다");
+  ok(/nickOwner/.test(rules.users.$nick[".write"]), "users 는 도장 주인만 쓴다");
+  /* 코드가 쓰는 경로가 규칙에 다 있는가 — 빠지면 조용히 거절됩니다 */
+  const src = ["script_core.js","script_data.js","script_realtime.js","script_ui.js",
+               "script_chat.js","script_timelog.js","script_profile.js","script_reactions.js",
+               "script_pet.js","script_wordcount.js","script_auth.js"]
+    .map(f => { try { return fs.readFileSync(DIR+f,"utf8"); } catch(e){ return ""; } }).join("\n");
+  const roots = new Set();
+  src.replace(/(?:db|window\.db|firebase\.database\(\))\s*\.ref\(\s*[`"']([a-zA-Z]+)/g,
+              (m, r) => { roots.add(r); return m; });
+  roots.forEach(r => ok(!!rules[r], `보안 규칙에 ${r} 경로가 있다`));
+
+  /* 펫 */
+  ok(tags.includes("script_pet.js") && tags.includes("script_pet_ui.js"), "펫 파일을 읽어온다");
+  ok(/id="panel-pet"/.test(H), "설정에 펫 자리가 있다");
+  ok(/petSpecies:/.test(rt), "카드에 펫 요약을 실어 보낸다");
+  ok(/window\.Pet\.MAX_LEVEL/.test(rt), "카드가 만렙 값을 코드에서 가져온다 (숫자를 박지 않는다)");
+  ok(!/Math\.min\(10, Number\(row\.petLevel\)/.test(rt), "레벨을 10에서 자르지 않는다");
+
+  /* 업적 배지는 닉네임 앞 */
+  ok(/<div class="card-name">\$\{achChips\}/.test(rt), "업적 배지가 닉네임 앞에 붙는다");
+  ok(/\.card-name \.card-ach\{[^}]*font-size: \.9/.test(one),
+     "배지 크기가 닉네임 글자를 따라간다 (em)");
+
+  /* 뽀모 알약이 곧 진행 바 */
+  ok(/id="timer-pill" class="is-fillable"/.test(H), "알약이 채워지는 형태다");
+  const pillSeg = H.slice(H.indexOf('id="timer-pill"'), H.indexOf('</div>', H.indexOf('id="timer-text"')));
+  ok(/id="pomo-bar"/.test(pillSeg), "진행 바가 알약 안에 들어 있다");
+  ok((H.match(/id="pomo-bar"/g) || []).length === 1, "진행 바가 하나뿐이다 (옛 줄이 안 남았다)");
+  ok(/#timer-pill\.is-fillable\{[^}]*overflow: hidden/.test(one),
+     "차오른 색이 둥근 모서리를 넘지 않는다");
+
+  /* 글자수 */
+  ok(tags.includes("script_wordcount.js"), "글자수 파일을 읽어온다");
+  ok(/<section class="pane pane-word" id="wordcount-block"/.test(H),
+     "글자수가 독립된 창이다 (뽀모 안에 들어 있지 않다)");
+  ok(H.indexOf('id="wordcount-block"') > H.indexOf('</section>', H.indexOf('id="pomo-block"')),
+     "글자수 창이 뽀모 창 밖에 있다");
+  ok(rules.wordlog && rules.wordfeed, "글자수 경로가 규칙에 있다");
+
+  /* 네 칸 배치 */
+  ok(/id: "word"/.test(lay), "배치 목록에 글자수가 있다");
+  ok(!/id: "stat"|id: "todo"/.test(lay), "목표·투두는 창 목록에서 빠졌다");
+  ok(/slotMapLand4/.test(lay), "저장 키를 새로 팠다 (칸 수가 바뀌었으므로)");
+  ok(/portrait:\s*\{ dir: "v", kids: \["s1", "s2", "s3", "s4"\] \}/.test(lay),
+     "세로 보기가 네 덩이를 위아래로 쌓는다");
+  ok(/id="goals-modal"/.test(H), "목표·투두 팝업이 있다");
 }
 
 function finish(){

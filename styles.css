@@ -3790,3 +3790,303 @@ body.narrow-chat-focus .narrow-tabs{
   body{ height: auto; overflow: visible; background: #fff; color: #000; }
   .container{ flex-direction: column; height: auto; }
 }
+
+/* 입장 모달의 안내/오류 한 줄 */
+.join-msg{
+  margin-top: var(--sp-2);
+  font-size: .88rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.join-msg.bad{ color: #D9534F; font-weight: 600; }
+
+
+/* =====================================================================
+   더마감에서 가져온 것 — 펫 · 글자수 · 카드 클릭 표시
+   두 방은 서버가 완전히 다르지만, 보이는 모양은 같게 맞춥니다.
+   ===================================================================== */
+/* =====================================================================
+   TheMagam — 카드가 조작판입니다
+
+   프사 · 상태표 · 아래칸이 각자 다른 문을 엽니다. 눌러도 되는 곳이라는
+   신호를 줘야 하니, 손가락 커서와 살짝 들리는 반응을 답니다.
+   ===================================================================== */
+.card-avatar-wrap.is-clickable,
+.card-state.is-clickable{ cursor: pointer; }
+.card-avatar-wrap.is-clickable:hover .card-avatar{
+  filter: brightness(1.05);
+  box-shadow: 0 0 0 2px var(--accent-line);
+}
+.card-state.is-clickable:hover{ filter: brightness(1.08); }
+.card-avatar-wrap.is-clickable:focus-visible,
+.card-state.is-clickable:focus-visible{
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+/* =====================================================================
+   펫 — 카드의 상태표 아래 자리
+
+   업적 배지를 없애면서 상태표가 위로 올라왔고, 그 아래로 프사 높이만큼
+   빈 자리가 생겼습니다. 펫이 그 자리에 삽니다.
+   ===================================================================== */
+.card-pet{
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+.card-pet .pet-svg{ display: block; }
+.card-pet-lv{
+  font-size: var(--fs-3xs, 10px);
+  color: var(--muted);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.card-pet-lv b{ color: var(--accent); }
+.card-pet-bar{
+  width: 100%;
+  height: 3px;
+  border-radius: var(--r-full);
+  background: rgba(0,0,0,.12);
+  overflow: hidden;
+}
+.card-pet-bar i{
+  display: block;
+  height: 100%;
+  border-radius: var(--r-full);
+  background: #2E8B6B;
+}
+/* =====================================================================
+   펫 관리 창 (설정 → 🐾 펫)
+   ===================================================================== */
+.pet-cur{
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-3);
+  border-radius: var(--radius2);
+  background: var(--glass2);
+  margin-bottom: var(--sp-3);
+}
+.pet-cur-info{ flex: 1; min-width: 0; }
+.pet-cur-name{ font-size: var(--fs-sm); font-weight: var(--fw-bold); }
+.pet-cur-sub{ font-size: var(--fs-2xs); color: var(--muted); margin-top: 1px; }
+.pet-bar{
+  height: 5px;
+  border-radius: var(--r-full);
+  background: rgba(0,0,0,.12);
+  overflow: hidden;
+  margin-top: 6px;
+}
+.pet-bar i{ display: block; height: 100%; border-radius: var(--r-full); background: #2E8B6B; }
+.pet-pick{ display: flex; flex-wrap: wrap; gap: 6px; }
+.pet-sp{
+  width: 58px;
+  padding: 5px 0 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--panel);
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+}
+.pet-sp span{ font-size: 9.5px; color: var(--muted); }
+.pet-sp.on{ border: 2px solid var(--accent); }
+.pet-sw{
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,.16);
+  cursor: pointer;
+  padding: 0;
+}
+.pet-sw.on{ box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
+/* 도감 */
+.pet-dex{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 6px;
+}
+.pet-cell{
+  aspect-ratio: 1;
+  border-radius: var(--r-md);
+  background: var(--glass2);
+  display: flex; align-items: center; justify-content: center;
+}
+.pet-cell.empty{
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+}
+/* 만렙 알림 */
+.pet-toast{
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 9500;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--accent-line);
+  background: var(--panel);
+  box-shadow: 0 10px 28px rgba(0,0,0,.22);
+  font-size: var(--fs-sm);
+  animation: petToastIn .32s ease;
+}
+/* 껍데기 고르기 칸은 이름이 길어서 조금 넓게 */
+.pet-sp.wide{ width: 72px; }
+/* 카드의 펫도 누를 수 있다는 신호 */
+.card-pet.is-clickable{ cursor: pointer; }
+.card-pet.is-clickable:hover .pet-svg{ filter: brightness(1.06); }
+.card-pet.is-clickable:focus-visible{ outline: 2px solid var(--accent-ring); outline-offset: 2px; border-radius: var(--r-sm); }
+/* =====================================================================
+   글자수 기록 — 뽀모 칸 아래
+
+   뽀모 줄은 폭이 좁습니다(기본 320px). 그래서 이 안의 모든 것은
+   가로로 넘치지 않게 만들었어요. 이름은 말줄임, 막대는 퍼센트,
+   숫자는 고정폭 숫자체로 자리가 흔들리지 않게 합니다.
+   ===================================================================== */
+.wc-block{
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  margin-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+  min-height: 0;
+  flex: 1 1 auto;
+}
+.wc-head{ display:flex; align-items:center; justify-content:space-between; gap:var(--sp-2); flex:none; }
+.wc-title{ font-weight: var(--fw-bold); font-size: var(--fs-sm); }
+.wc-tabs{ display:flex; gap:3px; }
+.wc-tab{
+  font-family: inherit; font-size: var(--fs-2xs);
+  padding: 3px 9px; border-radius: var(--r-full);
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text-dim); cursor: pointer;
+}
+.wc-tab.on{ background: var(--text); color: var(--bg); border-color: transparent; font-weight: var(--fw-medium); }
+.wc-mine{ display:flex; align-items:baseline; gap:5px; flex:none; }
+.wc-big{ font-size: var(--fs-2xl); font-weight: var(--fw-bold);
+         font-variant-numeric: tabular-nums; letter-spacing:-.02em; }
+.wc-unit{ font-size: var(--fs-xs); color: var(--text-dim); }
+.wc-rows{
+  display:flex; flex-direction:column; gap:4px;
+  font-size: var(--fs-xs);
+  overflow:auto; min-height: 0; flex: 1 1 auto;
+}
+.wc-row{ display:flex; align-items:center; gap:7px; }
+.wc-nm{ flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* 막대는 최대 40%까지만 — 이름과 숫자 자리를 뺏지 않게 */
+.wc-bar{ flex:0 0 auto; height:4px; border-radius:var(--r-full);
+         background: var(--accent); opacity:.45; max-width:40%; min-width:3px; }
+.wc-n{ flex:0 0 auto; font-variant-numeric: tabular-nums; font-weight: var(--fw-medium); }
+.wc-row.me .wc-nm{ color: var(--accent); font-weight: var(--fw-medium); }
+.wc-empty{ font-size: var(--fs-xs); color: var(--text-dim); }
+.wc-log{ margin:0; min-height:16px; font-size: var(--fs-2xs);
+         font-weight: var(--fw-medium); color:#2FA36B; flex:none; }
+.wc-inputline{ display:flex; gap:5px; flex:none; }
+.wc-inputline input{
+  flex:1 1 auto; min-width:0; font: inherit; font-size: var(--fs-sm);
+  padding: 6px 9px; border:1px solid var(--border-strong);
+  border-radius: var(--r-sm); background: var(--surface); color: var(--text);
+}
+.wc-minirow{ display:flex; gap:4px; flex:none; }
+.wc-minirow .ghost-btn{ flex:1 1 0; min-width:0; }
+/* =====================================================================
+   흐르는 글자수 기록 — 채팅처럼 보이게
+
+   · 올린 숫자   : 내 것은 오른쪽, 남의 것은 왼쪽 (말풍선)
+   · 계산 결과   : 방이 알려주는 말이라 가운데
+   · 시간        : 넣지 않습니다 (좁은 칸이 지저분해져서)
+
+   순위표처럼 보이지 않게 하려는 배치입니다. 나란히 줄 세우면
+   그날 적게 쓴 사람이 위축되니까요.
+   ===================================================================== */
+.wc-feed{ padding: 6px 0; font-size: var(--fs-xs); line-height: 1.4; }
+/* ── 올린 숫자 (말풍선) ── */
+.wc-said-line{ display:flex; justify-content:flex-start; }
+.wc-feed.me .wc-said-line{ justify-content:flex-end; }
+.wc-said{
+  display:inline-flex; align-items:baseline; gap:5px;
+  max-width: 85%;
+  padding: 5px 10px;
+  border-radius: 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  word-break: break-all;
+}
+.wc-feed.me .wc-said{
+  background: var(--accent);
+  border-color: transparent;
+  color: #fff;
+}
+.wc-said-nm{ font-size: var(--fs-2xs); color: var(--text-dim);
+             overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.wc-said-n{ font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }
+/* ── 계산 결과 (가운데) ── */
+.wc-feed-sys{
+  margin-top: 4px;
+  text-align: center;          /* 방이 알려주는 말이라 가운데 */
+  color: var(--text-dim);
+  font-size: var(--fs-2xs);
+  word-break: break-all;
+}
+.wc-feed-sys b{ color: var(--text); font-weight: var(--fw-medium); }
+.wc-feed.me .wc-feed-sys b{ color: var(--accent); }
+/* 뽀모 — 시간 설정을 버튼과 다른 줄에 둡니다 (좁은 칸에서 서로 밀려서) */
+.pomo-row-setup{ display:flex; justify-content:center; }
+.pomo-row-setup .pomo-setup{ margin:0; }
+/* 뽀모 — 시작·정지·알림음 버튼도 가운데로 (시간 설정 줄과 맞춥니다) */
+.pomo-row-4.timer-controls{ justify-content: center; }
+
+/* 업적 배지 — 닉네임 앞에 붙습니다.
+
+   em 을 쓰는 이유: px 로 박아두면 글씨 크기 설정을 바꿨을 때 배지만
+   따로 놀아 어색해집니다. em 은 옆 글자를 따라가요. */
+.card-name .card-ach{
+  font-size: .92em;
+  line-height: 1;
+  margin-right: .18em;
+  vertical-align: baseline;
+}
+.card-name .card-ach + .card-ach{ margin-left: -.05em; }
+/* 배지 줄은 이제 쓰지 않습니다 */
+.card-chips{ display: none; }
+
+/* =====================================================================
+   뽀모 알약이 곧 진행 바
+
+   알약 안쪽이 차오르고, 글자는 그 위에 얹힙니다.
+   · overflow:hidden — 차오른 색이 둥근 모서리 밖으로 안 삐져나오게
+   · isolation:isolate — 채움층이 알약 밖 요소와 섞이지 않게
+   ===================================================================== */
+#timer-pill.is-fillable{
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+#timer-pill.is-fillable .pomo-progress{
+  position: absolute;
+  inset: 0;
+  height: auto;              /* 원래 막대 높이를 무시하고 알약을 꽉 채웁니다 */
+  background: transparent;
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+}
+#timer-pill.is-fillable #pomo-bar{
+  height: 100%;
+  border-radius: 0;
+  /* 차오르는 속도를 부드럽게. 1초마다 갱신되므로 그만큼만 줍니다. */
+  transition: width 1s linear;
+}
+/* 글자는 채움층 위에 */
+#timer-pill.is-fillable > #timer-text{
+  position: relative;
+  z-index: 1;
+}
