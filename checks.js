@@ -648,6 +648,21 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
   ok(/404/.test(H), "확인하는 방법(404)을 알려준다");
   ok(/예전 주소/.test(H), "옛 주소로 들어왔을 가능성도 짚어준다");
 
+  /* ★ 오류 그물 — 폰으로 쓰시는 분은 콘솔을 볼 수 없습니다.
+     화면에 이유가 안 뜨면 결국 짐작으로 주고받게 되고, 실제로
+     그렇게 한참 헤맸습니다. */
+  ok(/__loadErrors/.test(H), "오류를 붙잡아 두는 그물이 있다");
+  ok(H.indexOf("__loadErrors") < H.indexOf('firebase-app-compat'),
+     "그물이 다른 어떤 스크립트보다 먼저 걸린다");
+  ok(H.indexOf("__loadErrors") < H.indexOf('<script src="script_core.js'),
+     "그물이 방 코드보다 먼저 걸린다");
+  ok(/addEventListener\("error"[\s\S]{0,600}\}, true\)/.test(H),
+     "파고들며 잡는다 (script 오류는 위로 안 올라온다)");
+  ok(/tagName === "SCRIPT"/.test(H), "파일을 못 받아온 경우도 구분한다");
+  ok(/붙잡은 오류/.test(H), "붙잡은 오류를 화면에 보여준다");
+  ok(/location\.href/.test(H), "지금 주소도 함께 보여준다 (옛 주소 판별용)");
+  ok(/캡쳐해서 방장에게/.test(H), "무엇을 보내달라고 알려준다");
+
   /* 큰 뽀모 시계는 글자수 칸 아래에 붙습니다.
      채팅 위에 있으면 대화를 가리고, 채팅을 접으면 시계도 같이 사라졌어요. */
   const ui = fs.readFileSync(DIR+"script_ui.js","utf8");
