@@ -4097,3 +4097,139 @@ body.narrow-chat-focus .narrow-tabs{
   border-top: 0;
   margin-top: 0;
 }
+
+
+/* =====================================================================
+   더마감에서 마저 가져온 것 — 팝업과 상태 고르기
+
+   처음에 펫·글자수 관련 규칙만 골라 옮겼다가, **목표·투두 팝업**
+   스타일을 빠뜨렸습니다. 그래서 팝업이 화면 왼쪽 위에 그냥 붙어
+   있었어요 (감추는 규칙이 없으니 늘 보이는 상태). 상태 고르기 판도
+   같은 이유로 안 떴습니다.
+
+   ★ 업적 배지를 감추는 규칙은 일부러 가져오지 않았습니다.
+     더마감은 업적을 없앴지만 벨사탕은 그대로 씁니다.
+   ===================================================================== */
+/* =====================================================================
+   기록 팝업 (카드 아래쪽 상자를 누르면)
+   ===================================================================== */
+/* [FIX] 새로 만든 두 팝업이 화면 옆에 어색하게 붙던 문제
+
+   #goals-modal 과 #panel-modal 을 만들면서 CSS 를 빠뜨렸습니다.
+   이 파일은 팝업을 id 로 하나하나 꾸미고 있어서, 규칙이 없는 팝업은
+   그냥 문서 흐름에 얹힌 평범한 상자로 나옵니다. 화면 가운데 뜨지도
+   않고 어둡게 덮이지도 않아요.
+
+   같은 규칙을 함께 받도록 선택자에 나란히 적습니다. 앞으로 팝업을
+   더 만들 때도 여기에 이름을 추가해야 합니다. */
+#record-modal,
+#goals-modal,
+#record-modal-legacy-unused{
+  position: fixed; inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 6300;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: var(--sp-4);
+}
+#record-modal .modal-content,
+#goals-modal .modal-content,
+#panel-modal .modal-content{
+  width: min(460px, 100%);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+}
+/* 목표·투두는 입력칸 몇 개뿐이라 좁아도 됩니다 (520 → 416) */
+#goals-modal .modal-content{ width: min(416px, 100%); }
+/* =====================================================================
+   TheMagam — 목표·상태·투두가 프로필 편집 안으로 들어왔습니다.
+
+   원래는 독립된 창이라 테두리와 그림자를 지고 있었는데, 설정 팝업
+   안에서는 그게 "창 속의 창"처럼 보입니다. 다른 설정 덩어리와 같은
+   결로 맞춥니다.
+   ===================================================================== */
+.pane.in-profile{
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+  overflow: visible;
+  margin-bottom: var(--sp-4);
+}
+.pane.in-profile + .pane.in-profile{ margin-top: 0; }
+.pane.in-profile .personal-title{
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+  margin: 0 0 var(--sp-2);
+}
+/* 팝업 안에서는 접기 버튼이 뜻이 없습니다 */
+.pane.in-profile .pane-collapse-btn{ display: none; }
+/* 상태 고르기 판 */
+.status-pop{
+  position: fixed;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px;
+  min-width: 132px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  box-shadow: 0 10px 28px rgba(0,0,0,.22);
+}
+.status-pop-item{
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+}
+.status-pop-item:hover{ background: var(--fill-2); }
+/* 지금 고른 것 — 테두리로만 표시합니다. 배경까지 칠하면 상태색과 싸웁니다. */
+.status-pop-item.on{ border-color: var(--accent); font-weight: var(--fw-bold); }
+/* 창마다 오른쪽 위 ✕ */
+.panel-close{
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  z-index: 5;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--anim-fast), background var(--anim-fast);
+}
+/* 늘 보이면 시끄럽습니다. 마우스를 올렸을 때만. */
+.cards-area:hover > .panel-close,
+.chat-sidebar:hover > .panel-close,
+.pane:hover > .panel-close{ opacity: .55; }
+.panel-close:hover{ opacity: 1 !important; background: rgba(255,59,48,.12); color: #C0392B; }
+.panel-close:focus-visible{ opacity: 1; outline: 2px solid var(--accent-ring); }
+/* 창을 자리에 붙이는 대신 팝업으로 띄웠을 때 */
+.panel-pop-host{ display: flex; min-height: 0; }
+.in-popup{
+  flex: 1 1 auto !important;
+  width: auto !important;
+  height: auto !important;
+  max-height: 60vh;
+  min-width: 0 !important;
+  overflow: auto;
+}
+.in-popup .panel-close{ display: none; }

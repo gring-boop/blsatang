@@ -614,6 +614,26 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
   ok(/portrait:\s*\{ dir: "v", kids: \["s1", "s2", "s3", "s4"\] \}/.test(lay),
      "세로 보기가 네 덩이를 위아래로 쌓는다");
   ok(/id="goals-modal"/.test(H), "목표·투두 팝업이 있다");
+
+  /* ★ 팝업은 평소에 감춰져 있어야 합니다.
+
+     [무엇이 잘못됐었나]
+     더마감에서 스타일을 옮길 때 펫·글자수 관련 규칙만 골라 왔습니다.
+     그 바람에 `#goals-modal` 규칙이 빠졌고, 감추는 규칙이 없으니
+     팝업이 화면 왼쪽 위에 늘 붙어 있었습니다. "닫기" 버튼만 덩그러니
+     떠 있는 모양이었어요. */
+  ok(/#goals-modal/.test(one), "목표·투두 팝업에 스타일이 있다");
+  ok(/#goals-modal\{[^}]*display: ?none/.test(one) ||
+     /#record-modal,\s*#goals-modal/.test(one) ||
+     /#goals-modal[^{]*\{[^}]*display: ?none/.test(one),
+     "팝업이 평소에는 감춰져 있다");
+  ok(/\.status-pop/.test(one), "상태 고르기 판에 스타일이 있다");
+  ok(/\.pane\.in-profile/.test(one), "팝업 안에 들어간 칸의 스타일이 있다");
+
+  /* 업적은 벨사탕에 남아 있어야 합니다 — 더마감의 '감추기' 규칙을
+     따라오면 안 됩니다. */
+  ok(!/\.streak-banner[^{]*\{[^}]*display: ?none/.test(one),
+     "업적 띠를 감추지 않는다 (더마감 규칙을 따라오지 않았다)");
   /* ★ 목표·투두는 창이 아니게 됐지만 문서에는 살아 있어야 합니다.
      보관함으로 치우지 않으면 화면 아래에 통짜로 남아 떠돕니다.
      실제로 그런 일이 있었습니다. */
