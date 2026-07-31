@@ -45,7 +45,7 @@
 
   const SLOT_LABELS = {
     landscape: { s1: "왼쪽", s2: "가운데", s3: "오른쪽 위", s4: "오른쪽 아래" },
-    portrait:  { s1: "첫째", s2: "둘째",   s3: "셋째",      s4: "넷째"       }
+    portrait:  { s1: "왼쪽 위", s2: "오른쪽 위", s3: "왼쪽 아래", s4: "오른쪽 아래" }
   };
 
   const DEFAULT_MAP = {
@@ -68,14 +68,18 @@
        각 가지는 자리 이름이거나, 또 다른 쪼갬입니다.
      --------------------------------------------------------------- */
   /* 가로 : 채팅 | 접속자 | (뽀모 위 / 글자수 아래)
-     세로 : 그냥 넷을 위에서 아래로
+     세로 : 2칸 × 2줄
 
-     세로 보기가 오래 문제였습니다. 예전에는 좌우로 먼저 쪼개서,
-     "세로 보기"인데 화면이 두 줄로 보였어요. 칸이 넷으로 줄어든 김에
-     그냥 네 덩이를 세로로 쌓습니다. 세로 모니터에서 자연스럽습니다. */
+     세로도 한 줄로 길게 쌓아봤는데, 칸 하나하나가 너무 납작해져서
+     쓰기 불편했습니다. 2×2 로 두면 각 칸이 넉넉해집니다.
+     좌우로 먼저 쪼개고 각 줄이 자기 안에서 위아래를 나누므로,
+     왼쪽 줄과 오른쪽 줄의 경계선이 따로 움직입니다. */
   const TREES = {
     landscape: { dir: "h", kids: ["s1", "s2", { dir: "v", kids: ["s3", "s4"] }] },
-    portrait:  { dir: "v", kids: ["s1", "s2", "s3", "s4"] }
+    portrait:  { dir: "h", kids: [
+                   { dir: "v", kids: ["s1", "s3"] },
+                   { dir: "v", kids: ["s2", "s4"] }
+                 ] }
   };
 
   /* 처음 열었을 때의 크기 (px). 마지막 가지는 남는 만큼 차지합니다. */
@@ -620,9 +624,9 @@
     landscape: "height:150px; max-width:100%;" +
                "grid-template-columns: 1fr 1.7fr 1fr; grid-template-rows: 1fr 1fr;" +
                "grid-template-areas:'s1 s2 s3' 's1 s2 s4';",
-    portrait:  "height:260px; max-width:190px; margin-left:auto; margin-right:auto;" +
-               "grid-template-columns: 1fr; grid-template-rows: 1fr 1.3fr 1fr 1fr;" +
-               "grid-template-areas:'s1' 's2' 's3' 's4';"
+    portrait:  "height:230px; max-width:240px; margin-left:auto; margin-right:auto;" +
+               "grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;" +
+               "grid-template-areas:'s1 s2' 's3 s4';"
   };
 
   function renderSlotMap() {

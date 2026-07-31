@@ -611,9 +611,35 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
   ok(/id: "word"/.test(lay), "배치 목록에 글자수가 있다");
   ok(!/id: "stat"|id: "todo"/.test(lay), "목표·투두는 창 목록에서 빠졌다");
   ok(/slotMapLand4/.test(lay), "저장 키를 새로 팠다 (칸 수가 바뀌었으므로)");
-  ok(/portrait:\s*\{ dir: "v", kids: \["s1", "s2", "s3", "s4"\] \}/.test(lay),
-     "세로 보기가 네 덩이를 위아래로 쌓는다");
+  /* 세로 보기는 2칸 × 2줄입니다.
+     한 줄로 길게 쌓았더니 칸이 너무 납작해져서 바꿨습니다. */
+  ok(/dir: "v", kids: \["s1", "s3"\]/.test(lay) && /dir: "v", kids: \["s2", "s4"\]/.test(lay),
+     "세로 보기가 2칸 × 2줄이다");
+  ok(/'s1 s2' 's3 s4'/.test(lay), "세로 자리 그림도 2×2 다");
   ok(/id="goals-modal"/.test(H), "목표·투두 팝업이 있다");
+
+  /* 상태 고르기와 WORK 버튼은 화면에서 뺐습니다 (카드 상태표로 대체).
+     다만 <select> 는 지우면 안 됩니다 — 저장과 시간 집계가 이 값을 읽어요. */
+  ok(/id="db-status"[^>]*class="[^"]*hidden/.test(H), "상태 고르기 칸이 감춰져 있다");
+  ok(/id="db-status"/.test(H), "상태 값 자체는 남아 있다 (지우면 집계가 깨진다)");
+  ok(!/id="status-quick-btn"/.test(H), "WORK 시작 버튼이 없다");
+  ok(/getElementById\("status-quick-btn"\)[\s\S]{0,120}if \(!btn/.test(
+       fs.readFileSync(DIR+"script_data.js","utf8")),
+     "버튼이 없어도 그냥 넘어간다");
+  ok(/>🍅 뽀모도로</.test(H), "설정 탭 이름이 뽀모도로다");
+
+  /* 가이드가 지금 화면과 어긋나지 않는지.
+     기능은 바뀌었는데 설명만 옛날 것으로 남는 일이 잦습니다. */
+  const man = fs.readFileSync(DIR+"script_manual.js","utf8");
+  ok(/비밀번호/.test(man), "가이드에 비밀번호 이야기가 있다");
+  ok(/네 칸/.test(man) && !/다섯 칸/.test(man), "가이드가 네 칸이라고 말한다");
+  ok(/2칸 × 2줄/.test(man), "가이드가 세로 보기 모양을 알려준다");
+  ok(/글자수/.test(man), "가이드에 글자수 설명이 있다");
+  ok(/100시간에 만렙/.test(man) && !/40시간에 만렙/.test(man),
+     "가이드의 펫 시간이 지금과 같다");
+  ok(!/WORK 시작!<\/b> 버튼/.test(man), "없앤 버튼을 설명하지 않는다");
+  ok(/닉네임 앞/.test(man), "업적 배지 자리를 알려준다");
+  ok(!/>⏰ 타이머</.test(H), "옛 이름(타이머)이 남아 있지 않다");
 
   /* ★ 팝업은 평소에 감춰져 있어야 합니다.
 

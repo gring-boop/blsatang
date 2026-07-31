@@ -33,7 +33,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
 
-  <link rel="stylesheet" href="styles.css?v=202608010202" />
+  <link rel="stylesheet" href="styles.css?v=202608010214" />
 </head>
 
 <body>
@@ -152,7 +152,7 @@
       <button class="tab"        data-tab="goals"   role="tab" aria-selected="false" aria-controls="panel-goals"   onclick="openTab('goals')">🎯 목표 · 투두</button>
       <button class="tab"        data-tab="pet"     role="tab" aria-selected="false" aria-controls="panel-pet"     onclick="openTab('pet')">🐾 펫</button>
       <button class="tab"        data-tab="theme"   role="tab" aria-selected="false" aria-controls="panel-theme"   onclick="openTab('theme')">🎨 테마</button>
-      <button class="tab"        data-tab="timer"   role="tab" aria-selected="false" aria-controls="panel-timer"   onclick="openTab('timer')">⏰ 타이머</button>
+      <button class="tab"        data-tab="timer"   role="tab" aria-selected="false" aria-controls="panel-timer"   onclick="openTab('timer')">🍅 뽀모도로</button>
       <button class="tab"        data-tab="privacy" role="tab" aria-selected="false" aria-controls="panel-privacy" onclick="openTab('privacy')">🔒 개인정보</button>
     </div>
 
@@ -632,7 +632,7 @@
   <!-- 오늘 목표 / 상태 -->
   <section class="pane pane-status" id="status-block" aria-label="오늘 목표와 상태">
     <div class="goal-wrap">
-    <h4 class="personal-title">🎯 오늘 목표 / 상태</h4>
+    <h4 class="personal-title">🎯 오늘 목표</h4>
     <div class="stack" style="gap:10px;">
       <label class="sr-only" for="db-today-goal-text">오늘의 한줄 목표</label>
     <input
@@ -644,8 +644,14 @@
       placeholder="오늘의 한줄 목표(공유됨)"
     >
 
+    <!-- 상태는 이제 카드의 상태표를 눌러서 바꿉니다.
+
+         이 <select> 는 화면에서 감추되 **지우지는 않았습니다.**
+         저장과 시간 집계가 전부 이 값을 읽고 있어서, 지우면 그 흐름을
+         따로 다시 만들어야 합니다. 상태 고르기 판이 이 값을 대신
+         조작합니다. 보이지 않는 중계기라고 생각하시면 됩니다. -->
     <label class="sr-only" for="db-status">내 스테이터스</label>
-    <select id="db-status" class="w-full"
+    <select id="db-status" class="w-full hidden"
             oninput="savePersonalDataDebounced(); window.renderQuickStatusBtn?.()">
       <option value="" disabled selected>내 스테이터스(공유됨)</option>
       <option value="writing">WORK</option>
@@ -655,9 +661,9 @@
     </select>
 
     <!-- 저장 버튼은 없앴습니다. 목표와 상태는 입력하는 즉시 저장돼요. -->
-    <div class="mini-row end">
-      <button id="status-quick-btn" class="ghost-btn primary compact" onclick="toggleWritingStatus()">✍️ WORK 시작!</button>
-    </div>
+    <!-- "WORK 시작!" 버튼도 뺐습니다. 카드의 상태표를 누르면 되니
+         같은 일을 하는 버튼이 둘이 될 이유가 없어요.
+         (renderQuickStatusBtn 이 이 버튼을 찾지 못해도 그냥 넘어갑니다) -->
     </div>
     </section>
 
@@ -692,21 +698,21 @@
 
 <!-- Core → UI → Chat → Data → Realtime → Profile 순서 -->
 <!-- script_profile.js는 다른 모듈의 함수를 감싸므로 반드시 마지막에 로드 -->
-<script src="fortune_data.js?v=202608010202"></script>
-<script src="script_core.js?v=202608010202"></script>
-<script src="script_auth.js?v=202608010202"></script>
-<script src="script_ui.js?v=202608010202"></script>
-<script src="script_chat.js?v=202608010202"></script>
-<script src="script_data.js?v=202608010202"></script>
-<script src="script_realtime.js?v=202608010202"></script>
-<script src="script_layout.js?v=202608010202"></script>
-<script src="script_pet.js?v=202608010202"></script>
-<script src="script_pet_ui.js?v=202608010202"></script>
-<script src="script_wordcount.js?v=202608010202"></script>
-<script src="script_timelog.js?v=202608010202"></script>
-<script src="script_profile.js?v=202608010202"></script>
-<script src="script_reactions.js?v=202608010202"></script>
-<script src="script_manual.js?v=202608010202"></script>
+<script src="fortune_data.js?v=202608010214"></script>
+<script src="script_core.js?v=202608010214"></script>
+<script src="script_auth.js?v=202608010214"></script>
+<script src="script_ui.js?v=202608010214"></script>
+<script src="script_chat.js?v=202608010214"></script>
+<script src="script_data.js?v=202608010214"></script>
+<script src="script_realtime.js?v=202608010214"></script>
+<script src="script_layout.js?v=202608010214"></script>
+<script src="script_pet.js?v=202608010214"></script>
+<script src="script_pet_ui.js?v=202608010214"></script>
+<script src="script_wordcount.js?v=202608010214"></script>
+<script src="script_timelog.js?v=202608010214"></script>
+<script src="script_profile.js?v=202608010214"></script>
+<script src="script_reactions.js?v=202608010214"></script>
+<script src="script_manual.js?v=202608010214"></script>
 
 <script>
   window.addEventListener("load", () => {
