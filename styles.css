@@ -4090,3 +4090,10 @@ body.narrow-chat-focus .narrow-tabs{
   position: relative;
   z-index: 1;
 }
+
+/* 글자수가 독립된 창일 때 — 뽀모 아래에 붙어 있을 때 쓰던 장식을 지웁니다.
+   (더마감에서는 뽀모 칸 안에 살아서 위쪽 구분선과 여백이 필요했습니다) */
+.pane.wc-block{
+  border-top: 0;
+  margin-top: 0;
+}

@@ -598,8 +598,11 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
 
   /* 글자수 */
   ok(tags.includes("script_wordcount.js"), "글자수 파일을 읽어온다");
-  ok(/<section class="pane pane-word" id="wordcount-block"/.test(H),
+  ok(/<section class="pane pane-word wc-block" id="wordcount-block"/.test(H),
      "글자수가 독립된 창이다 (뽀모 안에 들어 있지 않다)");
+  /* wc-block 클래스가 있어야 안쪽 배치가 잡힙니다.
+     한 번 빠뜨려서 입력칸과 버튼이 늘어져 보였습니다. */
+  ok(/class="[^"]*\bwc-block\b/.test(H), "글자수 칸에 wc-block 클래스가 있다");
   ok(H.indexOf('id="wordcount-block"') > H.indexOf('</section>', H.indexOf('id="pomo-block"')),
      "글자수 창이 뽀모 창 밖에 있다");
   ok(rules.wordlog && rules.wordfeed, "글자수 경로가 규칙에 있다");
@@ -611,6 +614,16 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
   ok(/portrait:\s*\{ dir: "v", kids: \["s1", "s2", "s3", "s4"\] \}/.test(lay),
      "세로 보기가 네 덩이를 위아래로 쌓는다");
   ok(/id="goals-modal"/.test(H), "목표·투두 팝업이 있다");
+  /* ★ 목표·투두는 창이 아니게 됐지만 문서에는 살아 있어야 합니다.
+     보관함으로 치우지 않으면 화면 아래에 통짜로 남아 떠돕니다.
+     실제로 그런 일이 있었습니다. */
+  ok(/\["status-block", "todo-block"\]\.forEach/.test(lay),
+     "목표·투두를 보관함으로 치운다");
+  const atticAt = lay.indexOf('["status-block", "todo-block"].forEach');
+  ok(atticAt > 0 && atticAt < lay.indexOf("root.innerHTML = \"\";"),
+     "뿌리를 비우기 전에 치운다 (안 그러면 통째로 삭제됨)");
+  ok(/mountGoalBlocks/.test(fs.readFileSync(DIR+"script_profile.js","utf8")),
+     "팝업을 열 때 다시 꺼내온다");
 }
 
 function finish(){

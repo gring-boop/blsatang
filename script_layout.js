@@ -383,6 +383,18 @@
         document.querySelectorAll(p.sel).forEach(el => attic.appendChild(el));
       }
       if (rail0) attic.appendChild(rail0);
+
+      /* [중요] 목표·투두는 이제 창이 아니지만, 문서에는 살아 있어야 합니다.
+
+         창 목록(PANELS)에서 뺐는데, 아래에서 뿌리를 비우기 때문에
+         보관함으로 피신시키지 않으면 **화면 아래에 그대로 남아 떠돕니다.**
+         실제로 그랬습니다 — 세 칸 아래에 목표와 투두가 통짜로 붙어
+         나왔어요. 여기로 치워두면 화면에서 사라지고, 카드 아래를
+         눌렀을 때 팝업 안으로 옮겨져 나타납니다. */
+      ["status-block", "todo-block"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) attic.appendChild(el);
+      });
     }
 
     // 치워둔 창은 보관함에 남겨둡니다
