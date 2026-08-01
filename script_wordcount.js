@@ -63,6 +63,7 @@
   let _feedRef = null;
   let _weekRefs = [];
   let _started = false;
+  let _day     = null;    // 지금 듣고 있는 날짜 — 자정 감시에 씁니다
 
   const FEED_MAX = 60;    // 너무 길어지지 않게 최근 것만 봅니다
 
@@ -314,6 +315,9 @@
      버튼이 하는 일
      --------------------------------------------------------------- */
   async function send() {
+    /* 자정 직후 첫 기록 보호 — 어제 값으로 계산하지 않게 오늘로 먼저 갈아탑니다.
+       갈아탄 직후에는 기준이 비어 있으므로, 적은 숫자가 자연스럽게 출발선이 됩니다. */
+    rolloverIfNeeded();
     const v = inputVal();
     if (v === null) { say("숫자를 적어주세요."); return; }
     if (!me()) { say("잠시만요, 아직 준비 중이에요."); return; }
@@ -348,6 +352,7 @@
   }
 
   async function setBase() {
+    rolloverIfNeeded();
     const v = inputVal();
     if (v === null) { say("먼저 지금 글자수를 적어주세요."); return; }
     await save({ base: v });
@@ -356,11 +361,13 @@
   }
 
   async function resetTotal() {
+    rolloverIfNeeded();
     await save({ total: 0 });
     say("오늘 누적을 0으로 되돌렸어요");
   }
 
   async function freshStart() {
+    rolloverIfNeeded();
     await save({ base: 0 });
     clearInput();
     say("새 편 시작 · 기준 0자");
@@ -373,9 +380,33 @@
     if (_started || !window.db) return;
     _started = true;
 
-    detach();
+    attach();
 
-    _ref = window.db.ref(`wordlog/${dayKey()}`);
+    /* [추가 2026-08] 자정 감시.
+
+       [무엇이 잘못됐었나]
+       듣는 날짜를 입장할 때 한 번만 계산했습니다. 자정이 지나도 화면은
+       어제 노드를 듣고("자정이 지나도 그대로"), 저장은 오늘 노드에
+       되는데 계산은 어제 값(어제 누적 total)으로 해서, 오늘 노드에
+       **어제 누적이 합쳐진 숫자**가 저장됐습니다. 새벽까지 쓰는 방에서는
+       반드시 터지는 버그였어요.
+
+       1분마다, 그리고 화면이 다시 보일 때(절전 복귀·탭 전환) 날짜를
+       검사해서 바뀌었으면 오늘 날짜로 갈아탑니다. 버튼을 누르는 순간에도
+       한 번 더 검사합니다 (자정 직후 첫 기록 보호). */
+    setInterval(rolloverIfNeeded, 60 * 1000);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") rolloverIfNeeded();
+    });
+  }
+
+  /** 듣기 붙이기 — 지금 날짜 기준으로. 자정이 지나면 다시 부릅니다 */
+  function attach() {
+    detach();
+    _day = dayKey();
+    _today = {}; _feed = []; _week = {};
+
+    _ref = window.db.ref(`wordlog/${_day}`);
     _ref.on("value", snap => {
       const server = snap.val() || {};
       /* 내 줄은 손안의 값이 더 새것일 수 있습니다 (방금 눌렀는데
@@ -390,7 +421,7 @@
     });
 
     /* 흐르는 기록 — 최근 것만 받아옵니다 */
-    _feedRef = window.db.ref(`wordfeed/${dayKey()}`).limitToLast(FEED_MAX);
+    _feedRef = window.db.ref(`wordfeed/${_day}`).limitToLast(FEED_MAX);
     _feedRef.on("value", snap => {
       const v = snap.val() || {};
       _feed = Object.values(v).sort((a, b) => Number(a.at || 0) - Number(b.at || 0));
@@ -405,6 +436,15 @@
     });
 
     render();
+  }
+
+  /** 날짜가 바뀌었으면 오늘로 갈아탑니다. 갈아탔으면 true */
+  function rolloverIfNeeded() {
+    if (!_started) return false;
+    if (_day === dayKey()) return false;
+    attach();
+    say("자정이 지나 오늘 기록으로 넘어왔어요. 전체 글자수를 적어 출발선부터 잡아주세요.");
+    return true;
   }
 
   function detach() {
