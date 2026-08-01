@@ -1058,6 +1058,7 @@ window.bindCardEditDelegate = bindCardEditDelegate;
         try { window.startWordcount?.(); }    catch (e) {}
         try { await window.startPet?.(); }    catch (e) { console.warn("[startPet]", e); }
         try { window.renderPetPanel?.(); }    catch (e) {}
+        try { window.renderMyStatusChip?.(); } catch (e) {}
       }
     };
     wrapped.__profilePatched = true;
@@ -1140,7 +1141,7 @@ window.rerenderUserCards = function () {
 (function () {
   const CHOICES = [
     { v: "writing", label: "WORK",      cls: "status-writing" },
-    { v: "focus",   label: "🔥초집중🔥", cls: "status-focus"   },
+    { v: "focus",   label: "🔥WORK🔥",   cls: "status-focus"   },
     { v: "rest",    label: "휴식",       cls: "status-rest"    },
     { v: "away",    label: "자리비움",   cls: "status-away"    }
   ];
@@ -1167,9 +1168,39 @@ window.rerenderUserCards = function () {
          (이 select 에는 oninput 이 걸려 있습니다) */
       sel.dispatchEvent(new Event("input", { bubbles: true }));
       window.renderQuickStatusBtn?.();
+      window.renderMyStatusChip?.();
     }
     close();
   }
+
+  /* ---------------------------------------------------------------
+     채팅 헤더의 내 상태 칩
+
+     값의 근원은 언제나 #db-status 하나입니다. 칩은 그 값을 비춰
+     보여줄 뿐이에요. 카드 상태표·고르기 판·이 칩 어디서 바꿔도
+     전부 같은 값을 움직이므로 서로 어긋날 수 없습니다. */
+  function renderMyStatusChip() {
+    const chip = document.getElementById("my-status-chip");
+    if (!chip) return;
+    if (!myNick) { chip.classList.add("hidden"); return; }
+
+    const v = document.getElementById("db-status")?.value || "";
+    const c = CHOICES.find(x => x.v === v);
+    chip.classList.remove("hidden",
+      "status-writing", "status-focus", "status-rest", "status-away");
+    if (c) {
+      chip.textContent = c.label;
+      chip.classList.add(c.cls);
+    } else {
+      chip.textContent = "상태 고르기";
+    }
+  }
+  window.renderMyStatusChip = renderMyStatusChip;
+
+  /* 값이 바뀌는 길목마다 칩을 새로 칠합니다 */
+  document.addEventListener("input", (e) => {
+    if (e.target && e.target.id === "db-status") renderMyStatusChip();
+  });
 
   window.openStatusPicker = function (anchor) {
     close();

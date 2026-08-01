@@ -665,6 +665,28 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
   ok(/Wordcount\?\.myWeekHtml/.test(tl), "글자수 요약도 함께 보여준다");
   ok(/🔥집중/.test(tl) && !/🔥초집중/.test(tl), "상태 이름이 벨사탕 것이다");
 
+  /* 채팅 헤더의 내 상태 칩 —
+     채팅만 넓게 보는 분은 카드가 안 보여서 상태를 바꿀 수 없었습니다. */
+  {
+    const pr = fs.readFileSync(DIR+"script_profile.js","utf8");
+    ok(/id="my-status-chip"/.test(H), "채팅 헤더에 상태 칩 자리가 있다");
+    ok(H.indexOf('id="my-status-chip"') < H.indexOf('id="my-info"'),
+       "칩이 '몇 명 접속 중' 왼편에 있다");
+    ok(/data-pick-status="1"/.test(H.slice(H.indexOf('id="my-status-chip"') - 200,
+                                           H.indexOf('id="my-info"'))),
+       "칩을 누르면 상태 고르기 판이 뜬다 (카드와 같은 길)");
+    ok(/function renderMyStatusChip/.test(pr), "칩을 그리는 함수가 있다");
+    ok(/renderMyStatusChip\?\.\(\)/.test(pr) || /renderMyStatusChip\(\)/.test(pr),
+       "상태를 바꾸면 칩도 새로 칠한다");
+    ok(!/🔥초집중/.test(pr), "고르기 판의 상태 이름도 벨사탕 것이다");
+    /* 색을 복사하지 않고 카드 상태표와 같은 규칙에 태웁니다.
+       복사하면 한쪽만 고치는 사고가 납니다. */
+    ok(/\.card-state\.status-writing,\s*\.my-status-chip\.status-writing/.test(one),
+       "칩이 카드 상태표와 같은 색 규칙을 쓴다 (복사본 없음)");
+    ok(/\.my-status-chip\{[^}]*calc\(var\(--fs-sm\) \* \.9\)/.test(one),
+       "칩이 카드 상태표보다 작다");
+  }
+
   /* 파일이 빠졌을 때 뜨는 안내가 실제 파일 목록과 맞아야 합니다.
      예전에는 "9개가 있어야 한다"고 적혀 있었는데 실제로는 14개였어요.
      그대로 두면 안내를 보고 엉뚱한 걸 찾게 됩니다. */

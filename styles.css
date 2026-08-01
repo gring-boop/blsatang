@@ -1649,14 +1649,21 @@ body.pomo-nonpart .pomo-status-line{
   background: var(--fill-2);
   color: var(--muted-strong);
 }
-.card-state.status-writing{ background: rgba(255,59,48,.60);  border-color: rgba(255,59,48,.73);  color: #8E2420; }
-.card-state.status-focus  { background: rgba(255,159,10,.63); border-color: rgba(255,159,10,.76); color: #7A4406; }
-.card-state.status-rest   { background: rgba(48,209,88,.61);  border-color: rgba(48,209,88,.73);  color: #0B5A46; }
-.card-state.status-away   { background: var(--fill-2);        border-color: var(--border);        color: var(--muted); }
+.card-state.status-writing,
+.my-status-chip.status-writing{ background: rgba(255,59,48,.60);  border-color: rgba(255,59,48,.73);  color: #8E2420; }
+.card-state.status-focus,
+.my-status-chip.status-focus  { background: rgba(255,159,10,.63); border-color: rgba(255,159,10,.76); color: #7A4406; }
+.card-state.status-rest,
+.my-status-chip.status-rest   { background: rgba(48,209,88,.61);  border-color: rgba(48,209,88,.73);  color: #0B5A46; }
+.card-state.status-away,
+.my-status-chip.status-away   { background: var(--fill-2);        border-color: var(--border);        color: var(--muted); }
 
-:root[data-is-dark="true"] .card-state.status-writing{ color: #FFA59E; }
-:root[data-is-dark="true"] .card-state.status-focus  { color: #FFCE85; }
-:root[data-is-dark="true"] .card-state.status-rest   { color: #8CE8C6; }
+:root[data-is-dark="true"] .card-state.status-writing,
+:root[data-is-dark="true"] .my-status-chip.status-writing{ color: #FFA59E; }
+:root[data-is-dark="true"] .card-state.status-focus,
+:root[data-is-dark="true"] .my-status-chip.status-focus  { color: #FFCE85; }
+:root[data-is-dark="true"] .card-state.status-rest,
+:root[data-is-dark="true"] .my-status-chip.status-rest   { color: #8CE8C6; }
 
 /* 카드 아래쪽 — 닉네임 · 목표 · 진척 바 · 지표를 한 덩어리로 묶습니다.
    둥근 상자로 감싸서 프사·배지와 시각적으로 갈라 보이게 했고,
@@ -4271,3 +4278,28 @@ body.narrow-chat-focus .narrow-tabs{
 #panel-record .rec-today{ margin-top: 2px; }
 #panel-record .rec-week{ margin-bottom: 4px; }
 #panel-record .set-block + .set-block{ margin-top: var(--sp-3); }
+
+/* =====================================================================
+   채팅 헤더의 내 상태 칩
+
+   카드 상태표(.card-state)와 같은 상태색 클래스를 씁니다 —
+   같은 상태면 어디서든 같은 색이어야 헷갈리지 않아요.
+   크기만 카드보다 작게 (헤더 한 줄에 얹히는 물건이라서).
+   ===================================================================== */
+.my-status-chip{
+  appearance: none;
+  font-family: inherit;
+  font-size: calc(var(--fs-sm) * .9);
+  font-weight: var(--fw-bold);
+  padding: 2px 9px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  margin-right: var(--sp-2);
+  flex: none;
+}
+.my-status-chip:hover{ filter: brightness(1.05); }
+.my-status-chip.hidden{ display: none; }
