@@ -58,6 +58,12 @@
 
   const KEY_ALIVE = "timelogAliveAt";
 
+  /* [추가 2026-08] 이 페이지(세션)의 표식.
+     timeCur 는 계정당 하나인데 기기는 여러 대일 수 있습니다. 누가 열어둔
+     구간인지 구분해야, 다른 기기가 이어받을 때 시간이 증발하거나 이중으로
+     잡히는 것을 막을 수 있습니다. */
+  const SID = Math.random().toString(36).slice(2) + Date.now().toString(36);
+
   function ymd(ms) {
     const d = new Date(ms);
     const p = n => String(n).padStart(2, "0");
@@ -75,6 +81,13 @@
      --------------------------------------------------------------- */
   function markAlive() {
     try { AppStore.setItem(KEY_ALIVE, String(nowMs())); } catch (e) {}
+    /* [추가 2026-08] 서버의 열린 구간에도 도장을 찍습니다.
+       localStorage 도장은 기기별이라 다른 기기가 구간을 정리할 때 못 보고,
+       백그라운드 탭은 타이머가 얼어 도장 자체가 멈춥니다. 서버에 찍어두면
+       어느 기기가 정리하든 이 구간의 실제 마지막 활동 시각을 압니다. */
+    try {
+      if (_cur && myNick) curRef().child("alive").set(nowMs());
+    } catch (e) {}
   }
   function lastAlive() {
     try {
@@ -86,9 +99,23 @@
   /* ---------------------------------------------------------------
      [2] 구간 쓰기
      --------------------------------------------------------------- */
-  let _cur = null;      // { s, a }  지금 열려 있는 구간
+  let _cur = null;      // { s, a, sid }  지금 열려 있는 구간
 
   function curRef() { return db.ref(`users/${myNick}/timeCur`); }
+
+  /* [추가 2026-08] 연결이 끊기면 **서버가** 끊긴 시각을 적습니다.
+
+     탭이 얼거나(백그라운드), 브라우저가 죽거나, 컴퓨터가 잠들면 JS 는
+     아무것도 못 남깁니다. 하지만 파이어베이스 서버는 소켓이 끊긴 순간을
+     정확히 알고, onDisconnect 로 그 시각을 대신 적어줄 수 있습니다.
+     다음 입장 때 이 시각까지 전액 인정하므로, 백그라운드에서 쌓은
+     시간이 증발하지 않습니다 — "연결이 살아있는 동안은 전액 인정"이라는
+     이 파일의 원칙을 이걸로 실제로 지킵니다. */
+  function armDisc() {
+    try {
+      curRef().child("disc").onDisconnect().set(firebase.database.ServerValue.TIMESTAMP);
+    } catch (e) {}
+  }
 
   /** 하루를 넘기는 구간은 날짜별로 쪼개서 저장합니다 */
   async function pushSegment(status, from, to) {
@@ -131,7 +158,7 @@
 
     if (_cur) await pushSegment(_cur.s, _cur.a, t);
 
-    _cur = { s: next, a: t };
+    _cur = { s: next, a: t, sid: SID };
     try { await curRef().set(_cur); } catch (e) {}
   }
 
@@ -165,10 +192,15 @@
       if (gone >= OFFLINE_MIN_MS && _cur) {
         // 끊긴 시각까지만 인정하고, 그 뒤부터 다시 시작 (그 사이는 안 셈)
         await pushSegment(_cur.s, _cur.a, _offlineSince);
-        _cur = { s: _cur.s, a: nowMs() };
+        _cur = { s: _cur.s, a: nowMs(), sid: SID };
         try { await curRef().set(_cur); } catch (e) {}
       }
       _offlineSince = 0;
+
+      /* [추가 2026-08] 다시 붙을 때마다 onDisconnect 를 재장전합니다.
+         (onDisconnect 예약은 연결 단위라, 끊겼다 붙으면 새로 걸어야 합니다.
+          set(_cur) 이 노드를 통째로 덮어써서 지난 disc 는 함께 지워집니다.) */
+      armDisc();
     });
   }
 
@@ -193,10 +225,20 @@
       const prev = snap.val();
       if (prev && Number(prev.a) > 0) {
         /* 지난번에 창을 닫으면서 못 닫은 구간이 남아 있습니다.
-           마지막으로 살아 있던 시각까지만 인정하고, 그 뒤(창이 닫혀 있던
-           시간)는 아예 세지 않습니다. 자리비움으로 찍지도 않습니다. */
-        const alive = lastAlive();
-        const cut = (alive && alive > Number(prev.a)) ? alive : Number(prev.a);
+           살아 있었다고 확인되는 가장 늦은 시각까지 인정하고, 그 뒤는
+           세지 않습니다. 자리비움으로 찍지도 않습니다.
+
+           [고침 2026-08] 예전엔 이 기기의 localStorage 도장만 봤습니다.
+           그래서 ① 다른 기기가 열어둔 구간을 정리하면 통째로 증발했고,
+           ② 백그라운드 탭은 도장 타이머가 얼어 그 사이가 잘렸습니다.
+           이제 서버가 적어준 끊긴 시각(disc)과 서버 도장(alive)을 함께
+           봐서, 가장 늦은 시각까지 전액 인정합니다. */
+        const cut = Math.min(nowMs(), Math.max(
+          Number(prev.a),
+          Number(prev.alive) || 0,
+          Number(prev.disc) || 0,
+          lastAlive() || 0
+        ));
         await pushSegment(prev.s, Number(prev.a), cut);
       }
     } catch (e) {}
@@ -205,6 +247,18 @@
     _lastSeenStatus = currentUiStatus();
     await switchTo(_lastSeenStatus, nowMs());
     markAlive();
+    armDisc();
+
+    /* [추가 2026-08] 다른 기기가 timeCur 를 이어받으면 이쪽은 조용히 놓습니다.
+       저쪽이 이 구간을 disc/alive 시각까지 정리했으니, 여기서 또 닫으면
+       같은 시간이 이중으로 잡힙니다. 놓기만 하고 아무것도 더하지 않습니다.
+       (놓은 뒤 이 기기에서 상태를 바꾸면 그때 새 구간으로 다시 시작합니다) */
+    try {
+      curRef().on("value", s3 => {
+        const v = s3.val();
+        if (_cur && v && v.sid && v.sid !== SID) _cur = null;
+      });
+    } catch (e) {}
 
     setInterval(() => {
       if (!myNick) return;
@@ -223,16 +277,19 @@
     window.addEventListener("focus", wake);
     document.addEventListener("resume", wake);
 
-    window.addEventListener("pagehide", () => {
-      // 마지막 구간을 닫아둡니다 (실패해도 다음 입장 때 정리됩니다)
-      try {
-        if (_cur) {
-          const t = nowMs();
-          db.ref(`users/${myNick}/timeSegs/${ymd(_cur.a)}`).push({ s: _cur.s, a: _cur.a, b: t });
-          curRef().remove();
-        }
-      } catch (e) {}
-    });
+    /* [고침 2026-08] 창이 닫힐 때 여기서 직접 구간을 닫지 않습니다.
+
+       예전엔 pagehide 에서 timeSegs 에 한 줄 적고 timeCur 를 지웠는데,
+       두 가지 문제가 있었습니다.
+         ① 기록장에는 적으면서 펫 누적(workMsTotal)에는 안 더해서,
+            곱게 닫을 때마다 마지막 집필 구간이 펫에게만 누락됐습니다.
+         ② 닫히는 순간의 전송은 어디까지 도착할지 알 수 없어서, 절반만
+            성공하면 같은 구간이 안 잡히거나 두 번 잡힐 수 있었습니다.
+
+       이제는 아무것도 하지 않습니다. 소켓이 닫히면 서버가 onDisconnect 로
+       끊긴 시각(disc)을 적어주고, 다음 입장 때 그 시각까지 **한 번만**
+       정산합니다 (기록장과 펫 누적이 같은 경로로 함께 처리됩니다).
+       그동안의 오늘 합계는 loadSummary 가 disc 를 보고 계산합니다. */
   }
   window.startTimelog = startTimelog;
 
@@ -293,7 +350,11 @@
          상한을 넘긴 뒤로는 더 늘지 않고 6시간에서 멈춥니다. */
       if (cur && Number(cur.a) > 0) {
         const curStart = Number(cur.a);
-        const curEnd   = Math.min(t, curStart + SEG_CAP_MS);   // ← 상한
+        /* [고침 2026-08] 연결이 이미 끊긴 사람의 열린 구간은 끊긴 시각
+           (disc)까지만 셉니다. 예전엔 지금 시각까지 계속 자라는 걸로
+           계산해서, 퇴근한 사람의 오늘 합계가 6시간 상한까지 부풀었습니다. */
+        const hardEnd  = Number(cur.disc) > 0 ? Math.min(t, Number(cur.disc)) : t;
+        const curEnd   = Math.min(hardEnd, curStart + SEG_CAP_MS);   // ← 상한
         const a = Math.max(curStart, dayMs);
         const b = Math.min(curEnd, dayMs + 24 * 60 * 60 * 1000);
         if (b > a) totals[normStatus(cur.s)] += (b - a);
