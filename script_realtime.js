@@ -120,15 +120,6 @@
     } catch(e){}
   };
 
-  function isPresenceSystemMsg(data) {
-    return !!(data && data.type === "system" && (data.joinOf || data.leaveOf));
-  }
-
-  // ✅ [추가] 뽀모 시스템 메시지인지 판별 (입장 이전 렌더에서 제외할 용도)
-  function isPomodoroSystemMsg(data) {
-    return !!(data && data.type === "system" && data.pomoSeq !== undefined && data.pomoPhase !== undefined);
-  }
-
   // =====================================================
   // Header online list
   // =====================================================
