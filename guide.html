@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>벨사탕 작업실 — 작가들의 실시간 집필 공간</title>
+<meta name="description" content="함께 쓰면 더 오래 쓴다. 작가들의 실시간 공동 집필 공간, 벨사탕 작업실.">
+<!-- =====================================================================
+     guide.html — 아직 안 들어와 본 분들에게 배포하는 소개 페이지
+
+     작업방과 완전히 독립된 한 장짜리 문서입니다. 파이어베이스도,
+     다른 스크립트도 읽지 않아요. 그래서 방이 어떤 상태든 이 페이지는
+     항상 열립니다. 링크: /blsatang/guide.html
+     ===================================================================== -->
+<style>
+:root{
+  --bg:#F6F3EA; --text:#2B2722; --dim:#7A7268;
+  --card:#FFFDF7; --line:rgba(0,0,0,.08);
+  --accent:#E4572E; --accent-soft:rgba(228,87,46,.1);
+  --green:#2FA36B;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#141210; --text:#EFEAE2; --dim:#9A9188;
+    --card:#1E1B18; --line:rgba(255,255,255,.09);
+    --accent:#F0754C; --accent-soft:rgba(240,117,76,.14); }
+}
+*{ box-sizing:border-box }
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  font-size:16px; line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{ max-width:680px; margin:0 auto; padding:48px 20px 80px }
+
+/* ── 머리 ── */
+.hero{ text-align:center; padding:24px 0 8px }
+.hero h1{ font-size:30px; margin:0 0 6px; letter-spacing:-.02em }
+.hero .sub{ color:var(--dim); font-size:16.5px; margin:0 }
+.hero .pets{ display:flex; justify-content:center; gap:2px; margin:18px 0 6px; flex-wrap:wrap }
+.hero .pets svg{ display:block }
+
+.cta{
+  display:inline-block; margin-top:22px;
+  background:var(--accent); color:#fff; text-decoration:none;
+  font-weight:700; font-size:16.5px;
+  padding:13px 34px; border-radius:999px;
+  box-shadow:0 4px 14px rgba(228,87,46,.28);
+}
+.cta:active{ transform:translateY(1px) }
+.cta-sub{ display:block; margin-top:10px; font-size:12.5px; color:var(--dim) }
+
+/* ── 소개 문단 ── */
+.pitch{
+  margin:44px 0 0; font-size:17px; text-align:center;
+  color:var(--text);
+}
+.pitch b{ color:var(--accent) }
+
+/* ── 기능 카드 ── */
+.grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:40px }
+@media (max-width:540px){ .grid{ grid-template-columns:1fr } }
+.feat{
+  background:var(--card); border:1px solid var(--line);
+  border-radius:16px; padding:18px 16px;
+}
+.feat .ico{ font-size:26px; line-height:1 }
+.feat h3{ font-size:15.5px; margin:10px 0 4px }
+.feat p{ font-size:13.5px; color:var(--dim); margin:0; line-height:1.6 }
+
+/* ── 간단 가이드 ── */
+h2{ font-size:20px; margin:52px 0 4px; text-align:center }
+.h2sub{ text-align:center; color:var(--dim); font-size:13.5px; margin:0 0 20px }
+.steps{ counter-reset:step; display:flex; flex-direction:column; gap:10px }
+.step{
+  background:var(--card); border:1px solid var(--line);
+  border-radius:14px; padding:14px 16px 14px 52px; position:relative;
+}
+.step::before{
+  counter-increment:step; content:counter(step);
+  position:absolute; left:16px; top:15px;
+  width:24px; height:24px; border-radius:50%;
+  background:var(--accent-soft); color:var(--accent);
+  font-weight:700; font-size:13px;
+  display:flex; align-items:center; justify-content:center;
+}
+.step b{ font-weight:700 }
+.step .note{ display:block; font-size:12.5px; color:var(--dim); margin-top:3px }
+
+/* ── 꼬리 ── */
+.foot{
+  text-align:center; margin-top:56px; color:var(--dim); font-size:12.5px;
+}
+.foot a{ color:var(--accent); font-weight:700; text-decoration:none }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>벨사탕 작업실 🔍 ✍️</h1>
+    <p class="sub">함께 쓰면, 더 오래 씁니다.</p>
+    <div class="pets"><svg class="pet-svg" viewBox="0 0 60 56" width="64" height="60"
+      role="img" aria-label="용 레벨 20 만렙">
+        <path d="M41.3 25.0q10 -17 15 -5 -3 11 -15 5z" fill="#78cbb5"/>
+        <ellipse cx="28" cy="37.0" rx="14.0" ry="12.0" fill="#17A67F"/>
+        <path d="M21.0 26.8l3 -3 3 3 3 -3 3 3" stroke="#107459" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        <g stroke="#E9B44C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M24.8 13.8C24.2 9.8 23.2 7.1 21.6 4.3"/><path d="M23.8 9.2L26.2 6.9"/><path d="M22.7 6.4L20.2 7.9"/><path d="M31.2 13.8C31.8 9.8 32.8 7.1 34.4 4.3"/><path d="M32.2 9.2L29.8 6.9"/><path d="M33.3 6.4L35.8 7.9"/></g>
+        <circle cx="28" cy="21.0" r="8.4" fill="#17A67F"/>
+        
+      <circle cx="25.0" cy="20.6" r="1.5" fill="#0a4b39"/>
+      <circle cx="31.0" cy="20.6" r="1.5" fill="#0a4b39"/>
+      <path d="M26.2 24.2q1.8 1.7 3.7 0" stroke="#0a4b39" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M52 8l1.1 3.2 3.2 1.1-3.2 1.1L52 16.8l-1.1 -3.6-3.2 -1.1z" fill="#EF9F27"/><path d="M7 24l0.85 2.5 2.5 0.85-2.5 0.85L7 30.8l-0.85 -2.8-2.5 -0.85z" fill="#EF9F27"/></svg><svg class="pet-svg" viewBox="0 0 60 56" width="64" height="60"
+      role="img" aria-label="고양이 레벨 20 만렙">
+        <path d="M42.7 35.0q12.0 -1 9.0 12.0" stroke="#9C988E" stroke-width="4.0" fill="none" stroke-linecap="round"/>
+        <ellipse cx="28" cy="37.0" rx="14.0" ry="12.0" fill="#9C988E"/>
+        <circle cx="28" cy="21.0" r="8.4" fill="#9C988E"/>
+        <path d="M20.9 14.7l0.5 -8.0 5.7 4.6z" fill="#9C988E"/>
+        <path d="M35.1 14.7l-0.5 -8.0 -5.7 4.6z" fill="#9C988E"/>
+        <path d="M14.6 23.0h6M35.4 23.0h6" stroke="#9C988E" stroke-width="1.1" stroke-linecap="round"/>
+        
+      <circle cx="25.0" cy="20.6" r="1.5" fill="#464440"/>
+      <circle cx="31.0" cy="20.6" r="1.5" fill="#464440"/>
+      <path d="M26.2 24.2q1.8 1.7 3.7 0" stroke="#464440" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M52 8l1.1 3.2 3.2 1.1-3.2 1.1L52 16.8l-1.1 -3.6-3.2 -1.1z" fill="#EF9F27"/><path d="M7 24l0.85 2.5 2.5 0.85-2.5 0.85L7 30.8l-0.85 -2.8-2.5 -0.85z" fill="#EF9F27"/></svg><svg class="pet-svg" viewBox="0 0 60 56" width="64" height="60"
+      role="img" aria-label="장미 레벨 20 만렙">
+        
+      <path d="M28 50V26.9" stroke="#5E9130" stroke-width="3.2" stroke-linecap="round"/>
+      
+      <path d="M28 40.0q-9.6 -5.8 -12.8 0.6
+               q--5.8 7.0 --12.8 -0.6z"
+            fill="#7FB53F"/>
+      
+      <path d="M28 34.0q8.8 -5.3 11.8 0.6
+               q-5.3 6.5 -11.8 -0.6z"
+            fill="#7FB53F"/>
+        
+        <circle cx="28" cy="21.0" r="7.4" fill="#D8384C"/>
+        <circle cx="28" cy="21.0" r="5.3" fill="#e88c97"/>
+        <circle cx="29.0" cy="20.3" r="3.3" fill="#D8384C"/>
+        <circle cx="27.3" cy="21.6" r="1.5" fill="#e88c97"/><path d="M52 8l1.1 3.2 3.2 1.1-3.2 1.1L52 16.8l-1.1 -3.6-3.2 -1.1z" fill="#EF9F27"/><path d="M7 24l0.85 2.5 2.5 0.85-2.5 0.85L7 30.8l-0.85 -2.8-2.5 -0.85z" fill="#EF9F27"/></svg><svg class="pet-svg" viewBox="0 0 60 56" width="64" height="60"
+      role="img" aria-label="고래 레벨 20 만렙">
+        <!-- 꼬리 — 위아래로 갈라져 올라갑니다 -->
+        <path d="M39.3 36.0
+                                 q6.0 -1.2 9.0 -10.2
+                                 q-1.2 6.6 4.2 9.0
+                                 q-5.4 6.0 -13.2 1.2z"
+                               fill="#39769d"/>
+
+        <!-- 몸 — 앞이 둥글고 뒤로 갈수록 가늘어집니다 -->
+        <path d="M9.3 36.0
+                 q0 -12.6 15.4 -11.4
+                 q14.6 0 30.0 10.2
+                 q-15.4 13.2 -30.0 3.0
+                 q-15.4 -3.6 -15.4 -1.8z" fill="#52A8E0"/>
+
+        <!-- 배 — 밝은 색으로 아랫배를 나눕니다 -->
+        <path d="M11.5 38.6
+                 q13.8 10.2 28.4 0.6
+                 q-13.8 9.0 -28.4 -0.6z" fill="#cfe7f6"/>
+        <path d="M17.4 42.0v4.8
+                                 M22.3 43.4v4.1
+                                 M27.1 43.9v3.4"
+                               stroke="#254c65" stroke-width=".9" opacity=".3" stroke-linecap="round"/>
+
+        <!-- 가슴지느러미 -->
+        <ellipse cx="23.1" cy="43.2" rx="4.4" ry="2.4"
+                 fill="#39769d" transform="rotate(22 23.1 43.2)"/>
+
+        <!-- 물줄기 -->
+        <path d="M18.7 25.0q-1 -7.0 3.5 -9.5"
+                               stroke="#cfe7f6" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                     <circle cx="21.6" cy="17.4" r="1.8" fill="#cfe7f6"/>
+                     <circle cx="15.8" cy="19.8" r="1.3" fill="#cfe7f6" opacity=".8"/>
+
+        <circle cx="16.1" cy="33.4" r="1.9" fill="#254c65"/>
+        <circle cx="15.4" cy="32.2" r=".55" fill="#FFFFFF"/>
+        <path d="M11.5 37.7q3.2 2.4 6.5 0"
+              stroke="#254c65" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M52 8l1.1 3.2 3.2 1.1-3.2 1.1L52 16.8l-1.1 -3.6-3.2 -1.1z" fill="#EF9F27"/><path d="M7 24l0.85 2.5 2.5 0.85-2.5 0.85L7 30.8l-0.85 -2.8-2.5 -0.85z" fill="#EF9F27"/></svg><svg class="pet-svg" viewBox="0 0 60 56" width="64" height="60"
+      role="img" aria-label="유니콘 레벨 20 만렙">
+        <!-- 꼬리 — 위로 뻗쳐 올립니다.
+
+             처음엔 아래로 늘어뜨렸는데 말꼬리처럼 축 처져 보였어요.
+             위로 휘어 올리면 갈기와 이어져 한 덩어리로 읽히고,
+             유니콘다운 기세가 납니다. -->
+        <path d="M40.9 38.0
+                                 q11.0 -4.0 12.5 -15.0"
+                               stroke="#C48BE0" stroke-width="4.6" fill="none" stroke-linecap="round"/>
+                     <path d="M47.9 33.0
+                              q8.0 -3.0 8.5 -11.0"
+                            stroke="#7EC8E3" stroke-width="2.8" fill="none" stroke-linecap="round" opacity=".9"/>
+        <ellipse cx="28" cy="37.0" rx="14.0" ry="12.0" fill="#EFE6F2"/>
+        <circle cx="28" cy="21.0" r="8.4" fill="#EFE6F2"/>
+
+        <!-- 갈기 — 머리 뒤로 흘러내립니다 -->
+        <path d="M20.4 16.8
+                 q-5.9 7.6 -1.7 14.3
+                 q4.2 -3.4 6.3 -10.9z" fill="#C48BE0"/>
+        <path d="M22.0 14.7
+                                 q-4.2 5.9 -0.8 10.1"
+                               stroke="#7EC8E3" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+
+        <!-- 귀 -->
+        <path d="M33.2 15.5l0.8 -4.2 3.4 2.9z" fill="#a7a1a9"/>
+
+        <!-- 뿔 — 나선 세 칸 -->
+        <path d="M28 12.6l-2.4 0 2.4 -10.5 2.4 0.0z"
+              fill="#E9B44C"/>
+        <path d="M26.6 9.7h2.8M27.0 6.8h2"
+              stroke="#C9922E" stroke-width=".8" stroke-linecap="round"/>
+        
+      <circle cx="25.0" cy="20.6" r="1.5" fill="#6c676d"/>
+      <circle cx="31.0" cy="20.6" r="1.5" fill="#6c676d"/>
+      <path d="M26.2 24.2q1.8 1.7 3.7 0" stroke="#6c676d" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M52 8l1.1 3.2 3.2 1.1-3.2 1.1L52 16.8l-1.1 -3.6-3.2 -1.1z" fill="#EF9F27"/><path d="M7 24l0.85 2.5 2.5 0.85-2.5 0.85L7 30.8l-0.85 -2.8-2.5 -0.85z" fill="#EF9F27"/></svg><svg class="pet-svg" viewBox="0 0 60 56" width="64" height="60"
+      role="img" aria-label="별 레벨 20 만렙">
+        <circle cx="48" cy="14" r="1.6" fill="#ccbced"/><circle cx="10" cy="42" r="1.3" fill="#ccbced"/><circle cx="46" cy="40" r="1.1" fill="#ccbced"/>
+        <path d="M28.0 7.0L33.0 19.1L46.1 20.1L36.1 28.6L39.2 41.4L28.0 34.5L16.8 41.4L19.9 28.6L9.9 20.1L23.0 19.1Z" fill="#ccbced"/>
+        <circle cx="28" cy="26" r="8.0" fill="#A78BE0" opacity=".25"/>
+        
+      <circle cx="25.1" cy="25.6" r="1.4" fill="#4b3f65"/>
+      <circle cx="30.9" cy="25.6" r="1.4" fill="#4b3f65"/>
+      <path d="M26.2 29.0q1.8 1.6 3.5 0" stroke="#4b3f65" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M52 8l1.1 3.2 3.2 1.1-3.2 1.1L52 16.8l-1.1 -3.6-3.2 -1.1z" fill="#EF9F27"/><path d="M7 24l0.85 2.5 2.5 0.85-2.5 0.85L7 30.8l-0.85 -2.8-2.5 -0.85z" fill="#EF9F27"/></svg></div>
+    <a class="cta" href="https://gring-boop.github.io/blsatang/">지금 입장하기</a>
+  </div>
+
+  <p class="pitch">
+    벨사탕 작업방이 <b>리뉴얼</b>되었습니다. 모두 즐겁게 글써요!! 🧡
+  </p>
+
+  <!-- 비밀번호 공지 — 같은 그룹에 띄우는 문서라 홍보보다 안내가 먼저입니다 -->
+  <h2>🔐 비밀번호 안내</h2>
+  <p class="h2sub">리뉴얼하면서 입장 방식이 달라졌어요.</p>
+  <div class="steps">
+    <div class="step"><b>이제 필명과 비밀번호로 입장합니다.</b>
+      <span class="note">처음 입장할 때 정한 비밀번호가 그 필명의 자물쇠가 돼요. <b>6자 이상</b>으로 정해주세요.</span></div>
+    <div class="step"><b>먼저 입장한 사람이 그 필명의 주인이 됩니다.</b>
+      <span class="note">쓰시던 필명이 있다면 서둘러 등록해 두세요. 이메일 등 개인정보는 받지 않습니다.</span></div>
+    <div class="step"><b>비밀번호를 잊으면 방장에게 문의해 주세요.</b>
+      <span class="note">스스로 되돌릴 방법이 없어서, 방장이 초기화해 드립니다. 채팅·펫·글자수 기록은 그대로 남아요.</span></div>
+  </div>
+
+  <div class="grid">
+    <div class="feat"><span class="ico">👥</span>
+      <h3>지금 누가 쓰고 있는지</h3>
+      <p>접속한 작가들이 카드로 보여요. WORK · 🔥WORK🔥 · 휴식 · 자리비움 — 서로의 리듬이 보이면 내 리듬도 잡힙니다.</p></div>
+    <div class="feat"><span class="ico">🐾</span>
+      <h3>집필 시간으로 펫 키우기</h3>
+      <p>쓰는 시간만큼 펫이 자랍니다. 알·씨앗·보자기에서 뭐가 나올지는 비밀. 42종을 모으는 도감도 있어요.</p></div>
+    <div class="feat"><span class="ico">✍️</span>
+      <h3>글자수 기록</h3>
+      <p>지금 원고의 전체 글자수만 적으면 늘어난 만큼 자동 계산. 순위는 없습니다 — 어제의 나와만 겨뤄요.</p></div>
+    <div class="feat"><span class="ico">🍅</span>
+      <h3>다 같이 뽀모도로</h3>
+      <p>누군가 시작 버튼을 누르면 방 전체가 같은 시계로 집중. 끝나면 알림이 울립니다.</p></div>
+    <div class="feat"><span class="ico">💬</span>
+      <h3>채팅과 응원</h3>
+      <p>막히면 수다, 풀리면 자랑. 이모지 반응과 스티커도 됩니다.</p></div>
+    <div class="feat"><span class="ico">📊</span>
+      <h3>나의 기록</h3>
+      <p>오늘 몇 시간 썼는지, 이번 주 몇 자 썼는지. 상태별 시간과 지난 7일 그래프로 남습니다.</p></div>
+  </div>
+
+  <div class="foot">
+    <p><a href="https://gring-boop.github.io/blsatang/">✍️ 벨사탕 작업실 입장하기</a></p>
+    <p>오늘도 집필, 같이 해요 🧡</p>
+  </div>
+
+</div>
+</body>
+</html>
