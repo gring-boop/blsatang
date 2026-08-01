@@ -265,9 +265,38 @@
 
   function sparkles(show) {
     if (!show) return "";
-    const s = (x, y, r) =>
-      `<path d="M${x} ${y}l${r} ${n1(r * 2.9)} ${n1(r * 2.9)} ${r}-${n1(r * 2.9)} ${r}L${x} ${n1(y + r * 8)}l-${r} -${n1(r * 3.3)}-${n1(r * 2.9)} -${r}z" fill="#EF9F27"/>`;
-    return s(52, 8, 1.1) + s(7, 24, 0.85);
+    /* [변경 2026-08] 두 톤 금색 4각 별 — 큰 별 + 작은 별을 짝지어 답니다 */
+    const s = (x, y, r, c) =>
+      `<path d="M${x} ${n1(y - r * 3)}L${n1(x + r)} ${n1(y - r)}L${n1(x + r * 3)} ${y}L${n1(x + r)} ${n1(y + r)}L${x} ${n1(y + r * 3)}L${n1(x - r)} ${n1(y + r)}L${n1(x - r * 3)} ${y}L${n1(x - r)} ${n1(y - r)}Z" fill="${c}"/>`;
+    return s(52, 8, 1.15, "#EF9F27") + s(50.2, 12.4, .6, "#FFD028")
+         + s(7, 24, .95, "#EF9F27") + s(10.4, 19.6, .55, "#FFD028");
+  }
+
+  /* ---- 업그레이드 그림 공통 부품 (2026-08 리뉴얼) ----
+     25종을 새로 그리면서 반복되는 조각을 모았습니다.
+     기존 15종은 옛 face()/모양을 그대로 씁니다. */
+  const oE = (cx, cy, rx, ry, f, sw) => `<ellipse cx="${n1(cx)}" cy="${n1(cy)}" rx="${n1(rx)}" ry="${n1(ry)}" fill="${f}"${sw ? ` stroke="${INK}" stroke-width="${sw}"` : ""}/>`;
+  const oC = (cx, cy, r, f, sw) => `<circle cx="${n1(cx)}" cy="${n1(cy)}" r="${n1(r)}" fill="${f}"${sw ? ` stroke="${INK}" stroke-width="${sw}"` : ""}/>`;
+
+  /** 업그레이드용 눈 — 흰 반짝임·볼터치·미소가 들어갑니다 */
+  function eyes2(cx, cy, r, dark, o) {
+    o = o || {};
+    const dx = r * 0.36, ey = cy - r * 0.05, er = Math.max(1.3, r * 0.19);
+    let s = `<circle cx="${n1(cx - dx)}" cy="${n1(ey)}" r="${n1(er)}" fill="${dark}"/><circle cx="${n1(cx + dx)}" cy="${n1(ey)}" r="${n1(er)}" fill="${dark}"/>`;
+    s += `<circle cx="${n1(cx - dx + er * 0.3)}" cy="${n1(ey - er * 0.35)}" r=".6" fill="#fff"/><circle cx="${n1(cx + dx + er * 0.3)}" cy="${n1(ey - er * 0.35)}" r=".6" fill="#fff"/>`;
+    if (o.blush) s += `<ellipse cx="${n1(cx - r * 0.72)}" cy="${n1(cy + r * 0.28)}" rx="${n1(r * 0.22)}" ry="${n1(r * 0.14)}" fill="#F2A2A2" opacity=".65"/><ellipse cx="${n1(cx + r * 0.72)}" cy="${n1(cy + r * 0.28)}" rx="${n1(r * 0.22)}" ry="${n1(r * 0.14)}" fill="#F2A2A2" opacity=".65"/>`;
+    if (o.smile) s += `<path d="M${n1(cx - r * 0.2)} ${n1(cy + r * 0.4)}q${n1(r * 0.2)} ${n1(r * 0.2)} ${n1(r * 0.4)} 0" stroke="${dark}" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+    return s;
+  }
+  const belly2 = (b, col) => oE(b.cx, b.cy + b.ry * 0.3, b.rx * 0.55, b.ry * 0.5, col, 0);
+  const feet2 = (b, col) => oE(b.cx - 5, b.cy + b.ry * 0.88, 3, 1.9, col, 1.1) + oE(b.cx + 5, b.cy + b.ry * 0.88, 3, 1.9, col, 1.1);
+
+  /** 고정 좌표(만렙 기준)로 그린 그림을 레벨에 맞춰 줄입니다.
+      바닥 중앙(28, 52)을 기준점으로 삼아 아기 때는 72%까지 작아져요. */
+  function grow(t, inner) {
+    const s = lerp(0.72, 1, t);
+    if (s > 0.995) return inner;
+    return `<g transform="translate(${(28 * (1 - s)).toFixed(2)} ${(52 * (1 - s)).toFixed(2)}) scale(${s.toFixed(3)})">${inner}</g>`;
   }
 
   /** 눈·입 — 거의 모든 종류가 같이 씁니다 */
@@ -479,17 +508,21 @@
     },
 
     dog(g) {
+      /* [2026-08 리뉴얼] 늘어진 귀 윤곽 + 주둥이·코·입, 혀는 Lv.15 */
       const { p, t, lv, body: b, head: h } = g;
-      const w = lerp(5.4, 7.2, t), len = lerp(8, 11.2, t);
-      const ear = sx => `<path d="M${n1(h.cx + sx * (h.r + 1.4))} ${n1(h.cy - h.r * 0.62)}h${n1(-sx * w)}l${n1(sx * w / 2)} ${n1(len)}z" fill="${p.line}" stroke="${p.line}" stroke-width="4" stroke-linejoin="round"/>`;
+      const ear = s => `<path d="M${n1(h.cx + s * (h.r - 1))} ${n1(h.cy - h.r * 0.75)}q${s * 8} 0 ${s * 7} 12 q-1 4 -5 3 q-3.4 -1 -3.4 -6z" fill="${p.line}" stroke="${INK}" stroke-width="1.3"/>`;
       return `
-        ${lv >= AT_TAIL ? `<path d="M${n1(b.cx + b.rx)} ${n1(b.cy - 4)}q7 -6 9 2" stroke="${p.body}" stroke-width="4" fill="none" stroke-linecap="round"/>` : ""}
-        <ellipse cx="${b.cx}" cy="${n1(b.cy)}" rx="${n1(b.rx)}" ry="${n1(b.ry)}" fill="${p.body}"/>
-        <circle cx="${h.cx}" cy="${n1(h.cy)}" r="${n1(h.r)}" fill="${p.body}"/>
+        ${lv >= AT_TAIL ? `<path d="M${n1(b.cx + b.rx)} ${n1(b.cy - 4)}q7.4 -7 9.6 1.6" stroke="${INK}" stroke-width="5.6" fill="none" stroke-linecap="round"/>
+        <path d="M${n1(b.cx + b.rx)} ${n1(b.cy - 4)}q7.4 -7 9.6 1.6" stroke="${p.body}" stroke-width="4" fill="none" stroke-linecap="round"/>` : ""}
+        ${oE(b.cx, b.cy, b.rx, b.ry, p.body, 1.4)}
+        ${belly2(b, p.pale)}${feet2(b, p.body)}
+        ${oC(h.cx, h.cy, h.r, p.body, 1.4)}
         ${ear(-1)}${ear(1)}
-        ${face(h.cx, h.cy, h.r, p, false)}
-        <ellipse cx="${h.cx}" cy="${n1(h.cy + h.r * 0.48)}" rx="${n1(h.r * 0.44)}" ry="${n1(h.r * 0.33)}" fill="${p.pale}"/>
-        <ellipse cx="${h.cx}" cy="${n1(h.cy + h.r * 0.38)}" rx="${n1(h.r * 0.2)}" ry="${n1(h.r * 0.15)}" fill="${p.dark}"/>`;
+        ${eyes2(h.cx, h.cy, h.r, p.dark, { blush: lv >= AT_MARK })}
+        ${oE(h.cx, h.cy + h.r * 0.5, h.r * 0.46, h.r * 0.36, p.pale, 0)}
+        <ellipse cx="${h.cx}" cy="${n1(h.cy + h.r * 0.36)}" rx="1.9" ry="1.4" fill="${p.dark}"/>
+        <path d="M${h.cx} ${n1(h.cy + h.r * 0.5)}v1.6M${h.cx} ${n1(h.cy + h.r * 0.68)}q-1.6 1.4 -2.8 .4M${h.cx} ${n1(h.cy + h.r * 0.68)}q1.6 1.4 2.8 .4" stroke="${p.dark}" stroke-width=".9" fill="none" stroke-linecap="round"/>
+        ${lv >= AT_WING ? `<path d="M${n1(h.cx + 1)} ${n1(h.cy + h.r * 0.74)}q1.4 2.6 -.6 3.2 -1.6 -.4 -1 -2.6" fill="#E88AA0" stroke="#C86A80" stroke-width=".7"/>` : ""}`;
     },
 
     rabbit(g) {
@@ -509,71 +542,59 @@
 /* ── 보자기에서 나오는 무리 (2차) ───────────────────────────── */
 
     hedgehog(g) {
-      /* 고슴도치 — 등의 가시가 전부입니다.
-         얼굴은 밝게 빼서 가시와 대비를 줍니다. 가시는 레벨이 오르면
-         촘촘해져요 — 개수를 늘리는 것만으로 "자랐다"가 보입니다. */
-      const { p, t, lv, body: b, head: h } = g;
-      const spikes = Math.round(lerp(7, 13, t));
-      const spikeL = lerp(4.6, 6.4, t);
-      const faceC = p.pale;
-      let quills = "";
-      for (let i = 0; i < spikes; i++) {
-        /* 등 위쪽 반원에 고르게 뿌립니다 (왼쪽 위 → 오른쪽 위) */
-        const a = Math.PI * (0.08 + 0.84 * (i / (spikes - 1)));
-        const x = b.cx - Math.cos(a) * b.rx * 0.98;
-        const y = b.cy - Math.sin(a) * b.ry * 0.98;
-        const tx = b.cx - Math.cos(a) * (b.rx + spikeL);
-        const ty = b.cy - Math.sin(a) * (b.ry + spikeL);
-        quills += `<path d="M${n1(x)} ${n1(y)}L${n1(tx)} ${n1(ty)}"
-                     stroke="${p.dark}" stroke-width="${n1(lerp(1.6, 2.1, t))}" stroke-linecap="round"/>`;
+      /* [2026-08 리뉴얼] 정면 — 흰 얼굴 + 붓터치 가시 갈기 (캡쳐 참고).
+         이마 잔가시 Lv.10, 앞발 Lv.5, 발가락 선 Lv.15 */
+      const { t, lv } = g;
+      const CREAM = "#F6F1E6", BR1 = "#7A5230", BR2 = "#9A7248", BR3 = "#5C3A20", TAN = "#D8A87E";
+      const cx = 28, cy = 29, R0 = 10.6, N = 20;
+      let mane = "";
+      for (let k = 0; k < N; k++) {
+        const a = Math.PI * 2 * k / N - Math.PI / 2;
+        const bottom = Math.sin(a) > 0.62;
+        const len = (bottom ? 4 : 6.8 + (k % 3) * 1.6) * lerp(0.7, 1, t);
+        const w = 0.26;
+        const x1 = cx + Math.cos(a - w) * R0, y1 = cy + Math.sin(a - w) * R0 * 0.96;
+        const x2 = cx + Math.cos(a) * (R0 + len), y2 = cy + Math.sin(a) * (R0 + len) * 0.96;
+        const x3 = cx + Math.cos(a + w) * R0, y3 = cy + Math.sin(a + w) * R0 * 0.96;
+        mane += `<path d="M${n1(x1)} ${n1(y1)}L${n1(x2)} ${n1(y2)}L${n1(x3)} ${n1(y3)}z" fill="${[BR1, BR2, BR3][k % 3]}" stroke="${INK}" stroke-width=".7" stroke-linejoin="round"/>`;
       }
-      return `
-        ${quills}
-        <ellipse cx="${b.cx}" cy="${n1(b.cy)}" rx="${n1(b.rx)}" ry="${n1(b.ry)}" fill="${p.body}"/>
-        ${lv >= AT_MARK ? `<path d="M${n1(b.cx - b.rx * 0.5)} ${n1(b.cy - b.ry * 0.35)}l${n1(b.rx * 0.3)} -${n1(b.ry * 0.3)}
-                                 M${n1(b.cx + b.rx * 0.1)} ${n1(b.cy - b.ry * 0.5)}l${n1(b.rx * 0.28)} -${n1(b.ry * 0.28)}"
-                               stroke="${p.dark}" stroke-width="1.4" stroke-linecap="round" opacity=".6"/>` : ""}
-        <!-- 얼굴 — 앞쪽 아래로 쑥 나옵니다 -->
-        <circle cx="${n1(h.cx - h.r * 0.1)}" cy="${n1(h.cy + h.r * 0.55)}" r="${n1(h.r * 0.82)}" fill="${faceC}"/>
-        <!-- 코 — 뾰족하게 -->
-        <path d="M${n1(h.cx - h.r * 0.82)} ${n1(h.cy + h.r * 0.55)}
-                 q-${n1(h.r * 0.5)} ${n1(h.r * 0.14)} -${n1(h.r * 0.62)} ${n1(h.r * 0.4)}
-                 q${n1(h.r * 0.42)} ${n1(h.r * 0.1)} ${n1(h.r * 0.66)} -${n1(h.r * 0.16)}z" fill="${faceC}"/>
-        <circle cx="${n1(h.cx - h.r * 1.4)}" cy="${n1(h.cy + h.r * 0.9)}" r="${n1(Math.max(1, h.r * 0.13))}" fill="${p.dark}"/>
-        <circle cx="${n1(h.cx - h.r * 0.28)}" cy="${n1(h.cy + h.r * 0.42)}" r="${n1(Math.max(1.1, h.r * 0.15))}" fill="${p.dark}"/>
-        <circle cx="${n1(h.cx + h.r * 0.36)}" cy="${n1(h.cy + h.r * 0.42)}" r="${n1(Math.max(1.1, h.r * 0.15))}" fill="${p.dark}"/>
-        ${lv >= AT_TAIL ? `<circle cx="${n1(h.cx + h.r * 0.62)}" cy="${n1(h.cy + h.r * 0.02)}" r="${n1(h.r * 0.26)}" fill="${faceC}"/>` : ""}`;
+      return grow(t, `
+        ${mane}
+        <circle cx="${cx}" cy="${cy}" r="${R0 + 1}" fill="${CREAM}" stroke="${INK}" stroke-width="1.4"/>
+        ${lv >= AT_MARK ? `<path d="M${cx - 4.6} ${cy - 8.2}l1.4 -3.4 1.6 3M${cx - 0.8} ${cy - 9.2}l1.2 -3.2 1.6 2.8M${cx + 3.2} ${cy - 8.4}l1.6 -3 1.2 3.2" stroke="${BR1}" stroke-width="1.2" fill="none" stroke-linejoin="round"/>` : ""}
+        <circle cx="${cx - 8.2}" cy="${cy - 6.6}" r="2" fill="${TAN}" stroke="${INK}" stroke-width="1"/>
+        <circle cx="${cx + 8.2}" cy="${cy - 6.6}" r="2" fill="${TAN}" stroke="${INK}" stroke-width="1"/>
+        <circle cx="${cx - 3.6}" cy="${n1(cy - 1.2)}" r="1.6" fill="#2A2A28"/>
+        <circle cx="${cx + 3.6}" cy="${n1(cy - 1.2)}" r="1.6" fill="#2A2A28"/>
+        <circle cx="${n1(cx - 3.1)}" cy="${n1(cy - 1.7)}" r=".55" fill="#fff"/>
+        <circle cx="${n1(cx + 4.1)}" cy="${n1(cy - 1.7)}" r=".55" fill="#fff"/>
+        <ellipse cx="${cx}" cy="${n1(cy + 2.6)}" rx="2" ry="1.5" fill="${BR1}" stroke="${INK}" stroke-width=".9"/>
+        <path d="M${cx} ${n1(cy + 4.1)}v1.5M${cx} ${n1(cy + 5.6)}q-1.6 1.4 -3 .5M${cx} ${n1(cy + 5.6)}q1.6 1.4 3 .5" stroke="${BR3}" stroke-width=".95" fill="none" stroke-linecap="round"/>
+        <ellipse cx="${cx - 7}" cy="${n1(cy + 3.2)}" rx="2" ry="1.3" fill="#F088A0" opacity=".75"/>
+        <ellipse cx="${cx + 7}" cy="${n1(cy + 3.2)}" rx="2" ry="1.3" fill="#F088A0" opacity=".75"/>
+        ${lv >= AT_TAIL ? `<ellipse cx="${cx - 2.6}" cy="${n1(cy + 9.4)}" rx="2.5" ry="3.2" fill="${TAN}" stroke="${INK}" stroke-width="1.1" transform="rotate(14 ${cx - 2.6} ${n1(cy + 9.4)})"/>
+        <ellipse cx="${cx + 2.6}" cy="${n1(cy + 9.4)}" rx="2.5" ry="3.2" fill="${TAN}" stroke="${INK}" stroke-width="1.1" transform="rotate(-14 ${cx + 2.6} ${n1(cy + 9.4)})"/>` : ""}
+        ${lv >= AT_WING ? `<path d="M${n1(cx - 3.2)} ${n1(cy + 8)}l0 3M${n1(cx - 1.6)} ${n1(cy + 8.2)}l0 3M${n1(cx + 1.6)} ${n1(cy + 8.2)}l0 3M${n1(cx + 3.2)} ${n1(cy + 8)}l0 3" stroke="${BR2}" stroke-width=".7" opacity=".8"/>` : ""}`);
     },
 
     hamster(g) {
-      /* 햄스터 — 볼주머니가 빵빵하고 귀는 작고 동그랗습니다.
-         꼬리는 아주 짧게. 길면 쥐가 됩니다. */
-      const { p, t, lv, body: b, head: h } = g;
-      const er = lerp(2.8, 3.6, t);
+      /* [2026-08 리뉴얼] 머리·몸이 한 덩어리, 분홍 귀 안쪽·볼주머니.
+         씨앗은 Lv.10부터 손에 쥡니다 */
+      const { p, t, lv, body: b } = g;
       return `
-        ${lv >= AT_TAIL ? `<circle cx="${n1(b.cx + b.rx * 0.98)}" cy="${n1(b.cy + b.ry * 0.3)}" r="${n1(lerp(2, 2.7, t))}" fill="${p.pale}"/>` : ""}
-        <ellipse cx="${b.cx}" cy="${n1(b.cy)}" rx="${n1(b.rx)}" ry="${n1(b.ry)}" fill="${p.body}"/>
-        <ellipse cx="${b.cx}" cy="${n1(b.cy + b.ry * 0.3)}" rx="${n1(b.rx * 0.58)}" ry="${n1(b.ry * 0.55)}" fill="${p.pale}"/>
-        ${lv >= AT_MARK ? `<path d="M${n1(b.cx - b.rx * 0.66)} ${n1(b.cy - b.ry * 0.35)}q${n1(b.rx * 0.66)} ${n1(b.ry * 0.3)} ${n1(b.rx * 1.32)} 0"
-                               stroke="${p.line}" stroke-width="1.4" fill="none" opacity=".55"/>` : ""}
-        <!-- 발 -->
-        <ellipse cx="${n1(b.cx - b.rx * 0.44)}" cy="${n1(b.cy + b.ry * 0.86)}" rx="${n1(lerp(2.2, 2.9, t))}" ry="${n1(lerp(1.4, 1.8, t))}" fill="${p.pale}"/>
-        <ellipse cx="${n1(b.cx + b.rx * 0.44)}" cy="${n1(b.cy + b.ry * 0.86)}" rx="${n1(lerp(2.2, 2.9, t))}" ry="${n1(lerp(1.4, 1.8, t))}" fill="${p.pale}"/>
-        <!-- 귀 — 작고 동그랗게 -->
-        <circle cx="${n1(h.cx - h.r * 0.78)}" cy="${n1(h.cy - h.r * 0.72)}" r="${n1(er)}" fill="${p.body}"/>
-        <circle cx="${n1(h.cx + h.r * 0.78)}" cy="${n1(h.cy - h.r * 0.72)}" r="${n1(er)}" fill="${p.body}"/>
-        <circle cx="${n1(h.cx - h.r * 0.78)}" cy="${n1(h.cy - h.r * 0.72)}" r="${n1(er * 0.5)}" fill="${p.line}"/>
-        <circle cx="${n1(h.cx + h.r * 0.78)}" cy="${n1(h.cy - h.r * 0.72)}" r="${n1(er * 0.5)}" fill="${p.line}"/>
-        <circle cx="${h.cx}" cy="${n1(h.cy)}" r="${n1(h.r)}" fill="${p.body}"/>
-        <!-- 볼주머니 — 양쪽으로 빵빵하게 -->
-        <circle cx="${n1(h.cx - h.r * 0.74)}" cy="${n1(h.cy + h.r * 0.42)}" r="${n1(h.r * 0.46)}" fill="${p.pale}"/>
-        <circle cx="${n1(h.cx + h.r * 0.74)}" cy="${n1(h.cy + h.r * 0.42)}" r="${n1(h.r * 0.46)}" fill="${p.pale}"/>
-        <ellipse cx="${h.cx}" cy="${n1(h.cy + h.r * 0.4)}" rx="${n1(h.r * 0.44)}" ry="${n1(h.r * 0.34)}" fill="${p.pale}"/>
-        ${face(h.cx, h.cy, h.r, p, false)}
-        <ellipse cx="${h.cx}" cy="${n1(h.cy + h.r * 0.3)}" rx="${n1(h.r * 0.15)}" ry="${n1(h.r * 0.11)}" fill="${p.dark}"/>
-        ${lv >= AT_WING ? `<path d="M${n1(h.cx - h.r * 0.3)} ${n1(h.cy + h.r * 0.34)}l-${n1(h.r * 0.8)} -${n1(h.r * 0.12)}
-                                 M${n1(h.cx + h.r * 0.3)} ${n1(h.cy + h.r * 0.34)}l${n1(h.r * 0.8)} -${n1(h.r * 0.12)}"
-                               stroke="${p.dark}" stroke-width=".8" stroke-linecap="round" opacity=".6"/>` : ""}`;
+        ${oE(b.cx, b.cy - 4, b.rx, b.ry + 4, p.body, 1.4)}
+        ${oE(b.cx, b.cy + 2, b.rx * 0.62, b.ry * 0.62, p.pale, 0)}
+        ${oC(b.cx - 9.4, b.cy - 9, 4.4, p.body, 1.2)}${oC(b.cx + 9.4, b.cy - 9, 4.4, p.body, 1.2)}
+        <circle cx="${n1(b.cx - 9.4)}" cy="${n1(b.cy - 9)}" r="2.2" fill="#F2C8D0"/>
+        <circle cx="${n1(b.cx + 9.4)}" cy="${n1(b.cy - 9)}" r="2.2" fill="#F2C8D0"/>
+        <ellipse cx="${n1(b.cx - 7)}" cy="${n1(b.cy)}" rx="4.4" ry="3.8" fill="${p.light}" opacity=".85"/>
+        <ellipse cx="${n1(b.cx + 7)}" cy="${n1(b.cy)}" rx="4.4" ry="3.8" fill="${p.light}" opacity=".85"/>
+        ${eyes2(b.cx, b.cy - 6, 7, p.dark, { blush: true })}
+        <path d="M${n1(b.cx - 1.2)} ${n1(b.cy - 3.2)}h2.4l-1.2 1.4z" fill="#E88AA0"/>
+        <path d="M${n1(b.cx)} ${n1(b.cy - 1.8)}q-1.6 1.6 -3 .6M${n1(b.cx)} ${n1(b.cy - 1.8)}q1.6 1.6 3 .6" stroke="${p.dark}" stroke-width=".9" fill="none" stroke-linecap="round"/>
+        ${oE(b.cx - 4, b.cy + 5, 2.5, 1.9, p.pale, 1)}${oE(b.cx + 4, b.cy + 5, 2.5, 1.9, p.pale, 1)}
+        ${lv >= AT_MARK ? `<ellipse cx="${n1(b.cx)}" cy="${n1(b.cy + 3.2)}" rx="2" ry="2.6" fill="#E8D4A0" stroke="${INK}" stroke-width=".8"/>` : ""}
+        ${oE(b.cx - 5, b.cy + b.ry * 0.82, 3, 1.9, p.body, 1.1)}${oE(b.cx + 5, b.cy + b.ry * 0.82, 3, 1.9, p.body, 1.1)}`;
     },
 
     chick(g) {
@@ -590,16 +611,21 @@
     },
 
     penguin(g) {
+      /* [2026-08 리뉴얼] 윤곽선·흰 배 판·볼 — 날개 Lv.5, 발 Lv.15는 그대로 */
       const { p, lv, body: b, head: h } = g;
+      const wing = s => `
+        <path d="M${n1(b.cx + s * b.rx)} ${n1(b.cy - 6)}q${n1(s * 7)} 5 ${n1(s * 2.4)} 14" stroke="${INK}" stroke-width="5.8" fill="none" stroke-linecap="round"/>
+        <path d="M${n1(b.cx + s * b.rx)} ${n1(b.cy - 6)}q${n1(s * 7)} 5 ${n1(s * 2.4)} 14" stroke="${p.body}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
       return `
-        ${lv >= AT_WING ? `<path d="M${n1(b.cx - 8)} ${n1(b.cy + b.ry)}l-5 4h10zM${n1(b.cx + 8)} ${n1(b.cy + b.ry)}l5 4h-10z" fill="#EF9F27"/>` : ""}
-        <ellipse cx="${b.cx}" cy="${n1(b.cy)}" rx="${n1(b.rx)}" ry="${n1(b.ry)}" fill="${p.body}"/>
-        <ellipse cx="${b.cx}" cy="${n1(b.cy + 2)}" rx="${n1(b.rx * 0.6)}" ry="${n1(b.ry * 0.78)}" fill="${p.pale}"/>
-        ${lv >= AT_TAIL ? `<path d="M${n1(b.cx - b.rx)} ${n1(b.cy - 5)}q-6 4 -2 12" stroke="${p.body}" stroke-width="4" fill="none" stroke-linecap="round"/>
-                     <path d="M${n1(b.cx + b.rx)} ${n1(b.cy - 5)}q6 4 2 12" stroke="${p.body}" stroke-width="4" fill="none" stroke-linecap="round"/>` : ""}
-        <circle cx="${h.cx}" cy="${n1(h.cy)}" r="${n1(h.r)}" fill="${p.body}"/>
-        ${face(h.cx, h.cy, h.r, p, false)}
-        <path d="M${h.cx} ${n1(h.cy + h.r * 0.3)}l-2.8 3.2h5.6z" fill="#EF9F27"/>`;
+        ${lv >= AT_WING ? `<path d="M${n1(b.cx - 8)} ${n1(b.cy + b.ry - 1)}l-5.5 4.6h11zM${n1(b.cx + 8)} ${n1(b.cy + b.ry - 1)}l5.5 4.6h-11z" fill="#EF9F27" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/>` : ""}
+        ${lv >= AT_TAIL ? wing(-1) + wing(1) : ""}
+        ${oE(b.cx, b.cy, b.rx, b.ry, p.body, 1.4)}
+        <path d="M${n1(b.cx)} ${n1(b.cy - b.ry + 1.5)}q${n1(b.rx * 0.62)} 1.5 ${n1(b.rx * 0.62)} ${n1(b.ry * 0.9)} 0 ${n1(b.ry * 0.95)} -${n1(b.rx * 0.62)} ${n1(b.ry * 1.02)} -${n1(b.rx * 0.62)} 0 -${n1(b.rx * 0.62)} -${n1(b.ry * 1.02)} 0 -${n1(b.ry * 0.9)} ${n1(b.rx * 0.62)} -${n1(b.ry * 0.9)}z" fill="#F6F3EA"/>
+        ${oC(h.cx, h.cy, h.r, p.body, 1.4)}
+        <circle cx="${n1(h.cx - h.r * 0.38)}" cy="${n1(h.cy + h.r * 0.02)}" r="${n1(h.r * 0.44)}" fill="#F6F3EA"/>
+        <circle cx="${n1(h.cx + h.r * 0.38)}" cy="${n1(h.cy + h.r * 0.02)}" r="${n1(h.r * 0.44)}" fill="#F6F3EA"/>
+        ${eyes2(h.cx, h.cy, h.r, "#2A2A28", { blush: lv >= AT_MARK })}
+        <path d="M${h.cx} ${n1(h.cy + h.r * 0.26)}l-3 3.4h6z" fill="#EF9F27" stroke="${INK}" stroke-width="1"/>`;
     },
 
 /* ── 알에서 나오는 무리 (2차) ──────────────────────────────────
@@ -649,38 +675,41 @@
     },
 
     parrot(g) {
-      /* 앵무새 — 굽은 부리와 머리 볏, 그리고 긴 꼬리깃.
-         부리를 굽히지 않으면 그냥 새가 되어버립니다. */
-      const { p, t, lv, body: b, head: h } = g;
-      const tailL = lerp(9, 15, t);
-      return `
-        ${lv >= AT_TAIL ? `<path d="M${n1(b.cx + b.rx * 0.7)} ${n1(b.cy + b.ry * 0.5)}q${n1(tailL * 0.7)} ${n1(tailL * 0.5)} ${n1(tailL)} ${n1(tailL * 0.95)}"
-                       stroke="${p.line}" stroke-width="${n1(lerp(3.2, 4.4, t))}" fill="none" stroke-linecap="round"/>` : ""}
-        <ellipse cx="${b.cx}" cy="${n1(b.cy)}" rx="${n1(b.rx)}" ry="${n1(b.ry)}" fill="${p.body}"/>
-        ${lv >= AT_WING ? `<path d="M${n1(b.cx - b.rx * 0.2)} ${n1(b.cy - b.ry * 0.5)}q-${n1(b.rx)} ${n1(b.ry * 0.5)} -${n1(b.rx * 0.55)} ${n1(b.ry * 1.1)}q${n1(b.rx * 0.6)} 0 ${n1(b.rx * 0.75)} -${n1(b.ry * 0.6)}z" fill="${p.light}"/>` : ""}
-        <circle cx="${h.cx}" cy="${n1(h.cy)}" r="${n1(h.r)}" fill="${p.body}"/>
-        <path d="M${n1(h.cx - 1)} ${n1(h.cy - h.r * 0.9)}q1 -${n1(lerp(4, 6.5, t))} ${n1(lerp(3.5, 5, t))} -${n1(lerp(3.2, 5, t))}q-1 ${n1(lerp(3.5, 5.5, t))} -1.5 ${n1(lerp(3.4, 5, t))}z" fill="${p.light}"/>
-        ${face(h.cx, h.cy, h.r, p, false)}
-        <path d="M${h.cx} ${n1(h.cy + h.r * 0.18)}q${n1(h.r * 0.42)} 0 ${n1(h.r * 0.4)} ${n1(h.r * 0.34)}q0 ${n1(h.r * 0.3)} -${n1(h.r * 0.4)} ${n1(h.r * 0.16)}z" fill="#E8A33C"/>`;
+      /* [2026-08 리뉴얼] 옆모습 마카우 — 왼쪽을 봅니다.
+         꼬리깃 Lv.5, 초록 날개층 Lv.10, 파랑 날개층 Lv.15 */
+      const { p, t, lv } = g;
+      return grow(t, `
+        ${lv >= AT_TAIL ? `<path d="M36 40Q46 46 50 53L44.6 51Q40 46 34.4 43z" fill="#2E9E4A" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M34 42Q42 48 44 54.6L38.8 52.4Q35.6 48 31.6 44.6z" fill="#2860C4" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/>` : ""}
+        <path d="M24 18Q14.6 24 15.8 35Q17 46.6 27 48.4Q37.4 50 39 40Q40 31 33 24.6Q29 21 24 18Z" fill="${p.body}" stroke="${INK}" stroke-width="1.4"/>
+        <path d="M19 34Q19.6 44.6 27.6 46.4Q33 47 35.6 43Q30 44 25.6 40.6Q21.4 37.4 19 34Z" fill="#FFC421"/>
+        <path d="M27 26Q38 28 37.4 40Q32 43.6 27.4 40Q23.4 33 27 26Z" fill="#FFC421" stroke="${INK}" stroke-width="1.2"/>
+        ${lv >= AT_MARK ? `<path d="M27.6 29.4Q36.4 31 35.8 40.4Q31.6 43 28 40.2Q25.2 34.6 27.6 29.4Z" fill="#2E9E4A" stroke="${INK}" stroke-width="1.1"/>` : ""}
+        ${lv >= AT_WING ? `<path d="M28.4 33Q34.6 34.4 34.2 40.8Q31.2 42.6 28.6 40.4Q26.8 37 28.4 33Z" fill="#2860C4" stroke="${INK}" stroke-width="1.1"/>` : ""}
+        <path d="M25 48.4v3.4M22.8 51.8h4.4M30 48.8v3M28 51.8h4" stroke="#8A6238" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="21.5" cy="19.5" r="8" fill="${p.body}" stroke="${INK}" stroke-width="1.4"/>
+        <path d="M17 13.2q.6 -3.6 3.6 -3.4 2.6 .4 2.6 3M23.2 12.6q1.4 -2.6 3.8 -1.8 1.8 1 1.2 3.2" fill="#C42B20" stroke="${INK}" stroke-width="1"/>
+        <path d="M13.8 18.2a7.6 7.4 0 0 1 8 -6q-1.4 4.4 -1 8.8 -.4 2.8 -3.4 2.8 -3.2 -.6 -3.6 -5.6z" fill="#F6F3EA"/>
+        <circle cx="17.6" cy="18.6" r="1.9" fill="#2A2A28"/>
+        <circle cx="18.2" cy="18" r=".65" fill="#fff"/>
+        <path d="M14.6 21.4Q9.6 21.4 9.4 25Q11 28.4 14.6 27.6L14 29.8L16.6 28Q19 26.6 18.8 23.4Q17 21.6 14.6 21.4Z" fill="#28418A" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M11.4 24.6q2.8 1.4 5.6 .6" stroke="${INK}" stroke-width=".7" fill="none" opacity=".6"/>
+        <ellipse cx="22.8" cy="24" rx="1.7" ry="1.05" fill="#F2A2A2" opacity=".6"/>`);
     },
 
     turtle(g) {
-      /* 거북이 — 등껍질이 주인공이라 몸통 타원을 껍질로 씁니다.
-         머리는 앞으로 쭉 내밀어야 거북이로 보입니다. */
+      /* [2026-08 리뉴얼] 등껍질 테두리 판 + 육각 무늬(Lv.10) + 정면 얼굴 */
       const { p, t, lv, body: b, head: h } = g;
-      const hx = h.cx + lerp(5, 8, t);       // 머리를 오른쪽으로 내밉니다
-      const hy = h.cy + lerp(5, 7, t);
-      const hr = h.r * 0.72;
-      const foot = (sx, dy) => `<ellipse cx="${n1(b.cx + sx * b.rx * 0.72)}" cy="${n1(b.cy + b.ry * 0.72 + dy)}" rx="${n1(lerp(2.8, 3.8, t))}" ry="${n1(lerp(1.9, 2.5, t))}" fill="${p.line}"/>`;
       return `
-        ${lv >= AT_TAIL ? `<path d="M${n1(b.cx - b.rx * 0.95)} ${n1(b.cy + 2)}l-${n1(lerp(3.5, 5, t))} ${n1(lerp(1.5, 2.2, t))} ${n1(lerp(3.5, 5, t))} ${n1(lerp(1.6, 2.4, t))}z" fill="${p.line}"/>` : ""}
-        ${foot(-1, 0)}${foot(1, 0)}
-        <ellipse cx="${b.cx}" cy="${n1(b.cy)}" rx="${n1(b.rx)}" ry="${n1(b.ry * 0.9)}" fill="${p.line}"/>
-        <ellipse cx="${b.cx}" cy="${n1(b.cy - 0.6)}" rx="${n1(b.rx * 0.82)}" ry="${n1(b.ry * 0.72)}" fill="${p.body}"/>
-        ${lv >= AT_MARK ? `<path d="M${n1(b.cx - b.rx * 0.5)} ${n1(b.cy - 1)}h${n1(b.rx)}M${b.cx} ${n1(b.cy - b.ry * 0.6)}v${n1(b.ry * 1.1)}" stroke="${p.dark}" stroke-width="1.1" opacity=".5"/>
-                     <circle cx="${b.cx}" cy="${n1(b.cy - 0.6)}" r="${n1(b.rx * 0.3)}" fill="none" stroke="${p.dark}" stroke-width="1.1" opacity=".5"/>` : ""}
-        <circle cx="${n1(hx)}" cy="${n1(hy)}" r="${n1(hr)}" fill="${p.light}"/>
-        ${face(hx, hy, hr, p, true)}`;
+        ${lv >= AT_TAIL ? `<path d="M${n1(b.cx - b.rx - 1)} ${n1(b.cy + 2)}l-${n1(lerp(3.5, 5, t))} ${n1(lerp(1.5, 2.2, t))} ${n1(lerp(3.5, 5, t))} ${n1(lerp(1.6, 2.4, t))}z" fill="${p.light}" stroke="${INK}" stroke-width="1"/>` : ""}
+        ${oC(h.cx, h.cy + 2, h.r * 0.92, p.light, 1.4)}
+        ${oE(b.cx - b.rx * 0.82, b.cy + b.ry * 0.72, 3.6, 2.4, p.light, 1.1)}
+        ${oE(b.cx + b.rx * 0.82, b.cy + b.ry * 0.72, 3.6, 2.4, p.light, 1.1)}
+        ${oE(b.cx, b.cy, b.rx, b.ry * 0.92, p.body, 1.4)}
+        <path d="M${n1(b.cx - b.rx)} ${n1(b.cy + b.ry * 0.5)}q${n1(b.rx)} 4 ${n1(b.rx * 2)} 0" stroke="${INK}" stroke-width="1.2" fill="none"/>
+        <path d="M${n1(b.cx - b.rx + 1)} ${n1(b.cy + b.ry * 0.52)}q${n1(b.rx - 1)} 3.6 ${n1((b.rx - 1) * 2)} 0v3q-${n1(b.rx - 1)} 3 -${n1((b.rx - 1) * 2)} 0z" fill="${p.pale}"/>
+        ${lv >= AT_MARK ? `<path d="M${n1(b.cx - 4)} ${n1(b.cy - b.ry * 0.85)}l4 2.6 4 -2.6M${n1(b.cx - 8.6)} ${n1(b.cy - 2)}l4.6 .8 0 -4.6M${n1(b.cx + 8.6)} ${n1(b.cy - 2)}l-4.6 .8 0 -4.6M${n1(b.cx - 4)} ${n1(b.cy - 1.2)}h8l-1.6 5h-4.8z" stroke="${p.dark}" stroke-width="1.1" fill="none" stroke-linejoin="round" opacity=".7"/>` : ""}
+        ${eyes2(h.cx, h.cy - 1, h.r * 0.8, p.dark, { blush: lv >= AT_WING, smile: true })}`;
     },
 
     butterfly(g) {
@@ -703,26 +732,27 @@
     },
 
     bee(g) {
-      /* 벌 — 몸통의 검은 줄무늬와 작고 투명한 날개.
-         줄무늬는 몸통 밖으로 삐져나오면 안 돼서 잘라내기 틀을 씁니다. */
-      const { p, t, lv, body: b, head: h } = g;
-      const cid = `beeclip${++_clipSeq}`;
-      const wr = lerp(4.2, 6, t);
-      const wing = sx => `<ellipse cx="${n1(b.cx + sx * b.rx * 0.55)}" cy="${n1(b.cy - b.ry * 0.85)}" rx="${n1(wr)}" ry="${n1(wr * 0.62)}" fill="#FFFFFF" opacity=".72" transform="rotate(${sx * -22} ${n1(b.cx + sx * b.rx * 0.55)} ${n1(b.cy - b.ry * 0.85)})"/>`;
-      const ant = sx => `<path d="M${n1(h.cx + sx * 1.6)} ${n1(h.cy - h.r * 0.85)}q${n1(sx * 2.4)} -${n1(lerp(3, 4.4, t))} ${n1(sx * 4)} -${n1(lerp(2.6, 3.6, t))}" stroke="${INK}" stroke-width="1" fill="none" stroke-linecap="round"/>`;
-      return `
-        ${wing(-1)}${wing(1)}
-        <clipPath id="${cid}"><ellipse cx="${b.cx}" cy="${n1(b.cy)}" rx="${n1(b.rx)}" ry="${n1(b.ry)}"/></clipPath>
-        <ellipse cx="${b.cx}" cy="${n1(b.cy)}" rx="${n1(b.rx)}" ry="${n1(b.ry)}" fill="${p.body}"/>
-        <g clip-path="url(#${cid})">
-          <rect x="${n1(b.cx - b.rx - 2)}" y="${n1(b.cy - b.ry * 0.55)}" width="${n1(b.rx * 2 + 4)}" height="${n1(b.ry * 0.42)}" fill="${INK}"/>
-          <rect x="${n1(b.cx - b.rx - 2)}" y="${n1(b.cy + b.ry * 0.2)}" width="${n1(b.rx * 2 + 4)}" height="${n1(b.ry * 0.42)}" fill="${INK}"/>
-        </g>
-        ${lv >= AT_TAIL ? `<path d="M${n1(b.cx)} ${n1(b.cy + b.ry)}l-2 ${n1(lerp(2.4, 3.4, t))} 2 -1 2 1z" fill="${INK}"/>` : ""}
-        <circle cx="${h.cx}" cy="${n1(h.cy)}" r="${n1(h.r * 0.86)}" fill="${INK}"/>
-        ${ant(-1)}${ant(1)}
-        <circle cx="${n1(h.cx - h.r * 0.3)}" cy="${n1(h.cy)}" r="${n1(h.r * 0.16)}" fill="#FFFFFF"/>
-        <circle cx="${n1(h.cx + h.r * 0.3)}" cy="${n1(h.cy)}" r="${n1(h.r * 0.16)}" fill="#FFFFFF"/>`;
+      /* [2026-08 리뉴얼] 옆모습 — 왼쪽으로 날아갑니다.
+         침 Lv.5, 뒷날개 Lv.10, 날갯짓 자국 Lv.15 */
+      const { t, lv } = g;
+      const YEL = "#FFC421", BLK = "#1E1E1E", WING = "#A8D8F0";
+      return grow(t, `
+        ${lv >= AT_WING ? `<path d="M45 38q3 1 4.4 3.4M46.6 33.4q3.4 .2 5.4 2" stroke="#B8C8D8" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".8"/>` : ""}
+        ${lv >= AT_MARK ? `<ellipse cx="34" cy="17.4" rx="4.6" ry="8.4" fill="${WING}" stroke="${INK}" stroke-width="1.4" transform="rotate(30 34 17.4)"/>` : ""}
+        ${lv >= AT_TAIL ? `<path d="M43.6 34l6 1.6 -5.6 2.8z" fill="${BLK}"/>` : ""}
+        <path d="M17 33.4Q17 24.4 27 23.6Q37.6 23 42.4 29Q45.4 33 42.6 37.6Q38.4 43.6 28.6 43.2Q17.6 42.6 17 33.4Z" fill="${YEL}" stroke="${INK}" stroke-width="1.8"/>
+        <path d="M26.6 23.7c-1.6 6.2 -1.6 13 0 19.3l5 .1c-1.8 -6.4 -1.8 -13.2 0 -19.6zM36.6 25.4c2 5.2 2.2 10.4 .4 15.8l4 -2.4q1.8 -3.6 .4 -7.2q-2 -4.2 -4.8 -6.2z" fill="${BLK}"/>
+        <path d="M17 33.4Q17 24.4 27 23.6Q37.6 23 42.4 29Q45.4 33 42.6 37.6Q38.4 43.6 28.6 43.2Q17.6 42.6 17 33.4Z" fill="none" stroke="${INK}" stroke-width="1.8"/>
+        <ellipse cx="27" cy="15" rx="5.4" ry="9.4" fill="${WING}" stroke="${INK}" stroke-width="1.5" transform="rotate(14 27 15)"/>
+        <path d="M26 9.4q1.6 5.4 .6 11" stroke="#6AA8CC" stroke-width=".9" fill="none" opacity=".7"/>
+        <circle cx="13.6" cy="30.4" r="7.4" fill="${YEL}" stroke="${INK}" stroke-width="1.8"/>
+        <ellipse cx="10.8" cy="27.2" rx="2.3" ry="1.5" fill="#fff" opacity=".6" transform="rotate(-24 10.8 27.2)"/>
+        <path d="M11.4 23.6q-1.6 -3.8 -4.6 -4.8M15.8 23.2q.2 -4.2 2.8 -6.2" stroke="${INK}" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <circle cx="6.4" cy="18.2" r="1.7" fill="${BLK}"/><circle cx="19.2" cy="16.4" r="1.7" fill="${BLK}"/>
+        <circle cx="11" cy="30.4" r="1.75" fill="${BLK}"/>
+        <circle cx="11.6" cy="29.8" r=".6" fill="#fff"/>
+        <path d="M8.6 33.6q2 1.8 4.2 .6" stroke="${BLK}" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+        <ellipse cx="15.4" cy="34.4" rx="1.8" ry="1.1" fill="#F2A2A2" opacity=".7"/>`);
     },
 
     bear(g) {
@@ -774,132 +804,83 @@
     /* ---- 새로 추가된 종류들 ---- */
 
     peacock(g) {
+      /* [2026-08 리뉴얼] 잎 모양 초록 깃털 부채.
+         깃털 3장 → Lv.5에 5장 → Lv.15에 7장, 눈꼴 무늬는 Lv.10부터 */
       const { p, t, lv, body: b, head: h } = g;
-      const spread = lerp(0.45, 1, t);
-      const fan = `
-        <path d="M${h.cx} ${n1(h.cy + 12)}C${n1(h.cx - 18 * spread)} ${n1(h.cy + 12)} ${n1(h.cx - 22 * spread)} ${n1(h.cy - 8)} ${n1(h.cx - 16 * spread)} ${n1(h.cy - 12)}
-                 c${n1(4 * spread)} ${n1(7 * spread)} ${n1(11 * spread)} ${n1(9 * spread)} ${n1(16 * spread)} ${n1(9 * spread)}
-                 s${n1(12 * spread)} -2 ${n1(16 * spread)} -${n1(9 * spread)}
-                 c${n1(6 * spread)} ${n1(4 * spread)} ${n1(2 * spread)} ${n1(24 * spread)} -${n1(16 * spread)} ${n1(24 * spread)}z"
-              fill="${p.pale}" opacity=".75"/>`;
-      const eyes = lv >= AT_TAIL
-        ? [-14, -6, 6, 14].map((dx, i) =>
-            `<circle cx="${n1(h.cx + dx * spread)}" cy="${n1(h.cy - (i === 0 || i === 3 ? 6 : 11) * spread)}" r="${n1(2.4 * spread)}" fill="${p.line}"/>`).join("")
-        : "";
+      const fr = lerp(0.78, 1, t);
+      const nF = lv >= AT_WING ? 7 : lv >= AT_TAIL ? 5 : 3;
+      const k = (nF - 1) / 2;
+      let fan = "";
+      for (let i = -k; i <= k; i++) {
+        const a = i * 0.34, x = b.cx + Math.sin(a) * 16.5 * fr, y = b.cy - 7 - Math.cos(a) * 14.5 * fr;
+        const rot = n1(a * 180 / Math.PI);
+        fan += `<ellipse cx="${n1(x)}" cy="${n1(y)}" rx="${n1(4.3 * fr)}" ry="${n1(8.8 * fr)}" fill="#5FA845" stroke="${INK}" stroke-width="1.1" transform="rotate(${rot} ${n1(x)} ${n1(y)})"/>
+          <ellipse cx="${n1(x)}" cy="${n1(y + 1.2 * fr)}" rx="${n1(2.7 * fr)}" ry="${n1(6.2 * fr)}" fill="#3E7E30" transform="rotate(${rot} ${n1(x)} ${n1(y + 1.2 * fr)})"/>`;
+        if (lv >= AT_MARK) fan += `<circle cx="${n1(x)}" cy="${n1(y - 2.4 * fr)}" r="${n1(2.4 * fr)}" fill="#F2C030" stroke="${INK}" stroke-width=".7"/>
+          <circle cx="${n1(x)}" cy="${n1(y - 2.4 * fr)}" r="${n1(1.5 * fr)}" fill="#E07A33"/>
+          <circle cx="${n1(x)}" cy="${n1(y - 2.4 * fr)}" r="${n1(0.8 * fr)}" fill="#2C4E8A"/>`;
+      }
       return `
-        ${fan}${eyes}
-        <ellipse cx="${b.cx}" cy="${n1(b.cy + 2)}" rx="${n1(b.rx * 0.62)}" ry="${n1(b.ry)}" fill="${p.body}"/>
-        <circle cx="${h.cx}" cy="${n1(h.cy)}" r="${n1(h.r * 0.78)}" fill="${p.body}"/>
-        ${lv >= AT_WING ? `<path d="M${h.cx} ${n1(h.cy - h.r * 0.85)}v-3M${n1(h.cx - 2.4)} ${n1(h.cy - h.r * 0.7)}l-1 -2.4M${n1(h.cx + 2.4)} ${n1(h.cy - h.r * 0.7)}l1 -2.4" stroke="${HORN_GOLD}" stroke-width="1.4" stroke-linecap="round"/>` : ""}
-        ${face(h.cx, h.cy, h.r * 0.78, p, false)}
-        <path d="M${h.cx} ${n1(h.cy + h.r * 0.3)}l-2 2.4h4z" fill="${HORN_GOLD}"/>`;
+        ${fan}
+        <path d="M${n1(b.cx - 3.5)} ${n1(b.cy + b.ry - 0.5)}v4.6M${n1(b.cx - 5.4)} ${n1(b.cy + b.ry + 4.1)}h3.8M${n1(b.cx + 3.5)} ${n1(b.cy + b.ry - 0.5)}v4.6M${n1(b.cx + 1.6)} ${n1(b.cy + b.ry + 4.1)}h3.8" stroke="#E07A33" stroke-width="1.7" stroke-linecap="round"/>
+        ${oE(b.cx, b.cy, b.rx * 0.92, b.ry, p.body, 1.4)}
+        ${belly2(b, p.pale)}
+        ${lv >= AT_MARK ? `<path d="M${n1(b.cx - b.rx * 0.62)} ${n1(b.cy - 2)}q-3.4 5 .4 9.4 q4 -.6 4.4 -5.4z" fill="${p.light}" stroke="${INK}" stroke-width="1" opacity=".9"/>` : ""}
+        ${oC(h.cx, h.cy, h.r, p.body, 1.4)}
+        <path d="M${n1(h.cx - 2.6)} ${n1(h.cy - h.r)}q-1.4 -4.4 .2 -4.6M${n1(h.cx)} ${n1(h.cy - h.r - 0.6)}q0 -4.4 1 -4.6M${n1(h.cx + 2.6)} ${n1(h.cy - h.r)}q1.4 -4.4 .4 -4.8" stroke="${p.line}" stroke-width="1" fill="none" stroke-linecap="round"/>
+        <circle cx="${n1(h.cx - 2.6)}" cy="${n1(h.cy - h.r - 4.8)}" r="1.15" fill="#E9B44C" stroke="${INK}" stroke-width=".8"/>
+        <circle cx="${n1(h.cx + 0.9)}" cy="${n1(h.cy - h.r - 5.3)}" r="1.15" fill="#E9B44C" stroke="${INK}" stroke-width=".8"/>
+        <circle cx="${n1(h.cx + 3.2)}" cy="${n1(h.cy - h.r - 4.9)}" r="1.15" fill="#E9B44C" stroke="${INK}" stroke-width=".8"/>
+        ${eyes2(h.cx, h.cy, h.r, p.dark, { blush: true })}
+        <path d="M${h.cx} ${n1(h.cy + h.r * 0.26)}l-2.2 2.4h4.4z" fill="#E9B44C" stroke="${INK}" stroke-width=".9"/>`;
     },
 
     seal(g) {
-      /* 물개 — 다시 그렸습니다.
-
-         [무엇이 달라졌나]
-         예전에는 몸통 위에 머리를 얹은 평범한 모양이라 곰이나 강아지와
-         잘 구분되지 않았습니다. 캡쳐로 보여주신 물개는 **몸이 통짜로
-         이어지고, 앞지느러미로 상체를 세워 앉은** 자세였어요.
-
-         그래서 머리와 몸을 하나의 흐름으로 잇고, 지느러미를 몸 앞에
-         붙였습니다. 코 끝에 흰 점을 찍어 반짝임도 넣었어요. */
-      const { p, t, lv, body: b, head: h } = g;
-      const cy = b.cy + 1;
-      const rx = b.rx * 1.02, ry = b.ry * 1.0;
-      const hr = h.r * 0.86;
-      const hy = h.cy + 2;
-      const whisk = sx => `<path d="M${n1(h.cx + sx * hr * 0.5)} ${n1(hy + hr * 0.5)}l${n1(sx * hr * 0.9)} -${n1(hr * 0.16)}
-                                 M${n1(h.cx + sx * hr * 0.5)} ${n1(hy + hr * 0.62)}l${n1(sx * hr * 0.85)} ${n1(hr * 0.14)}"
-                             stroke="${p.dark}" stroke-width=".8" stroke-linecap="round" opacity=".65"/>`;
-      return `
-        ${lv >= AT_TAIL ? `<path d="M${n1(b.cx + rx * 0.82)} ${n1(cy + ry * 0.5)}
-                                 q${n1(lerp(7, 10, t))} ${n1(lerp(2, 3, t))} ${n1(lerp(9, 13, t))} -${n1(lerp(2, 3, t))}
-                                 q-${n1(lerp(3, 4, t))} ${n1(lerp(4, 5.5, t))} -${n1(lerp(9, 13, t))} ${n1(lerp(2, 3, t))}z"
-                               fill="${p.line}"/>` : ""}
-
-        <!-- 몸 — 머리 쪽이 좁고 뒤가 두툼한 물방울 -->
-        <ellipse cx="${b.cx}" cy="${n1(cy)}" rx="${n1(rx)}" ry="${n1(ry)}" fill="${p.body}"/>
-        <ellipse cx="${b.cx}" cy="${n1(cy + ry * 0.22)}" rx="${n1(rx * 0.62)}" ry="${n1(ry * 0.62)}" fill="${p.pale}"/>
-
-        <!-- 목 — 머리와 몸을 하나로 잇습니다. 이게 물개다움의 절반 -->
-        <path d="M${n1(h.cx - hr * 0.78)} ${n1(hy)}
-                 q-${n1(hr * 0.25)} ${n1(hr * 1.5)} ${n1(hr * 0.5)} ${n1(hr * 1.9)}
-                 h${n1(hr * 1.35)}
-                 q${n1(hr * 0.75)} -${n1(hr * 0.4)} ${n1(hr * 0.28)} -${n1(hr * 1.9)}z" fill="${p.body}"/>
-
-        <!-- 앞지느러미 — 몸 앞으로 짚어 상체를 세웁니다 -->
-        <ellipse cx="${n1(b.cx - rx * 0.66)}" cy="${n1(cy + ry * 0.52)}" rx="${n1(lerp(3, 4.2, t))}" ry="${n1(lerp(4.6, 6.2, t))}"
-                 fill="${p.line}" transform="rotate(24 ${n1(b.cx - rx * 0.66)} ${n1(cy + ry * 0.52)})"/>
-        <ellipse cx="${n1(b.cx + rx * 0.66)}" cy="${n1(cy + ry * 0.52)}" rx="${n1(lerp(3, 4.2, t))}" ry="${n1(lerp(4.6, 6.2, t))}"
-                 fill="${p.line}" transform="rotate(-24 ${n1(b.cx + rx * 0.66)} ${n1(cy + ry * 0.52)})"/>
-
-        <circle cx="${h.cx}" cy="${n1(hy)}" r="${n1(hr)}" fill="${p.body}"/>
-        <!-- 주둥이 — 둥글게 튀어나옵니다 -->
-        <ellipse cx="${h.cx}" cy="${n1(hy + hr * 0.46)}" rx="${n1(hr * 0.52)}" ry="${n1(hr * 0.4)}" fill="${p.pale}"/>
-        <circle cx="${n1(h.cx - hr * 0.4)}" cy="${n1(hy - hr * 0.12)}" r="${n1(Math.max(1.3, hr * 0.19))}" fill="${p.dark}"/>
-        <circle cx="${n1(h.cx + hr * 0.4)}" cy="${n1(hy - hr * 0.12)}" r="${n1(Math.max(1.3, hr * 0.19))}" fill="${p.dark}"/>
-        <circle cx="${n1(h.cx - hr * 0.34)}" cy="${n1(hy - hr * 0.2)}" r=".55" fill="#FFFFFF"/>
-        <circle cx="${n1(h.cx + hr * 0.46)}" cy="${n1(hy - hr * 0.2)}" r=".55" fill="#FFFFFF"/>
-        <ellipse cx="${h.cx}" cy="${n1(hy + hr * 0.3)}" rx="${n1(hr * 0.2)}" ry="${n1(hr * 0.15)}" fill="${p.dark}"/>
-        ${lv >= AT_WING ? whisk(-1) + whisk(1) : ""}
-        ${lv >= AT_MARK ? `<circle cx="${n1(b.cx - rx * 0.35)}" cy="${n1(cy - ry * 0.4)}" r="1.5" fill="${p.dark}" opacity=".35"/>
-                     <circle cx="${n1(b.cx + rx * 0.42)}" cy="${n1(cy - ry * 0.2)}" r="1.2" fill="${p.dark}" opacity=".35"/>` : ""}`;
+      /* [2026-08 리뉴얼] 옆모습 — 머리 들고 엎드린 자세 (캡쳐 참고).
+         꼬리 골 Lv.5, 등 얼룩 Lv.10, 가슴 주름 Lv.15 */
+      const { p, t, lv } = g;
+      return grow(t, `
+        <path d="M14 17Q22 15.5 25 22Q27.5 28 34 32.5Q39 35.5 43.6 36.2Q44.8 32 49.2 29.6L48.4 34.2Q52.4 33 54 36.2Q49.6 37.6 46 40.4Q44.6 41.8 41.6 41.8Q30 44.8 20 43.6Q10 42.4 9.6 33.6Q9.4 23.6 14 17Z" fill="${p.body}" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>
+        ${lv >= AT_TAIL ? `<path d="M45.2 36.8q2 -2.6 3.2 -3.2M46.4 38.4q2.6 -1.8 4.4 -2" stroke="${p.dark}" stroke-width=".8" fill="none" opacity=".6"/>` : ""}
+        ${lv >= AT_WING ? `<path d="M15.4 34.6q.4 3.6 2 6M18.8 35.4q.4 3.2 1.8 5.4M22.2 36q.4 3 1.6 5" stroke="${p.dark}" stroke-width=".9" fill="none" opacity=".55" stroke-linecap="round"/>` : ""}
+        ${lv >= AT_MARK ? `<circle cx="30" cy="30" r="1.05" fill="${p.dark}" opacity=".5"/>
+        <circle cx="34.6" cy="34" r=".9" fill="${p.dark}" opacity=".5"/>
+        <circle cx="27" cy="26" r=".8" fill="${p.dark}" opacity=".5"/>
+        <circle cx="38.4" cy="37.4" r=".85" fill="${p.dark}" opacity=".5"/>` : ""}
+        <ellipse cx="21.6" cy="44.2" rx="3" ry="5.6" fill="${p.body}" stroke="${INK}" stroke-width="1.2" transform="rotate(-24 21.6 44.2)"/>
+        <path d="M20 42.2q.8 2.6 .4 4.6M22.6 42q.8 2.6 .4 4.6" stroke="${p.dark}" stroke-width=".8" fill="none" opacity=".6"/>
+        <circle cx="12.4" cy="22.4" r="1.6" fill="#2A2A28"/>
+        <circle cx="18.2" cy="22.4" r="1.6" fill="#2A2A28"/>
+        <circle cx="13" cy="21.8" r=".55" fill="#fff"/>
+        <circle cx="18.8" cy="21.8" r=".55" fill="#fff"/>
+        ${oE(15.2, 27, 4.2, 3.2, p.pale, 0)}
+        <ellipse cx="15.2" cy="25.4" rx="1.5" ry="1.15" fill="${p.dark}"/>
+        <path d="M15.2 26.6v1.6M15.2 28.2q-1.5 1.3 -2.8 .4M15.2 28.2q1.5 1.3 2.8 .4" stroke="${p.dark}" stroke-width=".85" fill="none" stroke-linecap="round"/>
+        <circle cx="11.6" cy="26.2" r=".38" fill="${p.dark}"/><circle cx="12.4" cy="27.6" r=".38" fill="${p.dark}"/>
+        <circle cx="18.8" cy="26.2" r=".38" fill="${p.dark}"/><circle cx="18" cy="27.6" r=".38" fill="${p.dark}"/>
+        <path d="M10.8 26.6q-2.6 -.4 -4 -1M11.2 27.8q-2.4 .2 -3.8 0M19.6 26.6q2.6 -.4 4 -1M19.2 27.8q2.4 .2 3.8 0" stroke="${p.dark}" stroke-width=".6" fill="none" opacity=".7"/>
+        <ellipse cx="10.4" cy="24.6" rx="1.6" ry="1.05" fill="#F088A0" opacity=".7"/>
+        <ellipse cx="20" cy="24.6" rx="1.6" ry="1.05" fill="#F088A0" opacity=".7"/>`);
     },
 
     whale(g) {
-      /* 고래 — 다시 그렸습니다.
-
-         [무엇이 달라졌나]
-         예전에는 옆으로 누운 타원 하나라 물고기처럼 보였습니다.
-         캡쳐의 고래는 **몸이 통통하고, 꼬리가 위로 갈라져 올라가며,
-         물줄기를 뿜고** 있었어요. 그 셋이 고래를 고래로 만듭니다.
-
-         물줄기는 Lv.15 부터 나옵니다. 처음부터 뿜으면 아기 고래가
-         너무 요란해져서요. */
+      /* [2026-08 리뉴얼] 윤곽선 + 배 주름 + 눈 반짝임·볼터치.
+         꼬리 Lv.5, 배 주름 Lv.10, 물줄기 Lv.15 (기존 타이밍 유지) */
       const { p, t, lv, body: b } = g;
       const cx = b.cx - 2.5, cy = b.cy - 1;
-      const rx = b.rx * 1.16, ry = b.ry * 1.0;
-      const tw = lerp(8, 12, t);        // 꼬리 크기
+      const rx = b.rx * 1.16, ry = b.ry;
       return `
-        <!-- 꼬리 — 위아래로 갈라져 올라갑니다 -->
-        ${lv >= AT_TAIL ? `<path d="M${n1(cx + rx * 0.85)} ${n1(cy)}
-                                 q${n1(tw * 0.5)} -${n1(tw * 0.1)} ${n1(tw * 0.75)} -${n1(tw * 0.85)}
-                                 q-${n1(tw * 0.1)} ${n1(tw * 0.55)} ${n1(tw * 0.35)} ${n1(tw * 0.75)}
-                                 q-${n1(tw * 0.45)} ${n1(tw * 0.5)} -${n1(tw * 1.1)} ${n1(tw * 0.1)}z"
-                               fill="${p.line}"/>` : ""}
-
-        <!-- 몸 — 앞이 둥글고 뒤로 갈수록 가늘어집니다 -->
-        <path d="M${n1(cx - rx)} ${n1(cy)}
-                 q0 -${n1(ry * 1.05)} ${n1(rx * 0.95)} -${n1(ry * 0.95)}
-                 q${n1(rx * 0.9)} 0 ${n1(rx * 1.85)} ${n1(ry * 0.85)}
-                 q-${n1(rx * 0.95)} ${n1(ry * 1.1)} -${n1(rx * 1.85)} ${n1(ry * 0.25)}
-                 q-${n1(rx * 0.95)} -${n1(ry * 0.3)} -${n1(rx * 0.95)} -${n1(ry * 0.15)}z" fill="${p.body}"/>
-
-        <!-- 배 — 밝은 색으로 아랫배를 나눕니다 -->
-        <path d="M${n1(cx - rx * 0.86)} ${n1(cy + ry * 0.22)}
-                 q${n1(rx * 0.85)} ${n1(ry * 0.85)} ${n1(rx * 1.75)} ${n1(ry * 0.05)}
-                 q-${n1(rx * 0.85)} ${n1(ry * 0.75)} -${n1(rx * 1.75)} -${n1(ry * 0.05)}z" fill="${p.pale}"/>
-        ${lv >= AT_MARK ? `<path d="M${n1(cx - rx * 0.5)} ${n1(cy + ry * 0.5)}v${n1(ry * 0.4)}
-                                 M${n1(cx - rx * 0.2)} ${n1(cy + ry * 0.62)}v${n1(ry * 0.34)}
-                                 M${n1(cx + rx * 0.1)} ${n1(cy + ry * 0.66)}v${n1(ry * 0.28)}"
-                               stroke="${p.dark}" stroke-width=".9" opacity=".3" stroke-linecap="round"/>` : ""}
-
-        <!-- 가슴지느러미 -->
-        <ellipse cx="${n1(cx - rx * 0.15)}" cy="${n1(cy + ry * 0.6)}" rx="${n1(lerp(3.2, 4.4, t))}" ry="${n1(lerp(1.8, 2.4, t))}"
-                 fill="${p.line}" transform="rotate(22 ${n1(cx - rx * 0.15)} ${n1(cy + ry * 0.6)})"/>
-
-        <!-- 물줄기 -->
-        ${lv >= AT_WING ? `<path d="M${n1(cx - rx * 0.42)} ${n1(cy - ry * 0.92)}q-1 -${n1(lerp(5, 7, t))} ${n1(lerp(2.5, 3.5, t))} -${n1(lerp(7, 9.5, t))}"
-                               stroke="${p.pale}" stroke-width="${n1(lerp(1.8, 2.4, t))}" fill="none" stroke-linecap="round"/>
-                     <circle cx="${n1(cx - rx * 0.24)}" cy="${n1(cy - ry * 1.55)}" r="${n1(lerp(1.2, 1.8, t))}" fill="${p.pale}"/>
-                     <circle cx="${n1(cx - rx * 0.6)}" cy="${n1(cy - ry * 1.35)}" r="${n1(lerp(.9, 1.3, t))}" fill="${p.pale}" opacity=".8"/>` : ""}
-
-        <circle cx="${n1(cx - rx * 0.58)}" cy="${n1(cy - ry * 0.22)}" r="${n1(lerp(1.5, 1.9, t))}" fill="${p.dark}"/>
-        <circle cx="${n1(cx - rx * 0.62)}" cy="${n1(cy - ry * 0.32)}" r=".55" fill="#FFFFFF"/>
-        <path d="M${n1(cx - rx * 0.86)} ${n1(cy + ry * 0.14)}q${n1(rx * 0.2)} ${n1(ry * 0.2)} ${n1(rx * 0.4)} 0"
-              stroke="${p.dark}" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+        ${lv >= AT_WING ? `<path d="M${n1(cx)} ${n1(cy - ry - 2)}q-2.6 -5 -6 -6.4M${n1(cx)} ${n1(cy - ry - 2)}q0 -6 0 -8M${n1(cx)} ${n1(cy - ry - 2)}q2.6 -5 6 -6.4" stroke="#9CCBEE" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <circle cx="${n1(cx - 6.6)}" cy="${n1(cy - ry - 9)}" r="1.4" fill="#9CCBEE"/><circle cx="${n1(cx)}" cy="${n1(cy - ry - 11)}" r="1.5" fill="#9CCBEE"/><circle cx="${n1(cx + 6.6)}" cy="${n1(cy - ry - 9)}" r="1.4" fill="#9CCBEE"/>` : ""}
+        ${lv >= AT_TAIL ? `<path d="M${n1(cx + rx * 0.85)} ${n1(cy)}q6 -1.2 9 -10.2 q-.8 6.6 4.2 9 q-5.4 6 -13.2 1.2z" fill="${p.line}" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/>` : ""}
+        <path d="M${n1(cx - rx)} ${n1(cy)}q0 -${n1(ry * 1.05)} ${n1(rx * 0.95)} -${n1(ry * 0.95)}q${n1(rx * 0.9)} 0 ${n1(rx * 1.85)} ${n1(ry * 0.85)}q-${n1(rx * 0.95)} ${n1(ry * 1.1)} -${n1(rx * 1.85)} ${n1(ry * 0.25)}q-${n1(rx * 0.95)} -${n1(ry * 0.3)} -${n1(rx * 0.95)} -${n1(ry * 0.15)}z" fill="${p.body}" stroke="${INK}" stroke-width="1.4"/>
+        <path d="M${n1(cx - rx + 1.6)} ${n1(cy + ry * 0.35)}q${n1(rx * 0.8)} ${n1(ry * 0.55)} ${n1(rx * 1.7)} ${n1(ry * 0.1)}" stroke="${p.pale}" stroke-width="4.6" fill="none" stroke-linecap="round"/>
+        ${lv >= AT_MARK ? `<path d="M${n1(cx - rx + 3)} ${n1(cy + ry * 0.28)}q${n1(rx * 0.35)} ${n1(ry * 0.2)} ${n1(rx * 0.8)} ${n1(ry * 0.18)}M${n1(cx - rx + 3.4)} ${n1(cy + ry * 0.52)}q${n1(rx * 0.32)} ${n1(ry * 0.16)} ${n1(rx * 0.72)} ${n1(ry * 0.14)}" stroke="${p.line}" stroke-width=".8" fill="none" opacity=".5"/>` : ""}
+        ${oE(cx + 1, cy + ry * 0.45, 3.8, 2, p.body, 1.1)}
+        <circle cx="${n1(cx - rx * 0.5)}" cy="${n1(cy - ry * 0.15)}" r="1.6" fill="${p.dark}"/>
+        <circle cx="${n1(cx - rx * 0.5 + 0.55)}" cy="${n1(cy - ry * 0.15 - 0.55)}" r=".6" fill="#fff"/>
+        <path d="M${n1(cx - rx * 0.62)} ${n1(cy + ry * 0.28)}q1.8 1.6 3.8 .4" stroke="${p.dark}" stroke-width="1" fill="none" stroke-linecap="round"/>
+        <ellipse cx="${n1(cx - rx * 0.28)}" cy="${n1(cy + ry * 0.1)}" rx="1.8" ry="1.1" fill="#F2A2A2" opacity=".55"/>`;
     },
 
 /* ── 나무 상자에서 나오는 무리 (2차) ────────────────────────── */
@@ -1048,58 +1029,44 @@
     },
 
     coral(g) {
-      /* 산호 — 손가락처럼 갈라져 올라가는 가지.
-
-         [지난 이야기]
-         처음엔 가지 끝에 동그란 머리를 얹었는데 롤리팝 같다고 하셔서,
-         **동그란 머리만 빼고** 손가락처럼 뻗은 모양으로 두었습니다.
-         그 결정을 그대로 지킵니다 — 끝을 둥글리되 혹은 달지 않아요. */
-      const { p, t, lv, body: b } = g;
-      const baseY = 46;
-      const h1 = lerp(14, 22, t);
-      const arm = (dx, len, w, tilt) => `
-        <path d="M${n1(b.cx + dx)} ${n1(baseY)}
-                 q${n1(tilt)} -${n1(len * 0.55)} ${n1(tilt * 1.5)} -${n1(len)}"
-              stroke="${p.body}" stroke-width="${n1(w)}" fill="none" stroke-linecap="round"/>`;
-      return `
-        <!-- 바닥 돌 -->
-        <ellipse cx="${b.cx}" cy="${n1(baseY + 2)}" rx="${n1(lerp(9, 12, t))}" ry="${n1(lerp(2.6, 3.4, t))}" fill="${p.dark}" opacity=".35"/>
-        ${arm(-6, h1 * 0.78, lerp(3.4, 4.6, t), -3)}
-        ${arm(6, h1 * 0.72, lerp(3.4, 4.6, t), 3)}
-        ${arm(0, h1, lerp(4, 5.4, t), 0)}
-        ${lv >= AT_TAIL ? arm(-2.5, h1 * 0.9, lerp(2.8, 3.8, t), -5) + arm(3, h1 * 0.86, lerp(2.8, 3.8, t), 5) : ""}
-        ${lv >= AT_WING ? arm(-9, h1 * 0.56, lerp(2.4, 3.2, t), -4) + arm(9, h1 * 0.52, lerp(2.4, 3.2, t), 4) : ""}
-        ${lv >= AT_MARK ? `<circle cx="${n1(b.cx - 4)}" cy="${n1(baseY - h1 * 0.5)}" r="1.3" fill="${p.pale}"/>
-                     <circle cx="${n1(b.cx + 5)}" cy="${n1(baseY - h1 * 0.4)}" r="1.1" fill="${p.pale}"/>
-                     <circle cx="${n1(b.cx + 1)}" cy="${n1(baseY - h1 * 0.75)}" r="1.2" fill="${p.pale}"/>` : ""}`;
+      /* [2026-08 리뉴얼] 이중 선 가지 + 모래 바닥 + 얼굴.
+         곁가지 Lv.5, 모래알 Lv.10, 물방울 Lv.15 */
+      const { p, t, lv } = g;
+      const br = (x, d, w) => `
+        <path d="M${x} 48${d}" stroke="${shade(p.body, -0.25)}" stroke-width="${n1(w + 2.2)}" fill="none" stroke-linecap="round"/>
+        <path d="M${x} 48${d}" stroke="${p.body}" stroke-width="${w}" fill="none" stroke-linecap="round"/>`;
+      return grow(t, `
+        ${lv >= AT_WING ? `<circle cx="14" cy="18" r="1.4" fill="#B8DCF0" stroke="#8CBCDC" stroke-width=".7"/>
+        <circle cx="18" cy="12" r="1.9" fill="#B8DCF0" stroke="#8CBCDC" stroke-width=".7"/>
+        <circle cx="45" cy="22" r="1.5" fill="#B8DCF0" stroke="#8CBCDC" stroke-width=".7"/>` : ""}
+        ${lv >= AT_TAIL ? br(22, "q-1 -9 -6 -12 M22 40q4 -1 5 -6", 4.4) : ""}
+        ${br(28, "q0 -13 0 -18 M28 34q-4 -2 -5 -7 M28 30q4 -1.6 5.4 -6.6", 5)}
+        ${lv >= AT_TAIL ? br(35, "q2 -8 7 -11 M35 42q-3.6 -1.4 -4 -5", 4.2) : ""}
+        <path d="M12 49q16 -4.4 32 0 v3h-32z" fill="#E8D4A8" stroke="${INK}" stroke-width="1.2"/>
+        ${lv >= AT_MARK ? `<circle cx="19" cy="50.4" r=".8" fill="#C8AC78"/><circle cx="30" cy="51" r=".7" fill="#C8AC78"/><circle cx="39" cy="50.2" r=".8" fill="#C8AC78"/>` : ""}
+        ${eyes2(28, 36, 5, shade(p.body, -0.5), { blush: true, smile: true })}`);
     },
 
     panda(g) {
-      /* 판다 — 몸은 검고, 배와 얼굴이 흽니다.
-         귀는 검게 남겨야 판다로 읽혀요. */
-      const { p, t, body: b, head: h } = g;
-      const er = lerp(4.4, 5.6, t);
+      /* [2026-08 리뉴얼] 검은 눈 패치 안에 흰 눈동자, 윤곽선.
+         볼터치는 Lv.10부터 */
+      const { p, t, lv, body: b, head: h } = g;
+      const ear = s => oC(h.cx + s * h.r * 0.72, h.cy - h.r * 0.72, 3.5, p.body, 1.3);
+      const patch = s => `<ellipse cx="${n1(h.cx + s * h.r * 0.38)}" cy="${n1(h.cy - h.r * 0.02)}" rx="2.9" ry="3.6" fill="${p.body}" transform="rotate(${s * 18} ${n1(h.cx + s * h.r * 0.38)} ${n1(h.cy - h.r * 0.02)})"/>
+        <circle cx="${n1(h.cx + s * h.r * 0.38)}" cy="${n1(h.cy)}" r="1.35" fill="#fff"/>
+        <circle cx="${n1(h.cx + s * h.r * 0.38)}" cy="${n1(h.cy)}" r=".85" fill="#2A2A28"/>
+        <circle cx="${n1(h.cx + s * h.r * 0.38 + 0.4)}" cy="${n1(h.cy - 0.4)}" r=".35" fill="#fff"/>`;
       return `
-        <!-- 몸 — 검정 -->
-        <ellipse cx="${b.cx}" cy="${n1(b.cy)}" rx="${n1(b.rx)}" ry="${n1(b.ry)}" fill="${p.body}"/>
-        <!-- 배 — 흰 무늬. 몸 안쪽에 크게 -->
-        <ellipse cx="${b.cx}" cy="${n1(b.cy + b.ry * 0.12)}" rx="${n1(b.rx * 0.62)}" ry="${n1(b.ry * 0.7)}" fill="${p.mark}"/>
-        <!-- 팔 — 검정이라 몸에 묻히므로 배 위로 살짝 걸칩니다 -->
-        <ellipse cx="${n1(b.cx - b.rx * 0.74)}" cy="${n1(b.cy + b.ry * 0.3)}" rx="${n1(er * 0.72)}" ry="${n1(er * 0.95)}" fill="${p.body}"/>
-        <ellipse cx="${n1(b.cx + b.rx * 0.74)}" cy="${n1(b.cy + b.ry * 0.3)}" rx="${n1(er * 0.72)}" ry="${n1(er * 0.95)}" fill="${p.body}"/>
-        <!-- 귀 — 검정 -->
-        <circle cx="${n1(h.cx - h.r * 0.95)}" cy="${n1(h.cy - h.r * 0.8)}" r="${n1(er)}" fill="${p.body}"/>
-        <circle cx="${n1(h.cx + h.r * 0.95)}" cy="${n1(h.cy - h.r * 0.8)}" r="${n1(er)}" fill="${p.body}"/>
-        <!-- 얼굴 — 흰빛 -->
-        <circle cx="${h.cx}" cy="${n1(h.cy)}" r="${n1(h.r)}" fill="${p.mark}"/>
-        <!-- 눈 둘레 — 검정 -->
-        <ellipse cx="${n1(h.cx - h.r * 0.42)}" cy="${n1(h.cy - h.r * 0.05)}" rx="${n1(h.r * 0.3)}" ry="${n1(h.r * 0.36)}" fill="${p.body}"/>
-        <ellipse cx="${n1(h.cx + h.r * 0.42)}" cy="${n1(h.cy - h.r * 0.05)}" rx="${n1(h.r * 0.3)}" ry="${n1(h.r * 0.36)}" fill="${p.body}"/>
-        <circle cx="${n1(h.cx - h.r * 0.38)}" cy="${n1(h.cy - h.r * 0.02)}" r="1.3" fill="#FFFFFF"/>
-        <circle cx="${n1(h.cx + h.r * 0.38)}" cy="${n1(h.cy - h.r * 0.02)}" r="1.3" fill="#FFFFFF"/>
-        <ellipse cx="${h.cx}" cy="${n1(h.cy + h.r * 0.42)}" rx="${n1(h.r * 0.2)}" ry="${n1(h.r * 0.15)}" fill="${p.body}"/>
-        <path d="M${n1(h.cx - h.r * 0.2)} ${n1(h.cy + h.r * 0.62)}q${n1(h.r * 0.2)} ${n1(h.r * 0.18)} ${n1(h.r * 0.4)} 0"
-              stroke="${p.body}" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+        ${oE(b.cx, b.cy, b.rx, b.ry, p.body, 1.4)}
+        ${oE(b.cx, b.cy + b.ry * 0.26, b.rx * 0.58, b.ry * 0.56, "#F4F2EC", 0)}
+        ${feet2(b, p.body)}
+        ${ear(-1)}${ear(1)}
+        ${oC(h.cx, h.cy, h.r, "#F4F2EC", 1.4)}
+        ${patch(-1)}${patch(1)}
+        <ellipse cx="${h.cx}" cy="${n1(h.cy + h.r * 0.38)}" rx="1.7" ry="1.3" fill="#2A2A28"/>
+        <path d="M${h.cx} ${n1(h.cy + h.r * 0.52)}v1.3M${h.cx} ${n1(h.cy + h.r * 0.68)}q-1.5 1.2 -2.6 .3M${h.cx} ${n1(h.cy + h.r * 0.68)}q1.5 1.2 2.6 .3" stroke="#2A2A28" stroke-width=".9" fill="none" stroke-linecap="round"/>
+        ${lv >= AT_MARK ? `<ellipse cx="${n1(h.cx - h.r * 0.74)}" cy="${n1(h.cy + h.r * 0.34)}" rx="1.6" ry="1" fill="#F2A2A2" opacity=".65"/>
+        <ellipse cx="${n1(h.cx + h.r * 0.74)}" cy="${n1(h.cy + h.r * 0.34)}" rx="1.6" ry="1" fill="#F2A2A2" opacity=".65"/>` : ""}`;
     },
 
     /* 문어 — 다리가 레벨에 따라 늘어납니다 (Lv.1 둘 → Lv.10 여섯).
@@ -1130,83 +1097,109 @@
 /* 여섯 꽃 — 핀 모습만 다릅니다 */
 
     rose: makeFlower((p, cy, r) => {
-      /* 장미 — 겹겹이 말린 꽃잎. 원을 세 겹 겹쳐서 소용돌이처럼 */
+      /* [2026-08 리뉴얼] 나선 꽃잎 + 바깥 겹 선 */
+      const a = v => n1(v * r / 8.6);
       return `
-        <circle cx="28" cy="${n1(cy)}" r="${n1(r)}" fill="${p.body}"/>
-        <circle cx="28" cy="${n1(cy)}" r="${n1(r * 0.72)}" fill="${p.light}"/>
-        <circle cx="${n1(28 + r * 0.14)}" cy="${n1(cy - r * 0.1)}" r="${n1(r * 0.44)}" fill="${p.body}"/>
-        <circle cx="${n1(28 - r * 0.1)}" cy="${n1(cy + r * 0.08)}" r="${n1(r * 0.2)}" fill="${p.light}"/>`;
+        <circle cx="28" cy="${n1(cy)}" r="${n1(r)}" fill="${p.body}" stroke="${INK}" stroke-width="1.2"/>
+        <path d="M28 ${n1(cy)}m-${n1(r)} 0a${n1(r)} ${n1(r)} 0 0 1 ${n1(r)} -${n1(r)}a${a(6.4)} ${a(6.4)} 0 0 1 ${a(6.2)} ${a(6.4)}a${a(4.8)} ${a(4.8)} 0 0 1 -${a(4.8)} ${a(4.6)}a${a(3.5)} ${a(3.5)} 0 0 1 -${a(3.4)} -${a(3.4)}a${a(2.4)} ${a(2.4)} 0 0 1 ${a(2.4)} -${a(2.4)}" stroke="${p.dark}" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+        <path d="M${n1(28 - r)} ${n1(cy)}q-${a(0.6)} ${a(5.6)} ${a(4.4)} ${a(7.8)}M${n1(28 + r * 0.98)} ${n1(cy - r * 0.19)}q${a(1.4)} ${a(5.4)} -${a(3.2)} ${a(8.2)}" stroke="${p.dark}" stroke-width="1" fill="none" opacity=".7"/>
+        <circle cx="${n1(28 - r * 0.4)}" cy="${n1(cy - r * 0.4)}" r="${n1(Math.max(0.9, r * 0.13))}" fill="${p.light}" opacity=".8"/>`;
     }),
 
     tulip: makeFlower((p, cy, r) => {
-      /* 튤립 — 컵 모양. 위쪽에 뾰족한 세 갈래 */
+      /* [2026-08 리뉴얼] 윤곽 있는 컵 + 밝은 왼쪽 꽃잎 */
       return `
-        <path d="M${n1(28 - r * 0.78)} ${n1(cy - r * 0.5)}q0 ${n1(r * 1.5)} ${n1(r * 0.78)} ${n1(r * 1.5)}
-                 q${n1(r * 0.78)} 0 ${n1(r * 0.78)} -${n1(r * 1.5)}
-                 l-${n1(r * 0.5)} ${n1(r * 0.42)} -${n1(r * 0.28)} -${n1(r * 0.6)}
-                 -${n1(r * 0.28)} ${n1(r * 0.6)}z" fill="${p.body}"/>
-        <path d="M28 ${n1(cy - r * 0.62)}v${n1(r * 1.35)}" stroke="${p.light}" stroke-width="1.1" opacity=".7"/>`;
+        <path d="M${n1(28 - r)} ${n1(cy - r * 0.54)}q-${n1(r * 0.08)} ${n1(r * 1.27)} ${n1(r)} ${n1(r * 1.4)}q${n1(r * 1.08)} -${n1(r * 0.13)} ${n1(r)} -${n1(r * 1.4)}l-${n1(r * 0.49)} ${n1(r * 0.46)} -${n1(r * 0.51)} -${n1(r * 0.73)} -${n1(r * 0.51)} ${n1(r * 0.73)}z" fill="${p.body}" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/>
+        <ellipse cx="${n1(28 - r * 0.42)}" cy="${n1(cy + r * 0.2)}" rx="${n1(r * 0.28)}" ry="${n1(r * 0.55)}" fill="${p.light}" opacity=".55"/>
+        <path d="M${n1(28 - r * 0.46)} ${n1(cy + r * 0.46)}q${n1(r * 0.46)} ${n1(r * 0.22)} ${n1(r * 0.92)} 0" stroke="${p.dark}" stroke-width=".9" fill="none" opacity=".5"/>`;
     }),
 
     lily: makeFlower((p, cy, r) => {
-      /* 백합 — 길쭉한 꽃잎 여섯 장이 별처럼. 안쪽에 수술 */
-      const petal = i => {
-        const a = (i * 60) * Math.PI / 180;
-        return `<ellipse cx="${n1(28 + Math.sin(a) * r * 0.62)}" cy="${n1(cy - Math.cos(a) * r * 0.62)}"
-                  rx="${n1(r * 0.34)}" ry="${n1(r * 0.86)}" fill="${p.body}"
-                  transform="rotate(${i * 60} ${n1(28 + Math.sin(a) * r * 0.62)} ${n1(cy - Math.cos(a) * r * 0.62)})"/>`;
-      };
+      /* [2026-08 리뉴얼] 뾰족한 여섯 꽃잎 + 수술·꽃밥 */
+      let petals = "";
+      for (let i = 0; i < 6; i++) {
+        const a = Math.PI * 2 * i / 6 - Math.PI / 2;
+        petals += `<path d="M28 ${n1(cy)}L${n1(28 + Math.cos(a - 0.38) * r * 0.75)} ${n1(cy + Math.sin(a - 0.38) * r * 0.75)}Q${n1(28 + Math.cos(a) * r)} ${n1(cy + Math.sin(a) * r)} ${n1(28 + Math.cos(a + 0.38) * r * 0.75)} ${n1(cy + Math.sin(a + 0.38) * r * 0.75)}z" fill="${p.body}" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/>`;
+      }
       return `
-        ${[0,1,2,3,4,5].map(petal).join("")}
-        <circle cx="28" cy="${n1(cy)}" r="${n1(r * 0.3)}" fill="${p.dark}" opacity=".5"/>
-        <path d="M28 ${n1(cy)}l-${n1(r * 0.3)} -${n1(r * 0.5)}M28 ${n1(cy)}l${n1(r * 0.3)} -${n1(r * 0.5)}"
-              stroke="#C99A2E" stroke-width="1" stroke-linecap="round"/>`;
+        ${petals}
+        <path d="M28 ${n1(cy)}l-${n1(r * 0.28)} -${n1(r * 0.58)}M28 ${n1(cy)}l0 -${n1(r * 0.67)}M28 ${n1(cy)}l${n1(r * 0.28)} -${n1(r * 0.58)}" stroke="#C89838" stroke-width="1" fill="none" stroke-linecap="round"/>
+        <circle cx="${n1(28 - r * 0.3)}" cy="${n1(cy - r * 0.63)}" r="${n1(Math.max(0.7, r * 0.1))}" fill="#B4451F"/>
+        <circle cx="28" cy="${n1(cy - r * 0.72)}" r="${n1(Math.max(0.7, r * 0.1))}" fill="#B4451F"/>
+        <circle cx="${n1(28 + r * 0.3)}" cy="${n1(cy - r * 0.63)}" r="${n1(Math.max(0.7, r * 0.1))}" fill="#B4451F"/>`;
     }),
 
     chrysanth: makeFlower((p, cy, r) => {
-      /* 국화 — 가는 꽃잎이 아주 많이. 열두 장을 돌려 붙입니다 */
-      const petal = i => {
-        const a = i * 30;
-        return `<ellipse cx="28" cy="${n1(cy - r * 0.66)}" rx="${n1(r * 0.2)}" ry="${n1(r * 0.66)}"
-                  fill="${i % 2 ? p.light : p.body}"
-                  transform="rotate(${a} 28 ${n1(cy)})"/>`;
+      /* [2026-08 리뉴얼] 두 겹 가는 꽃잎 링 + 짙은 중심 */
+      const ring = (R, nP, rx, ry, col, rot0) => {
+        let s = "";
+        for (let i = 0; i < nP; i++) {
+          const a = Math.PI * 2 * i / nP + rot0;
+          const x = 28 + Math.cos(a) * R, y = cy + Math.sin(a) * R;
+          s += `<ellipse cx="${n1(x)}" cy="${n1(y)}" rx="${n1(rx)}" ry="${n1(ry)}" fill="${col}" stroke="${INK}" stroke-width=".6" transform="rotate(${n1(a * 180 / Math.PI + 90)} ${n1(x)} ${n1(y)})"/>`;
+        }
+        return s;
       };
       return `
-        ${Array.from({length: 12}, (_, i) => petal(i)).join("")}
-        <circle cx="28" cy="${n1(cy)}" r="${n1(r * 0.32)}" fill="${p.dark}"/>`;
+        ${ring(r * 0.93, 16, r * 0.16, r * 0.5, p.light, 0)}
+        ${ring(r * 0.6, 12, r * 0.17, r * 0.45, p.body, 0.26)}
+        <circle cx="28" cy="${n1(cy)}" r="${n1(r * 0.32)}" fill="${shade(p.body, -0.3)}" stroke="${INK}" stroke-width=".8"/>
+        <circle cx="${n1(28 - r * 0.09)}" cy="${n1(cy - r * 0.09)}" r="${n1(Math.max(0.7, r * 0.11))}" fill="${p.light}" opacity=".8"/>`;
     }),
 
     hydrangea: makeFlower((p, cy, r) => {
-      /* 수국 — 작은 꽃이 뭉쳐 공이 됩니다. 알갱이를 흩뿌려요 */
-      const pts = [[0,-0.62],[-0.58,-0.28],[0.58,-0.28],[-0.36,0.34],[0.36,0.34],[0,0.06],[0,0.72]];
+      /* [2026-08 리뉴얼] 네잎 소화(小花) 여섯 뭉치 */
+      const fl = (dx, dy, col) => {
+        const fr = r * 0.27, x = 28 + dx * r, y = cy + dy * r;
+        let s = "";
+        for (let i = 0; i < 4; i++) {
+          const a = Math.PI / 2 * i + Math.PI / 4;
+          s += `<circle cx="${n1(x + Math.cos(a) * fr)}" cy="${n1(y + Math.sin(a) * fr)}" r="${n1(fr * 1.05)}" fill="${col}" stroke="${INK}" stroke-width=".55"/>`;
+        }
+        return s + `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(fr * 0.5)}" fill="${p.pale}"/>`;
+      };
       return `
-        <circle cx="28" cy="${n1(cy)}" r="${n1(r * 0.96)}" fill="${p.pale}" opacity=".6"/>
-        ${pts.map(([dx, dy], i) => `
-          <circle cx="${n1(28 + dx * r)}" cy="${n1(cy + dy * r)}" r="${n1(r * 0.3)}"
-                  fill="${i % 2 ? p.light : p.body}"/>`).join("")}`;
+        ${fl(-0.75, 0.22, p.light)}${fl(0.75, 0.22, p.light)}${fl(-0.54, -0.54, p.body)}
+        ${fl(0.54, -0.54, p.body)}${fl(0, 0.52, p.body)}${fl(0, -0.16, p.light)}`;
     }),
 
     sunflower: makeFlower((p, cy, r) => {
-      /* 해바라기 — 넓은 꽃잎 열두 장에 크고 진한 씨앗판 */
-      const petal = i => `<ellipse cx="28" cy="${n1(cy - r * 0.78)}" rx="${n1(r * 0.26)}" ry="${n1(r * 0.56)}"
-                            fill="${p.body}" transform="rotate(${i * 30} 28 ${n1(cy)})"/>`;
+      /* [2026-08 리뉴얼] 꽃잎 두 겹 + 씨앗 나선 패턴 */
+      const ring = (R, rot0, col) => {
+        let s = "";
+        for (let i = 0; i < 12; i++) {
+          const a = Math.PI * 2 * i / 12 + rot0;
+          const x = 28 + Math.cos(a) * R, y = cy + Math.sin(a) * R;
+          s += `<ellipse cx="${n1(x)}" cy="${n1(y)}" rx="${n1(r * 0.33)}" ry="${n1(r * 0.58)}" fill="${col}" stroke="${INK}" stroke-width=".8" transform="rotate(${n1(a * 180 / Math.PI + 90)} ${n1(x)} ${n1(y)})"/>`;
+        }
+        return s;
+      };
+      let seeds = "";
+      for (let rr = r * 0.17; rr <= r * 0.47; rr += r * 0.15)
+        for (let i = 0; i < Math.round(rr * 4); i++) {
+          const a = Math.PI * 2 * i / Math.round(rr * 4) + rr;
+          seeds += `<circle cx="${n1(28 + Math.cos(a) * rr)}" cy="${n1(cy + Math.sin(a) * rr)}" r="${n1(Math.max(0.4, r * 0.06))}" fill="#5C3A1E" opacity=".8"/>`;
+        }
       return `
-        ${Array.from({length: 12}, (_, i) => petal(i)).join("")}
-        <circle cx="28" cy="${n1(cy)}" r="${n1(r * 0.52)}" fill="#6B4A22"/>
-        <circle cx="28" cy="${n1(cy)}" r="${n1(r * 0.34)}" fill="#4E361A"/>`;
+        ${ring(r, 0, p.light)}
+        ${ring(r * 0.87, 0.26, p.body)}
+        <circle cx="28" cy="${n1(cy)}" r="${n1(r * 0.66)}" fill="#7E5233" stroke="${INK}" stroke-width="1.1"/>
+        <circle cx="28" cy="${n1(cy)}" r="${n1(r * 0.66)}" fill="none" stroke="#5C3A1E" stroke-width=".7" opacity=".5"/>
+        ${seeds}`;
     }),
 
     berry(g) {
-      /* 열매 — 꽃이 아니라 가지에 알맹이가 달립니다.
-         꽃 무리와 같은 줄기·잎을 쓰되, 위에 열매를 답니다. */
+      /* [2026-08 리뉴얼] 알맹이에 윤곽선·꼭지를 달았습니다.
+         구조(줄기·단계)는 그대로 */
       const { p, t, lv } = g;
       const st = plantStage(lv);
       const cy = st === "sprout" ? 34 : lerp(27, 22, t);
       const br = lerp(3, 4.4, t);
       const topY = st === "sprout" ? 38 : cy + br;
       const one = (dx, dy, scale) => `
-        <circle cx="${n1(28 + dx)}" cy="${n1(cy + dy)}" r="${n1(br * scale)}" fill="${p.body}"/>
-        <circle cx="${n1(28 + dx - br * scale * 0.3)}" cy="${n1(cy + dy - br * scale * 0.3)}" r="${n1(br * scale * 0.26)}" fill="${p.pale}" opacity=".8"/>`;
+        <path d="M${n1(28 + dx)} ${n1(cy + dy - br * scale - 2)}v2" stroke="#5E9130" stroke-width="1.2" stroke-linecap="round"/>
+        <circle cx="${n1(28 + dx)}" cy="${n1(cy + dy)}" r="${n1(br * scale)}" fill="${p.body}" stroke="${INK}" stroke-width="1.1"/>
+        <circle cx="${n1(28 + dx - br * scale * 0.32)}" cy="${n1(cy + dy - br * scale * 0.32)}" r="${n1(br * scale * 0.28)}" fill="${p.light}" opacity=".85"/>`;
       return `
         ${plantBase(lv, t, topY)}
         ${st === "sprout" || st === "leaf" ? "" :
@@ -1215,205 +1208,143 @@
     },
 
     tree(g) {
+      /* [2026-08 리뉴얼] 갈라진 줄기 + 겹친 수관.
+         곁수관 Lv.5, 열매 Lv.10, 하이라이트 Lv.15 */
       const { p, t, lv } = g;
-      const r = lerp(9, 13, t), cy = lerp(24, 20, t);
-      return `
-        <path d="M28 50V${n1(cy + r * 0.6)}" stroke="#8D6434" stroke-width="${n1(lerp(3, 4.2, t))}" stroke-linecap="round"/>
-        ${lv >= AT_TAIL ? `<path d="M28 ${n1(cy + r * 0.9)}l-6 -5" stroke="#8D6434" stroke-width="2.2" stroke-linecap="round"/>` : ""}
-        ${lv >= AT_WING ? `<path d="M28 ${n1(cy + r * 0.55)}l6 -5" stroke="#8D6434" stroke-width="2.2" stroke-linecap="round"/>` : ""}
-        <circle cx="28" cy="${n1(cy)}" r="${n1(r)}" fill="${p.body}"/>
-        ${lv >= AT_TAIL ? `<circle cx="${n1(28 - r * 0.78)}" cy="${n1(cy + r * 0.5)}" r="${n1(r * 0.58)}" fill="${p.light}"/>
-                     <circle cx="${n1(28 + r * 0.78)}" cy="${n1(cy + r * 0.5)}" r="${n1(r * 0.58)}" fill="${p.light}"/>` : ""}
-        ${face(28, cy, r * 0.82, p, true)}`;
+      return grow(t, `
+        <path d="M24.8 50c.6 -6 .2 -9 -3.6 -13l2.4 -1.4q2.6 3.4 3.2 6 .6 -4.4 4 -7.4l2.2 1.6c-3.4 3.4 -3.8 8 -3.4 14.2z" fill="#8A6238" stroke="${INK}" stroke-width="1.1" stroke-linejoin="round"/>
+        ${lv >= AT_TAIL ? `<circle cx="20" cy="26" r="7.6" fill="${p.body}" stroke="${INK}" stroke-width="1.3"/>
+        <circle cx="36" cy="26" r="7.6" fill="${p.body}" stroke="${INK}" stroke-width="1.3"/>` : ""}
+        <circle cx="28" cy="18.6" r="8.4" fill="${p.body}" stroke="${INK}" stroke-width="1.3"/>
+        <circle cx="28" cy="24" r="9" fill="${p.body}"/>
+        ${lv >= AT_WING ? `<circle cx="23.6" cy="17" r="3.2" fill="${p.light}" opacity=".7"/>` : ""}
+        ${lv >= AT_MARK ? `<circle cx="21" cy="29" r="1.5" fill="#D8384C"/><circle cx="33.4" cy="22" r="1.5" fill="#D8384C"/><circle cx="29" cy="30" r="1.5" fill="#D8384C"/>
+        <circle cx="21.4" cy="28.6" r=".45" fill="#fff" opacity=".8"/><circle cx="33.8" cy="21.6" r=".45" fill="#fff" opacity=".8"/><circle cx="29.4" cy="29.6" r=".45" fill="#fff" opacity=".8"/>` : ""}`);
     },
 
     grass(g) {
+      /* [2026-08 리뉴얼] 여러 갈래 잎 다발 + 들꽃.
+         바깥 잎 Lv.5, 들꽃 Lv.10·Lv.15 */
       const { p, t, lv } = g;
-      const top = lerp(28, 22, t);
-      const blade = (sx, h2, fill) =>
-        `<path d="M28 46q${n1(sx * 2)} -${n1(h2 * 0.6)} ${n1(sx * 9)} -${n1(h2)} -${n1(sx * 8)} 1 -${n1(sx * 9)} ${n1(h2 - 1)}z" fill="${fill}"/>`;
-      return `
-        ${lv >= AT_TAIL ? blade(-1, lerp(14, 20, t), p.light) : ""}
-        ${lv >= AT_WING ? blade(1, lerp(14, 20, t), p.pale) : ""}
-        <path d="M28 47V${n1(top + 4)}" stroke="${p.line}" stroke-width="3.2" stroke-linecap="round"/>
-        <path d="M28 ${n1(top + 6)}q-7 -8 -3 -14 5 4 3 14z" fill="${p.body}"/>
-        <path d="M28 ${n1(top + 6)}q7 -8 3 -14 -5 4 -3 14z" fill="${p.light}"/>
-        ${face(28, top + 12, 5.4, p, true)}`;
+      const blade = (x, h2, w, col, bend) => `<path d="M${x} 50q${n1(bend * 0.4)} -${n1(h2 * 0.55)} ${bend} -${h2}q${n1(w * 0.5 - bend * 0.4)} ${n1(h2 * 0.35)} ${n1(w - bend)} ${h2}z" fill="${col}" stroke="#5E9130" stroke-width=".8" stroke-linejoin="round"/>`;
+      return grow(t, `
+        ${lv >= AT_TAIL ? blade(18, 16, 4.4, p.body, -3) : ""}
+        ${blade(23, 22, 4.8, p.light, -1.6)}
+        ${blade(28.2, 26, 5, p.body, 0.4)}
+        ${blade(33, 21, 4.6, p.light, 2)}
+        ${lv >= AT_TAIL ? blade(38, 15, 4.2, p.body, 3.2) : ""}
+        <path d="M12 50q16 -3 32 0" stroke="#5E9130" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        ${lv >= AT_MARK ? `<circle cx="21" cy="42" r="1.6" fill="#fff" stroke="#E8C048" stroke-width=".8"/>
+        <circle cx="21" cy="42" r=".6" fill="#E8C048"/>` : ""}
+        ${lv >= AT_WING ? `<circle cx="36.6" cy="45" r="1.3" fill="#fff" stroke="#E8C048" stroke-width=".7"/>
+        <circle cx="36.6" cy="45" r=".5" fill="#E8C048"/>` : ""}`);
     },
 
     cloud(g) {
+      /* [2026-08 리뉴얼] 뭉게 윤곽 + 얼굴.
+         곁구름 Lv.5·Lv.15, 하이라이트 Lv.10 */
       const { p, t, lv } = g;
-      const w = lerp(11, 14, t);
-      return `
-        <path d="M${n1(28 - w)} 34a7.5 7.5 0 0 1 1 -13 9.5 9.5 0 0 1 18 -2 7.5 7.5 0 0 1 6 15z" fill="${p.light}"/>
-        ${face(28, 26, 6.6, p, true)}
-        <circle cx="${n1(28 - 5.5)}" cy="30.5" r="2.3" fill="#F4C0D1" opacity=".65"/>
-        <circle cx="${n1(28 + 5.5)}" cy="30.5" r="2.3" fill="#F4C0D1" opacity=".65"/>
-        ${lv >= AT_TAIL ? `<path d="M22 39v5M34 39v5" stroke="${p.body}" stroke-width="2" stroke-linecap="round"/>` : ""}
-        ${lv >= AT_WING ? `<path d="M28 40v6" stroke="${p.body}" stroke-width="2" stroke-linecap="round"/>` : ""}`;
+      return grow(t, `
+        ${lv >= AT_TAIL ? `<ellipse cx="46" cy="14" rx="4.6" ry="2.9" fill="${p.light}" stroke="${INK}" stroke-width="1" opacity=".85"/>` : ""}
+        ${lv >= AT_WING ? `<ellipse cx="11" cy="40" rx="3.8" ry="2.4" fill="${p.light}" stroke="${INK}" stroke-width="1" opacity=".85"/>` : ""}
+        <path d="M14 36a7.4 7.4 0 0 1 3 -13.6 9.4 9.4 0 0 1 18.4 -2.6 8 8 0 0 1 9.4 8.4 6.6 6.6 0 0 1 -1.6 7.8q-14.6 4.6 -29.2 0z" fill="${p.body}" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>
+        <path d="M14 36q14.6 4.4 29.2 0" stroke="${INK}" stroke-width="1.4" fill="none"/>
+        ${lv >= AT_MARK ? `<ellipse cx="22" cy="23" rx="4.6" ry="3" fill="#fff" opacity=".65"/>` : ""}
+        ${eyes2(28.5, 29, 6.2, "#5A6B7C", { blush: true, smile: true })}`);
     },
 
     stone(g) {
-      /* 돌멩이 — 다시 그렸습니다.
-
-         [무엇이 달라졌나]
-         예전엔 윤곽이 흐물흐물해서 감자처럼 보였습니다. 캡쳐로 보여주신
-         돌은 **모난 면이 각각 다른 밝기로 나뉜** 모습이었어요.
-         돌은 곡선이 아니라 **면**으로 읽힙니다.
-
-         그래서 바깥을 각지게 깎고, 안쪽에 밝은 면과 어두운 면을 나눠
-         넣었습니다. 위쪽 모서리에 흰 반짝임도 하나 얹었어요. */
+      /* [2026-08 리뉴얼] 모난 바위 + 이끼 모자.
+         이끼 Lv.5, 면 사이 금 Lv.10, 곁이끼 Lv.15 */
       const { p, t, lv } = g;
-      const s = lerp(0.86, 1, t);
-      /* ★ 좌표 도우미는 **문자열**을 돌려줍니다 (n1 이 toFixed 라서요).
-         그래서 이 값을 다시 계산에 쓰면 안 됩니다 — `+` 가 더하기가
-         아니라 이어붙이기가 되어 "35.02.2" 같은 게 나옵니다.
-         실제로 face() 에 넘겼다가 NaN 이 됐습니다.
-         계산에 쓸 값은 숫자 그대로 두고, 그릴 때만 n1 을 붙입니다. */
-      const sxN = v => 28 + v * s;            // 가로 (숫자)
-      const syN = v => 40 + v * s;            // 세로 (숫자)
-      const S = v => n1(sxN(v));              // 가로 (그리기용)
-      const Y = v => n1(syN(v));              // 세로 (그리기용)
-      return `
-        <!-- 그림자 -->
-        <ellipse cx="28" cy="${Y(4)}" rx="${n1(15 * s)}" ry="${n1(2.6 * s)}" fill="${p.dark}" opacity=".22"/>
-
-        <!-- 바깥 — 모난 육각. 각 꼭짓점을 서로 다른 각도로 둬야
-             "깎인 돌"로 보입니다. 좌우가 대칭이면 공깃돌이 돼요. -->
-        <path d="M${S(-14)} ${Y(1)}L${S(-10)} ${Y(-11)}L${S(-1)} ${Y(-16)}
-                 L${S(10)} ${Y(-12)}L${S(15)} ${Y(-2)}L${S(9)} ${Y(4)}
-                 L${S(-6)} ${Y(5)}Z" fill="${p.body}"/>
-
-        <!-- 밝은 면 — 빛이 드는 왼쪽 위 -->
-        <path d="M${S(-10)} ${Y(-11)}L${S(-1)} ${Y(-16)}L${S(2)} ${Y(-6)}
-                 L${S(-9)} ${Y(-3)}Z" fill="${p.light}"/>
-
-        <!-- 어두운 면 — 오른쪽 아래 -->
-        <path d="M${S(2)} ${Y(-6)}L${S(10)} ${Y(-12)}L${S(15)} ${Y(-2)}
-                 L${S(9)} ${Y(4)}Z" fill="${p.line}"/>
-
-        <!-- 면과 면 사이 금 -->
-        <path d="M${S(2)} ${Y(-6)}L${S(-9)} ${Y(-3)}M${S(2)} ${Y(-6)}L${S(9)} ${Y(4)}"
-              stroke="${p.dark}" stroke-width=".9" opacity=".35"/>
-
-        ${lv >= AT_MARK ? `<path d="M${S(-6)} ${Y(0)}l${n1(4 * s)} ${n1(2 * s)}M${S(4)} ${Y(-10)}l${n1(3 * s)} ${n1(2 * s)}"
-                               stroke="${p.dark}" stroke-width=".8" opacity=".3" stroke-linecap="round"/>` : ""}
-
-        <!-- 반짝임 -->
-        <path d="M${S(-4)} ${Y(-13)}l${n1(2.5 * s)} -${n1(1 * s)}" stroke="#FFFFFF" stroke-width="1.4"
-              opacity=".7" stroke-linecap="round"/>
-
-        <!-- 이끼 — 자라면서 붙습니다 -->
-        ${lv >= AT_TAIL ? `<path d="M${S(-11)} ${Y(-9)}q-4 -6 2 -7 3 3 1 7z" fill="#97C459"/>` : ""}
-        ${lv >= AT_WING ? `<path d="M${S(9)} ${Y(-11)}q5 -5 7 1 -3 3 -7 -1z" fill="#B4D686"/>` : ""}
-        ${face(28, syN(-5), 5.8, p, true)}`;
+      return grow(t, `
+        <path d="M15 42l2.6 -12 6.4 -6.6 9.4 -1.4 8 4.6 3.6 9.4 -2.6 8 -8.4 3.4 -13.4 -.8z" fill="${p.body}" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>
+        ${lv >= AT_MARK ? `<path d="M17.6 30l7.4 -6.2M33.4 22.6l4.4 8.2M20.6 44.2l3 -6.4" stroke="${p.dark}" stroke-width="1" fill="none" opacity=".5"/>` : ""}
+        <path d="M24 23.4l9.4 -1.4 3.2 1.8 -7.2 2.4z" fill="${p.light}" opacity=".7"/>
+        ${lv >= AT_TAIL ? `<path d="M18 23.6q4 -4.6 9.6 -4.8 -1.4 3 -4.6 4.4 q3.2 .4 5.4 -1 -1 3.2 -5.2 4.2z" fill="#7FA858" stroke="#5E8140" stroke-width="1" stroke-linejoin="round"/>` : ""}
+        ${lv >= AT_WING ? `<path d="M37 34.6q4.4 -3 6 1 -2.6 2.6 -6 -1z" fill="#B4D686" stroke="#5E8140" stroke-width=".8"/>` : ""}
+        ${eyes2(29, 33, 6.4, "#3A3630", { blush: true, smile: true })}`);
     },
 
 /* ── 선물 상자에서 나오는 무리 (2차) ────────────────────────── */
 
     rainbow(g) {
-      /* 무지개 — 겹친 반원 띠.
-         띠를 밖에서 안으로 그려야 색이 제대로 겹칩니다.
-         (안쪽부터 그리면 나중 띠가 앞의 것을 덮어버립니다) */
-      const { p, t, lv } = g;
-      const cy = 42;
-      const R = lerp(15, 21, t);
-      const w = lerp(3, 4, t);
-      const bands = ["#E86A6A", "#F0A03C", "#F2D44C", "#6FBF6A", "#5A9BE0", "#9B72D4"];
-      const shown = Math.max(3, Math.min(6, 3 + Math.round(t * 3)));
+      /* [2026-08 리뉴얼] 윤곽 있는 띠 + 양끝 뭉게구름에 얼굴.
+         띠 2개 → Lv.10에 3개 → Lv.15에 4개 */
+      const { t, lv } = g;
+      const cols = ["#E86A6A", "#F2B417", "#7FB53F", "#52A8E0"];
+      const shown = lv >= AT_WING ? 4 : (lv >= AT_MARK ? 3 : 2);
       let arcs = "";
       for (let i = 0; i < shown; i++) {
-        const r = R - i * w;
-        if (r < w) break;
-        arcs += `<path d="M${n1(28 - r)} ${n1(cy)}a${n1(r)} ${n1(r)} 0 0 1 ${n1(r * 2)} 0"
-                   stroke="${bands[i]}" stroke-width="${n1(w)}" fill="none" stroke-linecap="butt"/>`;
+        const r = 17.4 - i * 3.1;
+        arcs += `<path d="M${n1(28 - r)} 41a${n1(r)} ${n1(r)} 0 0 1 ${n1(r * 2)} 0" stroke="${cols[i]}" stroke-width="3.1" fill="none"/>`;
       }
-      return `
+      const inR = 17.4 - (shown - 1) * 3.1 - 1.55;
+      const puff = (x, y) => `
+        <ellipse cx="${x}" cy="${y}" rx="6.2" ry="4.4" fill="#fff" stroke="${INK}" stroke-width="1.2"/>
+        <ellipse cx="${n1(x - 3)}" cy="${n1(y - 2)}" rx="3" ry="2.4" fill="#fff" stroke="${INK}" stroke-width="1"/>
+        <ellipse cx="${n1(x + 3.4)}" cy="${n1(y - 1.6)}" rx="2.7" ry="2.2" fill="#fff" stroke="${INK}" stroke-width="1"/>`;
+      return grow(t, `
+        <path d="M${n1(28 - 18.9)} 41a18.9 18.9 0 0 1 37.8 0" stroke="${INK}" stroke-width="1.2" fill="none"/>
+        <path d="M${n1(28 - inR)} 41a${n1(inR)} ${n1(inR)} 0 0 1 ${n1(inR * 2)} 0" stroke="${INK}" stroke-width="1.2" fill="none"/>
         ${arcs}
-        <!-- 구름 받침 — 무지개는 무언가에서 솟아야 그림이 됩니다 -->
-        <circle cx="${n1(28 - R + w * 0.5)}" cy="${n1(cy + 1)}" r="${n1(lerp(4, 5.4, t))}" fill="#FFFFFF"/>
-        <circle cx="${n1(28 - R + w * 2.2)}" cy="${n1(cy + 2)}" r="${n1(lerp(3.2, 4.2, t))}" fill="#F2F4F8"/>
-        <circle cx="${n1(28 + R - w * 0.5)}" cy="${n1(cy + 1)}" r="${n1(lerp(4, 5.4, t))}" fill="#FFFFFF"/>
-        <circle cx="${n1(28 + R - w * 2.2)}" cy="${n1(cy + 2)}" r="${n1(lerp(3.2, 4.2, t))}" fill="#F2F4F8"/>
-        ${lv >= AT_MARK ? `<circle cx="${n1(28 - 2)}" cy="${n1(cy - R - 3)}" r="1.4" fill="#FFFFFF" opacity=".9"/>
-                     <circle cx="${n1(28 + 6)}" cy="${n1(cy - R + 1)}" r="1.1" fill="#FFFFFF" opacity=".8"/>` : ""}
-        ${face(28, cy - R * 0.42, lerp(5, 6.4, t), { dark: "#5B5148" }, true)}`;
+        ${puff(11.4, 41)}${puff(44.6, 41)}
+        ${eyes2(11.4, 41.4, 3.6, "#5A6B7C", { blush: true, smile: true })}
+        ${eyes2(44.6, 41.4, 3.6, "#5A6B7C", { blush: true, smile: true })}`);
     },
 
     moon(g) {
-      /* 달 — 초승달. 큰 원에서 작은 원을 도려냅니다.
-
-         [왜 도려내는가]
-         초승달 모양을 곡선 둘로 직접 그리면 굵기가 고르지 않아
-         손톱처럼 보입니다. 원 두 개를 겹쳐 빼면 어디를 봐도 두께가
-         자연스러워요. 도려내기 틀은 그릴 때마다 새 id 를 씁니다 —
-         도감처럼 여러 마리를 한 화면에 그릴 때 서로 물어오거든요. */
+      /* [2026-08 리뉴얼] 한 획 초승달(도려내기 없음) + 크레이터.
+         금별 Lv.5, 크레이터 Lv.10, 작은 별 Lv.15 */
       const { p, t, lv } = g;
-      const cid = `moonclip${++_clipSeq}`;
-      const cx = 28, cy = 30;
-      const R = lerp(11, 14.5, t);
-      const bite = R * 0.82;                     // 도려낼 원의 크기
-      const bx = cx + R * 0.52;                  // 도려낼 위치
-      return `
-        <clipPath id="${cid}">
-          <path d="M${n1(cx - R - 1)} ${n1(cy - R - 1)}h${n1(R * 2 + 2)}v${n1(R * 2 + 2)}h-${n1(R * 2 + 2)}z"/>
-        </clipPath>
-        <mask id="${cid}m">
-          <rect x="0" y="0" width="60" height="56" fill="#000"/>
-          <circle cx="${n1(cx)}" cy="${n1(cy)}" r="${n1(R)}" fill="#FFF"/>
-          <circle cx="${n1(bx)}" cy="${n1(cy - R * 0.14)}" r="${n1(bite)}" fill="#000"/>
-        </mask>
-        <g mask="url(#${cid}m)">
-          <circle cx="${n1(cx)}" cy="${n1(cy)}" r="${n1(R)}" fill="${p.body}"/>
-          ${lv >= AT_MARK ? `<circle cx="${n1(cx - R * 0.42)}" cy="${n1(cy - R * 0.3)}" r="${n1(R * 0.16)}" fill="${p.line}" opacity=".7"/>
-                       <circle cx="${n1(cx - R * 0.5)}" cy="${n1(cy + R * 0.3)}" r="${n1(R * 0.11)}" fill="${p.line}" opacity=".7"/>` : ""}
-        </g>
-        <!-- 얼굴은 두꺼운 쪽(왼쪽)에 얹습니다 -->
-        ${face(cx - R * 0.42, cy, R * 0.5, p, true)}
-        ${lv >= AT_TAIL ? `<path d="M${n1(cx + R * 0.9)} ${n1(cy - R * 0.9)}l1.4 3 3 1.4 -3 1.4 -1.4 3 -1.4 -3 -3 -1.4 3 -1.4z"
-                               fill="#F7E7A8"/>` : ""}
-        ${lv >= AT_WING ? `<path d="M${n1(cx + R * 1.15)} ${n1(cy + R * 0.5)}l1 2.2 2.2 1 -2.2 1 -1 2.2 -1 -2.2 -2.2 -1 2.2 -1z"
-                               fill="#F7E7A8" opacity=".85"/>` : ""}`;
+      return grow(t, `
+        <path d="M35.4 10.6a17 17 0 1 0 8.2 30.8 13.6 13.6 0 0 1 -8.2 -30.8z" fill="${p.body}" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>
+        ${lv >= AT_MARK ? `<circle cx="22" cy="20" r="2.1" fill="${p.light}" opacity=".9"/><circle cx="17.4" cy="30" r="1.5" fill="${p.light}" opacity=".9"/><circle cx="23" cy="40" r="1.7" fill="${p.light}" opacity=".9"/>
+        <circle cx="22" cy="20" r="2.1" fill="none" stroke="${shade(p.body, -0.25)}" stroke-width=".7"/><circle cx="17.4" cy="30" r="1.5" fill="none" stroke="${shade(p.body, -0.25)}" stroke-width=".7"/>` : ""}
+        ${eyes2(24.5, 28.5, 5.4, "#8A7434", { blush: true, smile: true })}
+        ${lv >= AT_TAIL ? `<path d="M44 16l1 2.9 2.9 1 -2.9 1 -1 2.9 -1 -2.9 -2.9 -1 2.9 -1z" fill="#EF9F27"/>` : ""}
+        ${lv >= AT_WING ? `<path d="M46 34l.7 2 2 .7 -2 .7 -.7 2 -.7 -2 -2 -.7 2 -.7z" fill="#FFD028"/>` : ""}`);
     },
 
     sun(g) {
+      /* [2026-08 리뉴얼] 삼각 햇살(두 색 번갈아) + 얼굴.
+         햇살 4개 → Lv.5에 6개 → Lv.15에 8개 */
       const { p, t, lv } = g;
-      const r = lerp(9.5, 13, t);
       const count = lv >= AT_WING ? 8 : (lv >= AT_TAIL ? 6 : 4);
       let rays = "";
       for (let i = 0; i < count; i++) {
-        const a = (Math.PI * 2 * i) / count - Math.PI / 2;
-        const x1 = 28 + Math.cos(a) * (r + 3), y1 = 28 + Math.sin(a) * (r + 3);
-        const x2 = 28 + Math.cos(a) * (r + 8), y2 = 28 + Math.sin(a) * (r + 8);
-        rays += `<path d="M${n1(x1)} ${n1(y1)}L${n1(x2)} ${n1(y2)}"/>`;
+        const a = Math.PI * 2 * i / count - Math.PI / 2, R = i % 2 ? 15.4 : 18;
+        const x1 = 28 + Math.cos(a - 0.22) * 11.6, y1 = 28 + Math.sin(a - 0.22) * 11.6;
+        const x2 = 28 + Math.cos(a) * R, y2 = 28 + Math.sin(a) * R;
+        const x3 = 28 + Math.cos(a + 0.22) * 11.6, y3 = 28 + Math.sin(a + 0.22) * 11.6;
+        rays += `<path d="M${n1(x1)} ${n1(y1)}L${n1(x2)} ${n1(y2)}L${n1(x3)} ${n1(y3)}z" fill="${i % 2 ? p.light : p.body}" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/>`;
       }
-      return `
-        <g stroke="${p.body}" stroke-width="2.6" stroke-linecap="round">${rays}</g>
-        <circle cx="28" cy="28" r="${n1(r)}" fill="${p.light}"/>
-        <circle cx="28" cy="28" r="${n1(r * 0.72)}" fill="${p.body}" opacity=".3"/>
-        ${face(28, 28, r * 0.8, p, true)}
-        <circle cx="${n1(28 - r * 0.62)}" cy="${n1(28 + r * 0.3)}" r="2.3" fill="#E88A6A" opacity=".45"/>
-        <circle cx="${n1(28 + r * 0.62)}" cy="${n1(28 + r * 0.3)}" r="2.3" fill="#E88A6A" opacity=".45"/>`;
+      return grow(t, `
+        ${rays}
+        <circle cx="28" cy="28" r="11" fill="${p.body}" stroke="${INK}" stroke-width="1.4"/>
+        <circle cx="28" cy="28" r="8.4" fill="${p.light}" opacity=".45"/>
+        ${lv >= AT_MARK ? `<ellipse cx="24" cy="23.4" rx="3.4" ry="2.2" fill="#fff" opacity=".55" transform="rotate(-24 24 23.4)"/>` : ""}
+        ${eyes2(28, 28.5, 6.4, "#8A5A18", { blush: true, smile: true })}`);
     },
 
     star(g) {
+      /* [2026-08 리뉴얼] 윤곽 있는 별 + 속 하이라이트.
+         작은 별 Lv.5, 하이라이트 Lv.10, 둘째 작은 별 Lv.15 */
       const { p, t, lv } = g;
-      const R = lerp(14, 19, t), r2 = R * 0.45;
-      let d = "";
-      for (let i = 0; i < 10; i++) {
-        const a = (Math.PI * i) / 5 - Math.PI / 2;
-        const rr = i % 2 === 0 ? R : r2;
-        d += (i ? "L" : "M") + n1(28 + Math.cos(a) * rr) + " " + n1(26 + Math.sin(a) * rr);
-      }
-      d += "Z";
-      const minis = lv >= AT_WING
-        ? `<circle cx="48" cy="14" r="1.6" fill="${p.light}"/><circle cx="10" cy="42" r="1.3" fill="${p.light}"/><circle cx="46" cy="40" r="1.1" fill="${p.light}"/>`
-        : (lv >= AT_TAIL ? `<circle cx="48" cy="14" r="1.5" fill="${p.light}"/>` : "");
-      return `
-        ${minis}
-        <path d="${d}" fill="${p.light}"/>
-        <circle cx="28" cy="26" r="${n1(R * 0.42)}" fill="${p.body}" opacity=".25"/>
-        ${face(28, 26, R * 0.42, p, true)}`;
+      const sp = (cx, cy, R, r2) => {
+        let d = "";
+        for (let i = 0; i < 10; i++) {
+          const a = Math.PI * i / 5 - Math.PI / 2, rr = i % 2 === 0 ? R : r2;
+          d += (i ? "L" : "M") + n1(cx + Math.cos(a) * rr) + " " + n1(cy + Math.sin(a) * rr);
+        }
+        return d + "Z";
+      };
+      return grow(t, `
+        ${lv >= AT_TAIL ? `<path d="${sp(48.5, 15, 3, 1.35)}" fill="${p.light}" stroke="${INK}" stroke-width=".8" stroke-linejoin="round"/>` : ""}
+        ${lv >= AT_WING ? `<path d="${sp(9.5, 41, 2.5, 1.1)}" fill="${p.light}" stroke="${INK}" stroke-width=".8" stroke-linejoin="round"/>` : ""}
+        <path d="${sp(28, 27, 18.6, 8.4)}" fill="${p.body}" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>
+        ${lv >= AT_MARK ? `<path d="${sp(28, 27, 13.6, 6.2)}" fill="${p.light}" opacity=".5"/>` : ""}
+        ${eyes2(28, 27.5, 6, "#5A4A80", { blush: true, smile: true })}`);
     }
   };
 
