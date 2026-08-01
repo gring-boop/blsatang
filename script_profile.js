@@ -1202,6 +1202,28 @@ window.rerenderUserCards = function () {
     if (e.target && e.target.id === "db-status") renderMyStatusChip();
   });
 
+  /* ★ 칩의 클릭은 여기서 직접 겁니다.
+
+     [무엇이 잘못됐었나]
+     data-pick-status 클릭을 감지하는 그물이 **접속자 카드 영역**에만
+     걸려 있었습니다. 칩은 채팅 헤더에 사니까 그물 밖이었어요.
+     그래서 접속자 탭에서는 상태 고르기가 잘 뜨는데, 채팅만 보는
+     화면에서는 칩을 눌러도 아무 일이 없었습니다. 폰에서 딱 그랬어요. */
+  function bindMyStatusChip() {
+    const chip = document.getElementById("my-status-chip");
+    if (!chip || chip._bound) return;
+    chip._bound = true;
+    chip.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      window.openStatusPicker?.(chip);
+    });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindMyStatusChip);
+  } else {
+    bindMyStatusChip();
+  }
+
   window.openStatusPicker = function (anchor) {
     close();
     if (!anchor) return;
