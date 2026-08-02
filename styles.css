@@ -973,6 +973,10 @@ body.conn-down .user-card.is-me .card-conn i:nth-child(4){ opacity: .22; }
   transition: transform var(--anim-fast), background var(--anim-fast);
 }
 #pomo-opt-btn:hover{ background: var(--fill-1); }
+/* [추가 2026-08-02] 참여 버튼의 starter 표시 — "starter"는 살짝 작게,
+   닉네임은 "참여 중"과 같은 크기로 */
+.pomo-starter-lb{ font-size: .82em; opacity: .75; }
+.pomo-starter-nm{ font-size: 1em; font-weight: var(--fw-medium); }
 #pomo-opt-btn:active{ transform: scale(.97); }
 
 .pomo-detail{

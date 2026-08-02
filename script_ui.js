@@ -1141,12 +1141,23 @@
     return _pomoParticipating;
   }
 
+  /* [추가 2026-08-02] 지금 도는 뽀모를 시작한 사람 — 참여 버튼에 표시 */
+  let _pomoStarter = "";
+  window.setPomoStarter = function (nick) {
+    const n = String(nick || "");
+    if (n === _pomoStarter) return;
+    _pomoStarter = n;
+    _renderParticipationButton();
+  };
+
   function _renderParticipationButton() {
     const btn = document.getElementById("pomo-opt-btn");
     if (!btn) return;
     if (_pomoParticipating) {
       btn.dataset.state = "on";
-      btn.textContent = "🔔 참여 중 · 알림 ON";
+      btn.innerHTML = "🔔 참여 중 · 알림 ON" + (_pomoStarter
+        ? ` / <span class="pomo-starter-lb">starter</span> <span class="pomo-starter-nm">${window.escapeHtml ? window.escapeHtml(_pomoStarter) : ""}</span>`
+        : "");
       btn.classList.remove("danger");
       btn.classList.add("primary");
     } else {

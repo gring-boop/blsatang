@@ -549,6 +549,11 @@
       if (window.pomodoroTick) { clearInterval(window.pomodoroTick); window.pomodoroTick = null; }
       pill.classList.remove("timer-warn");
 
+      /* [추가 2026-08-02] 참여 버튼에 보여줄 starter — 도는 동안만 */
+      window.setPomoStarter?.(
+        (data && data.status !== "stopped") ? String(data.startedBy || "") : ""
+      );
+
       // ✅ stopped/없음 처리
       if (!data || data.status === "stopped") {
         text.textContent = "🍅 뽀모도로 대기 중… 🍅";
@@ -699,6 +704,10 @@
         startedAt: now,
         endAt:     now + workMin * 60 * 1000,
         status:    "running",
+        /* [추가 2026-08-02] 시작 버튼을 누른 사람. updatedBy 는 정지·전환
+           때마다 바뀌지만 startedBy 는 "시작"에서만 적혀서, 참여 버튼에
+           starter 를 보여주는 데 씁니다. */
+        startedBy: myNick || "unknown",
         updatedBy: myNick || "unknown",
         seq:       nextSeq,
         workMin:   workMin,
