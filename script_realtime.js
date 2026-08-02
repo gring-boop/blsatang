@@ -417,7 +417,7 @@
                       title="${connOk ? "연결됨" : "연결이 끊겼어요 (곧 돌아올 수 있어요)"}">
                   <i></i><i></i><i></i><i></i>
                 </span>
-                <div class="card-name">${achChips}${escapeHtml(u)}</div>
+                <div class="card-name">${achChips}${escapeHtml(u)}<span class="card-dex" title="만렙 펫 ${Number(row.petDexN) || 0}종">${Number(row.petDexN) || 0}/${window.Pet?.SPECIES_IDS?.length || 42}</span></div>
                 <div class="card-goal" title="${escapeHtml(row.todayGoalText || "")}"><div class="goal-line">🎯 ${goalText}</div></div>
                 ${metaBlock}
               </div>
@@ -499,6 +499,8 @@
       petLevel:   _pet?.level   || 1,
       petMax:     !!_pet?.isMax,
       petPct:     Math.round((_pet?.ratio || 0) * 100),
+      /* [추가 2026-08-02] 만렙 도감 수 — 닉네임 옆 (n/42) 표시용 */
+      petDexN:    Object.keys(window.petDex?.() || {}).length,
       // ✅ 서버 시각으로 기록 — 각자 PC 시계가 달라도 판정이 흔들리지 않음
       lastSeen: firebase.database.ServerValue.TIMESTAMP,
       // 살아 있다는 뜻 — 끊김 표시를 지웁니다

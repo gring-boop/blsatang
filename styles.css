@@ -1664,6 +1664,23 @@ body.pomo-nonpart .pomo-status-line{
   text-overflow: ellipsis;
 }
 
+/* [추가 2026-08-02] 닉네임 뒤 만렙 도감 수 — 미니 알약 배지 (n/42) */
+.card-name .card-dex{
+  display: inline-block;
+  font-size: .62em;
+  font-weight: var(--fw-medium);
+  line-height: 1.5;
+  color: var(--text-dim);
+  background: var(--fill-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  padding: 0 7px;
+  margin-left: 5px;
+  vertical-align: 2px;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
 .card-goal{ margin-top: 0; }
 .card-goal .goal-line{
   text-align: right;
