@@ -63,7 +63,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
 
-  <link rel="stylesheet" href="styles.css?v=202608022054" />
+  <link rel="stylesheet" href="styles.css?v=202608022134" />
 </head>
 
 <body>
@@ -465,16 +465,16 @@
       <div id="hidden-panels" class="hidden-panels hidden" aria-label="치워둔 창"></div>
 
       <div class="head-tools">
-        <button class="icon-btn guide" type="button" onclick="openManual()" aria-label="가이드" title="가이드">
+        <button class="icon-btn guide labeled" type="button" onclick="openManual()" aria-label="가이드" title="가이드">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.2 3.1c-.6.2-.8.7-.8 1.3v.4"/><path d="M12 17.2h.01"/>
-          </svg>
+          </svg><span class="icon-btn-label">가이드</span>
         </button>
 
-        <button class="icon-btn" type="button" onclick="openSettings()" aria-label="설정" title="설정">
+        <button class="icon-btn labeled" type="button" onclick="openSettings()" aria-label="설정" title="설정">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7.9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3 14.2H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 8.9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/>
-          </svg>
+          </svg><span class="icon-btn-label">설정</span>
         </button>
 
         <div class="font-ctl">
@@ -483,10 +483,10 @@
           <button class="font-btn" type="button" onclick="increaseFont()" aria-label="글씨 크게">+</button>
         </div>
 
-        <button class="icon-btn danger" type="button" onclick="leaveRoom()" aria-label="나가기" title="나가기">
+        <button class="icon-btn danger labeled" type="button" onclick="leaveRoom()" aria-label="나가기" title="나가기">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5"/><path d="M5 12h11"/>
-          </svg>
+          </svg><span class="icon-btn-label">나가기</span>
         </button>
       </div>
     </div>
@@ -752,21 +752,21 @@
 
 <!-- Core → UI → Chat → Data → Realtime → Profile 순서 -->
 <!-- script_profile.js는 다른 모듈의 함수를 감싸므로 반드시 마지막에 로드 -->
-<script src="fortune_data.js?v=202608022054"></script>
-<script src="script_core.js?v=202608022054"></script>
-<script src="script_auth.js?v=202608022054"></script>
-<script src="script_ui.js?v=202608022054"></script>
-<script src="script_chat.js?v=202608022054"></script>
-<script src="script_data.js?v=202608022054"></script>
-<script src="script_realtime.js?v=202608022054"></script>
-<script src="script_layout.js?v=202608022054"></script>
-<script src="script_pet.js?v=202608022054"></script>
-<script src="script_pet_ui.js?v=202608022054"></script>
-<script src="script_wordcount.js?v=202608022054"></script>
-<script src="script_timelog.js?v=202608022054"></script>
-<script src="script_profile.js?v=202608022054"></script>
-<script src="script_reactions.js?v=202608022054"></script>
-<script src="script_manual.js?v=202608022054"></script>
+<script src="fortune_data.js?v=202608022134"></script>
+<script src="script_core.js?v=202608022134"></script>
+<script src="script_auth.js?v=202608022134"></script>
+<script src="script_ui.js?v=202608022134"></script>
+<script src="script_chat.js?v=202608022134"></script>
+<script src="script_data.js?v=202608022134"></script>
+<script src="script_realtime.js?v=202608022134"></script>
+<script src="script_layout.js?v=202608022134"></script>
+<script src="script_pet.js?v=202608022134"></script>
+<script src="script_pet_ui.js?v=202608022134"></script>
+<script src="script_wordcount.js?v=202608022134"></script>
+<script src="script_timelog.js?v=202608022134"></script>
+<script src="script_profile.js?v=202608022134"></script>
+<script src="script_reactions.js?v=202608022134"></script>
+<script src="script_manual.js?v=202608022134"></script>
 
 <script>
   window.addEventListener("load", () => {

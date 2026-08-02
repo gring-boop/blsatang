@@ -3230,7 +3230,16 @@ input[type="range"]:focus{ box-shadow: none; }
   justify-content: center;
   transition: background var(--anim-fast), color var(--anim-fast), transform var(--anim-fast);
 }
-.icon-btn svg{ width: 16px; height: 16px; display: block; }
+.icon-btn svg{ width: 16px; height: 16px; display: block; flex: none; }
+/* [추가 2026-08-02] 아이콘 옆 문구 — 아이콘만으로는 모르겠다는 분들이 많아서.
+   문구가 있는 버튼은 정사각형을 풀고 알약처럼 늘어납니다. */
+.icon-btn.labeled{ width: auto; padding: 0 9px 0 7px; gap: 4px; }
+.icon-btn-label{
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  line-height: 1;
+}
 .icon-btn:hover{ background: var(--fill-2); color: var(--text); }
 .icon-btn:active{ transform: scale(.94); }
 .icon-btn.danger{ color: var(--on-danger-btn); border-color: var(--danger-line); }
