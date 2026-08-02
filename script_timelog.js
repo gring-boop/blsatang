@@ -161,6 +161,40 @@
     }
   }
 
+  /* [추가 2026-08-02] 구간을 뺏겼으면 되찾습니다.
+
+     timeCur 는 계정당 하나라, 같은 계정으로 두 번째 탭·기기가 열리면
+     그쪽이 구간을 가져가고 이 탭은 _cur 를 놓습니다. 예전엔 상태를
+     바꾸기 전까지 다시 시작하지 않아서, 그 뒤로 몇 시간을 써도 서버에
+     아무것도 안 쌓였습니다 (펫 레벨이 되돌아가던 원인).
+
+     이제 화면에 보이는 탭이 30초 안에 구간을 되찾아 이어갑니다.
+     되찾기 전에 상대가 열어둔 구간을 alive/disc 시각까지 닫아 주므로
+     양쪽 다 시간이 새지 않고, 숨어 있는 탭은 되찾지 않으므로 두 탭이
+     서로 뺏고 빼앗는 일도 없습니다. */
+  let _remoteCur = null;
+  let _reclaimBusy = false;
+  async function reclaimIfDropped() {
+    if (_reclaimBusy || _cur || !myNick || !_tlStarted) return;
+    if (document.visibilityState !== "visible") return;
+    _reclaimBusy = true;
+    try {
+      const t = nowMs();
+      const v = _remoteCur;
+      if (v && v.sid && v.sid !== SID && Number(v.a) > 0) {
+        const cut = Math.min(t, Math.max(
+          Number(v.a), Number(v.alive) || 0, Number(v.disc) || 0));
+        await pushSegment(v.s, Number(v.a), cut);
+      }
+      _lastSeenStatus = currentUiStatus();
+      _cur = { s: _lastSeenStatus, a: t, sid: SID };
+      await curRef().set(_cur);
+      markAlive();
+      armDisc();
+    } catch (e) {}
+    _reclaimBusy = false;
+  }
+
   /* [추가 2026-08-02] 열린 구간이 너무 길면 잘라서 저장하고 같은 상태로
      다시 엽니다. 합계는 변하지 않고(닫힌 구간 + 새 열린 구간), 한 구간이
      6시간 상한에 걸려 뒤가 잘리는 일만 막습니다. */
@@ -286,6 +320,7 @@
     try {
       curRef().on("value", s3 => {
         const v = s3.val();
+        _remoteCur = v || null;          // 되찾을 때 상대 구간을 닫는 데 씁니다
         if (_cur && v && v.sid && v.sid !== SID) _cur = null;
       });
     } catch (e) {}
@@ -293,6 +328,7 @@
     setInterval(() => {
       if (!myNick) return;
       markAlive();
+      if (!_cur) { reclaimIfDropped(); return; }   // 다른 탭에 뺏긴 경우
       const s = currentUiStatus();
       if (s !== _lastSeenStatus) { _lastSeenStatus = s; switchTo(s); return; }
       checkpointIfLong();
@@ -303,6 +339,7 @@
     const wake = () => {
       if (!myNick || document.visibilityState === "hidden") return;
       markAlive();
+      if (!_cur) reclaimIfDropped();   // 뺏긴 채 돌아왔으면 바로 되찾기
     };
     document.addEventListener("visibilitychange", wake);
     window.addEventListener("focus", wake);
