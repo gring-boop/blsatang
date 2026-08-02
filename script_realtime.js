@@ -549,10 +549,20 @@
       if (window.pomodoroTick) { clearInterval(window.pomodoroTick); window.pomodoroTick = null; }
       pill.classList.remove("timer-warn");
 
-      /* [추가 2026-08-02] 참여 버튼에 보여줄 starter — 도는 동안만 */
-      window.setPomoStarter?.(
-        (data && data.status !== "stopped") ? String(data.startedBy || "") : ""
-      );
+      /* [추가 2026-08-02] 참여 버튼에 보여줄 starter — 도는 동안만.
+
+         startedBy 가 마지막 정지(stoppedAt) 이후에 적힌 것일 때만 믿습니다.
+         옛 코드로 접속한 사람이 시작을 누르면 startedBy 를 안 적어서
+         지난 세션 이름이 남는데, 그 이름은 지난 정지보다 오래된 것이라
+         여기서 걸러집니다 — 그때는 이름 없이 보여요. (startedAt 과 비교하면
+         안 됩니다: 휴식↔집중 자동 전환 때마다 startedAt 이 갱신돼서
+         멀쩡한 starter 도 사라져요) */
+      let starter = "";
+      if (data && data.status !== "stopped" && data.startedBy) {
+        const sbAt = Number(data.startedByAt || 0);
+        if (sbAt && sbAt > Number(data.stoppedAt || 0)) starter = String(data.startedBy);
+      }
+      window.setPomoStarter?.(starter);
 
       // ✅ stopped/없음 처리
       if (!data || data.status === "stopped") {
@@ -706,8 +716,14 @@
         status:    "running",
         /* [추가 2026-08-02] 시작 버튼을 누른 사람. updatedBy 는 정지·전환
            때마다 바뀌지만 startedBy 는 "시작"에서만 적혀서, 참여 버튼에
-           starter 를 보여주는 데 씁니다. */
-        startedBy: myNick || "unknown",
+           starter 를 보여주는 데 씁니다.
+           startedByAt 은 검증용 — 옛 코드로 접속한 사람이 시작을 누르면
+           startedBy 를 안 적어서 지난 세션 이름이 남는데, 그걸 걸러냅니다.
+           stoppedAt 을 지우는 것도 같은 이유: "마지막 정지보다 나중에
+           적힌 startedBy 만 믿는다"가 판별 기준이라서요 (listenPomodoro). */
+        startedBy:   myNick || "unknown",
+        startedByAt: now,
+        stoppedAt:   null,
         updatedBy: myNick || "unknown",
         seq:       nextSeq,
         workMin:   workMin,
