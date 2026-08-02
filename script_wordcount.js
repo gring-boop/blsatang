@@ -44,8 +44,7 @@
    아랫줄(계산 결과)은 방이 알려주는 말이라 **가운데**에 둡니다.
    순위표가 아니라 대화 기록으로 읽히게 하려는 배치예요.
 
-   시간은 넣지 않습니다. 줄마다 시각이 붙으면 좁은 칸이 금세
-   지저분해지고, 몇 시에 올렸는지는 사실 아무도 안 봅니다.
+   [고침 2026-08-02] 시간을 채팅처럼 말풍선 옆에 붙입니다. (요청)
 
    남과 견주는 화면은 '내 기록' 탭 하나뿐이고, 거기서 견주는 상대는
    지난 요일의 나입니다.
@@ -142,7 +141,14 @@
       const sum = vals.reduce((a, b) => a + b[1], 0);
       big.textContent  = fmt(sum);
       unit.textContent = "자 · 이번 주 내 합계";
-      rows.innerHTML = drawRows(vals, vals.length - 1);
+      /* [추가 2026-08-02] 요일별 그래프 아래에 "오늘 내 기록"을 붙입니다.
+         오늘 탭과 같은 흐르는 기록이지만, 내가 올린 것만 골라 보여줍니다. */
+      const myFeed = _feed.filter(f => f.nick === me());
+      rows.innerHTML = drawRows(vals, vals.length - 1)
+        + `<div class="wc-me-h">오늘 내 기록</div>`
+        + (myFeed.length
+            ? drawFeed(myFeed)
+            : `<div class="wc-empty">오늘 올린 기록이 아직 없어요.</div>`);
     } else {
       /* 오늘 탭 — 흐르는 기록. 순위도 막대도 없습니다. */
       const roomSum = Object.values(_today)
@@ -178,14 +184,20 @@
       const nick = esc(f.nick);
       /* 옛 기록에는 snap 이 없습니다. 그럴 땐 윗줄을 생략합니다. */
       const snap = (f.snap === undefined || f.snap === null) ? null : Number(f.snap);
+      /* [추가 2026-08-02] 채팅처럼 말풍선 안쪽 옆에 시각을 붙입니다.
+         내 것은 왼쪽에, 남의 것은 오른쪽에 — 채팅 창과 같은 배치예요. */
+      const tm = (f.at && window.formatHHMM)
+        ? `<span class="wc-said-t">${window.formatHHMM(f.at)}</span>` : "";
 
       return `<div class="wc-feed${isMe ? " me" : ""}">
         ${snap === null ? "" : `
         <div class="wc-said-line">
+          ${isMe ? tm : ""}
           <div class="wc-said">
             ${isMe ? "" : `<span class="wc-said-nm">${nick}</span>`}
             <span class="wc-said-n">${fmt(snap)}자</span>
           </div>
+          ${isMe ? "" : tm}
         </div>`}
         <div class="wc-feed-sys">
           [<b>${nick}</b>님 <b>+${fmt(f.add)}자</b>${
@@ -524,11 +536,9 @@
       <div class="rec-h2">이번 주 · 요일별</div>
       <div class="wc-rows" style="max-height:none">${drawRows(vals, vals.length - 1)}</div>
       <div class="rec-foot">이번 주 <b>${fmt(week)}자</b></div>
-      <p class="hint">
-        ${base === null || base === undefined
-          ? "아직 출발선을 안 잡았어요. 글자수 칸에서 지금 원고의 전체 글자수를 적어주세요."
-          : `지금 기준은 <b>${fmt(base)}자</b>예요. 다음에도 그때의 전체 글자수를 적으면 차이만 쌓입니다.`}
-      </p>`;
+      ${base === null || base === undefined
+        ? `<p class="hint">아직 출발선을 안 잡았어요. 글자수 칸에서 지금 원고의 전체 글자수를 적어주세요.</p>`
+        : ""}`;
   }
 
   window.Wordcount = { dayKey, weekDays, drawRows, drawFeed, sumWeek, myWeekHtml,

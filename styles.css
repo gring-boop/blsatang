@@ -3726,7 +3726,8 @@ body.narrow-chat-focus .narrow-tabs{
 .wc-unit{ font-size: var(--fs-xs); color: var(--text-dim); }
 .wc-rows{
   display:flex; flex-direction:column; gap:4px;
-  font-size: var(--fs-xs);
+  /* [고침 2026-08-02] 글자수 창만 0.5px 키움 (요청) */
+  font-size: calc(var(--fs-xs) + .5px);
   overflow:auto; min-height: 0; flex: 1 1 auto;
 }
 .wc-row{ display:flex; align-items:center; gap:7px; }
@@ -3736,7 +3737,7 @@ body.narrow-chat-focus .narrow-tabs{
          background: var(--accent); opacity:.45; max-width:40%; min-width:3px; }
 .wc-n{ flex:0 0 auto; font-variant-numeric: tabular-nums; font-weight: var(--fw-medium); }
 .wc-row.me .wc-nm{ color: var(--accent); font-weight: var(--fw-medium); }
-.wc-empty{ font-size: var(--fs-xs); color: var(--text-dim); }
+.wc-empty{ font-size: calc(var(--fs-xs) + .5px); color: var(--text-dim); }
 .wc-log{ margin:0; min-height:16px; font-size: var(--fs-2xs);
          font-weight: var(--fw-medium); color:#2FA36B; flex:none; }
 .wc-inputline{ display:flex; gap:5px; flex:none; }
@@ -3752,15 +3753,34 @@ body.narrow-chat-focus .narrow-tabs{
 
    · 올린 숫자   : 내 것은 오른쪽, 남의 것은 왼쪽 (말풍선)
    · 계산 결과   : 방이 알려주는 말이라 가운데
-   · 시간        : 넣지 않습니다 (좁은 칸이 지저분해져서)
+   · 시간        : 채팅처럼 말풍선 옆에 (2026-08-02 요청)
 
    순위표처럼 보이지 않게 하려는 배치입니다. 나란히 줄 세우면
    그날 적게 쓴 사람이 위축되니까요.
    ===================================================================== */
-.wc-feed{ padding: 6px 0; font-size: var(--fs-xs); line-height: 1.4; }
+.wc-feed{ padding: 6px 0; font-size: calc(var(--fs-xs) + .5px); line-height: 1.4; }
 /* ── 올린 숫자 (말풍선) ── */
-.wc-said-line{ display:flex; justify-content:flex-start; }
+.wc-said-line{ display:flex; justify-content:flex-start; align-items:flex-end; gap:4px; }
 .wc-feed.me .wc-said-line{ justify-content:flex-end; }
+/* [추가 2026-08-02] 말풍선 옆 시각 — 채팅의 msg-time 과 같은 느낌 */
+.wc-said-t{
+  flex:none;
+  font-size: var(--fs-2xs);
+  color: var(--time-muted, var(--text-dim));
+  font-variant-numeric: tabular-nums;
+  padding-bottom: 2px;
+  user-select: none;
+  white-space: nowrap;
+}
+/* [추가 2026-08-02] 내 기록 탭 · "오늘 내 기록" 구분 제목 */
+.wc-me-h{
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  color: var(--text-dim);
+}
 .wc-said{
   display:inline-flex; align-items:baseline; gap:5px;
   max-width: 85%;
@@ -3783,7 +3803,7 @@ body.narrow-chat-focus .narrow-tabs{
   margin-top: 4px;
   text-align: center;          /* 방이 알려주는 말이라 가운데 */
   color: var(--text-dim);
-  font-size: var(--fs-2xs);
+  font-size: calc(var(--fs-2xs) + .5px);
   word-break: break-all;
 }
 .wc-feed-sys b{ color: var(--text); font-weight: var(--fw-medium); }

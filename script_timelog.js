@@ -52,6 +52,11 @@
   const OFFLINE_MIN_MS = 5 * 60 * 1000;   // 이보다 오래 끊겼으면 그 구간을 집계에서 뺍니다
   const SEG_CAP_MS     = 6 * 60 * 60 * 1000; // 한 구간의 상한 (상식 밖 값 방지)
   const ALIVE_TICK_MS  = 30 * 1000;
+  /* [추가 2026-08-02] 열린 구간이 이 길이를 넘으면 잘라서 저장하고 새로 엽니다.
+     같은 상태로 밤새 달리면 한 구간이 6시간 상한(SEG_CAP_MS)에 걸려
+     그 뒤가 통째로 잘렸습니다. 1시간마다 미리 닫아두면 상한에 걸릴 일이
+     없고, 자정을 넘길 때도 날짜별로 제때 나뉩니다. */
+  const CHECKPOINT_MS  = 60 * 60 * 1000;
 
   /* 예전 이름을 쓰는 곳이 있을 수 있어 남겨둡니다 */
   const GAP_LIMIT_MS = OFFLINE_MIN_MS;
@@ -113,6 +118,13 @@
      이 파일의 원칙을 이걸로 실제로 지킵니다. */
   function armDisc() {
     try {
+      /* [고침 2026-08-02] 묵은 disc 를 먼저 지웁니다.
+
+         잠깐 끊겼다 붙으면(5분 미만) 구간을 새로 쓰지 않는데, 그 사이
+         서버가 onDisconnect 로 적어둔 disc 는 지워지지 않고 남았습니다.
+         loadSummary 가 이 묵은 disc 까지만 세는 바람에, 계속 접속해서
+         쓰고 있는데도 오늘 합계가 그 시각(예: 2분)에서 멈췄습니다. */
+      curRef().child("disc").remove();
       curRef().child("disc").onDisconnect().set(firebase.database.ServerValue.TIMESTAMP);
     } catch (e) {}
   }
@@ -147,6 +159,24 @@
       }
       a = end;
     }
+  }
+
+  /* [추가 2026-08-02] 열린 구간이 너무 길면 잘라서 저장하고 같은 상태로
+     다시 엽니다. 합계는 변하지 않고(닫힌 구간 + 새 열린 구간), 한 구간이
+     6시간 상한에 걸려 뒤가 잘리는 일만 막습니다. */
+  let _ckptBusy = false;
+  async function checkpointIfLong() {
+    if (_ckptBusy || !_cur || !myNick) return;
+    if (nowMs() - Number(_cur.a) < CHECKPOINT_MS) return;
+    _ckptBusy = true;
+    try {
+      const at = nowMs();
+      const prev = _cur;
+      _cur = { s: prev.s, a: at, sid: SID };
+      await pushSegment(prev.s, prev.a, at);
+      await curRef().set(_cur);
+    } catch (e) {}
+    _ckptBusy = false;
   }
 
   /** 지금 열린 구간을 닫고 새 상태로 다시 엽니다 */
@@ -264,7 +294,8 @@
       if (!myNick) return;
       markAlive();
       const s = currentUiStatus();
-      if (s !== _lastSeenStatus) { _lastSeenStatus = s; switchTo(s); }
+      if (s !== _lastSeenStatus) { _lastSeenStatus = s; switchTo(s); return; }
+      checkpointIfLong();
     }, ALIVE_TICK_MS);
 
     watchConnection();
@@ -350,10 +381,12 @@
          상한을 넘긴 뒤로는 더 늘지 않고 6시간에서 멈춥니다. */
       if (cur && Number(cur.a) > 0) {
         const curStart = Number(cur.a);
-        /* [고침 2026-08] 연결이 이미 끊긴 사람의 열린 구간은 끊긴 시각
-           (disc)까지만 셉니다. 예전엔 지금 시각까지 계속 자라는 걸로
-           계산해서, 퇴근한 사람의 오늘 합계가 6시간 상한까지 부풀었습니다. */
-        const hardEnd  = Number(cur.disc) > 0 ? Math.min(t, Number(cur.disc)) : t;
+        /* [고침 2026-08] 끊긴 사람의 열린 구간은 disc 까지만 셉니다.
+           [고침 2026-08-02] 단 alive 가 disc 보다 최신이면 disc 무시 —
+           잠깐 끊겼다 붙은 뒤 남은 묵은 disc 가 합계를 멈추던 버그. */
+        const disc     = Number(cur.disc) || 0;
+        const alive    = Number(cur.alive) || 0;
+        const hardEnd  = (disc > 0 && disc >= alive) ? Math.min(t, disc) : t;
         const curEnd   = Math.min(hardEnd, curStart + SEG_CAP_MS);   // ← 상한
         const a = Math.max(curStart, dayMs);
         const b = Math.min(curEnd, dayMs + 24 * 60 * 60 * 1000);
