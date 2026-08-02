@@ -3602,7 +3602,16 @@ body.narrow-chat-focus .narrow-tabs{
   justify-content: flex-end;
   gap: 2px;
 }
-.card-pet .pet-svg{ display: block; }
+/* [고침 2026-08-02] 펫 크기 — 58px 고정을 버리고 남는 칸을 꽉 채웁니다.
+   svg 는 viewBox 덕에 어떤 크기든 비율 그대로 늘어나요. 위로는 상태
+   알약, 아래로는 레벨·게이지가 있으니 그 사이(flex 남는 높이)와 칸
+   폭 중 작은 쪽에 맞춰집니다 — 옆 칸을 넘지 않는 선에서 최대 크기. */
+.card-pet .pet-svg{
+  display: block;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+}
 .card-pet-lv{
   font-size: var(--fs-3xs, 10px);
   color: var(--muted);
