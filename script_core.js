@@ -465,6 +465,10 @@ window.AppSession = AppSession;
   async function leaveRoom() {
     if (!myNick) return;
 
+    /* [추가 2026-08-03] 집필 시간 마침표 — myNick 을 비우기 전에,
+       열려 있는 구간을 이 자리에서 닫아 저장까지 끝냅니다. */
+    try { await window.finalizeTimelog?.(); } catch (e) {}
+
     await cancelPresenceOnDisconnect();
     await db.ref("status/" + myNick).remove();
     await _writeLeaveSystemMessageOnce();

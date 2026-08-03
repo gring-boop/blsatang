@@ -1366,7 +1366,11 @@ body.pomo-nonpart .pomo-status-line{
 .user-cards-grid{
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--card-w), 1fr));
+  /* [고침 2026-08-03] 카드 폭 고정 — 1fr 로 늘리면 사이드창 너비를
+     조절할 때마다 카드가 커졌다 작아졌다 했습니다. 이제 항상 --card-w
+     그대로이고, 남는 가로 공간은 가운데 여백으로 갑니다. */
+  grid-template-columns: repeat(auto-fill, var(--card-w));
+  justify-content: center;
   gap: var(--cards-gap);
   padding: var(--cards-pad);
   overflow-y: auto;

@@ -361,6 +361,24 @@
   }
   window.startTimelog = startTimelog;
 
+  /* [추가 2026-08-03] 나가기 버튼의 "마침표".
+
+     창을 그냥 닫으면 열린 구간은 다음 입장 때 disc/alive 를 보고
+     정산되는데, 그 사이 표시가 어긋나 보일 수 있습니다. 나가기 버튼은
+     사용자가 직접 누르는 순간이라 시간이 있으므로, 그 자리에서 구간을
+     닫아 저장까지 끝냅니다. 이 뒤로는 정산할 것이 남지 않습니다. */
+  async function finalizeTimelog() {
+    if (!myNick) return;
+    const seg = _cur;
+    _cur = null;                       // 먼저 놓아야 이중 정산이 없습니다
+    try {
+      if (seg && Number(seg.a) > 0) await pushSegment(seg.s, seg.a, nowMs());
+      try { await curRef().child("disc").onDisconnect().cancel(); } catch (e) {}
+      await curRef().remove();
+    } catch (e) {}
+  }
+  window.finalizeTimelog = finalizeTimelog;
+
   /** 상태가 바뀔 때 즉시 반영 (updateStatus 를 감싸서) */
   function hookStatusChange() {
     const orig = window.updateStatus;
