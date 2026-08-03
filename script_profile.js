@@ -962,6 +962,14 @@ function openProfileEditor() {
 }
 window.openProfileEditor = openProfileEditor;
 
+/** 카드의 펫을 누르면 설정 → 🐾 펫 으로 바로 갑니다 */
+function openPetPanel() {
+  if (!myNick) { alert("입장 후에 볼 수 있어요."); return; }
+  window.openSettings?.();
+  window.openTab?.("pet");
+}
+window.openPetPanel = openPetPanel;
+
 /**
  * 카드는 status가 바뀔 때마다 통째로 다시 그려지므로
  * 버튼마다 리스너를 다는 대신 컨테이너에 위임합니다.
@@ -978,10 +986,16 @@ function bindCardEditDelegate() {
       openProfileEditor();
       return;
     }
-    /* 상태표 → Work ↔ Break 토글 (2026-08-03: 상태 2가지로 축소) */
+    /* 펫 → 펫 관리 창 */
+    if (e.target?.closest?.("[data-open-pet]")) {
+      e.preventDefault(); e.stopPropagation();
+      window.openPetPanel?.();
+      return;
+    }
+    /* 상태표 → 상태 고르기 */
     if (e.target?.closest?.("[data-pick-status]")) {
       e.preventDefault(); e.stopPropagation();
-      window.toggleWritingStatus?.();
+      window.openStatusPicker?.(e.target.closest("[data-pick-status]"));
       return;
     }
   });
@@ -990,8 +1004,9 @@ function bindCardEditDelegate() {
   host.addEventListener("keydown", (e) => {
     if (e.key !== "Enter" && e.key !== " ") return;
     const t = e.target;
-    if (t?.closest?.("[data-edit-profile]")) { e.preventDefault(); openProfileEditor(); }
-    else if (t?.closest?.("[data-pick-status]")) { e.preventDefault(); window.toggleWritingStatus?.(); }
+    if (t?.closest?.("[data-open-pet]")) { e.preventDefault(); window.openPetPanel?.(); }
+    else if (t?.closest?.("[data-edit-profile]")) { e.preventDefault(); openProfileEditor(); }
+    else if (t?.closest?.("[data-pick-status]")) { e.preventDefault(); window.openStatusPicker?.(t); }
   });
 }
 window.bindCardEditDelegate = bindCardEditDelegate;
@@ -1012,17 +1027,26 @@ window.bindCardEditDelegate = bindCardEditDelegate;
       _openTab.apply(this, arguments);
       if (name === "profile") renderProfilePanel();
       if (name === "goals")   mountGoalBlocks(document.getElementById("panel-goals"));
+      if (name === "pet")     window.renderPetPanel?.();
       if (name === "record")  window.renderMyRecordPanel?.();
     };
     wrapped.__profilePatched = true;
     window.openTab = wrapped;
   }
 
-  /* 입장 완료 후 프로필 로드 + 시간 기록 시작
+  /* 입장 완료 후 프로필 로드 + 시간 기록·펫 시작
 
-     [왜 입장 뒤인가] startTimelog 는 필명이 있어야 동작합니다.
-     페이지 로드(init) 시점에는 필명이 아직 없어서 첫 줄에서 그냥
-     돌아가므로, 입장한 뒤에 다시 불러줍니다. 여러 번 불려도
+     [FIX] 펫 관리 창에서 아무것도 안 눌리던 문제
+
+     startTimelog 와 startPet 을 init(페이지 로드) 에서만 불렀습니다.
+     그 시점에는 필명이 아직 없어서 두 함수가 첫 줄에서 그냥 돌아갑니다.
+     그래서 펫 정보가 비어 있었고, 껍데기·색을 눌러도 저장할 대상이
+     없어 조용히 아무 일도 일어나지 않았습니다.
+
+     화면에는 펫이 보였습니다. 값이 없을 때 기본값으로 그리게 해둔
+     탓입니다 — "보이는데 안 먹는다" 가 그래서 나왔습니다.
+
+     입장한 뒤에 다시 불러줍니다. 두 함수 모두 여러 번 불려도
      안전하도록 만들어져 있습니다. */
   const _join = window.join;
   if (typeof _join === "function" && !_join.__profilePatched) {
@@ -1032,6 +1056,9 @@ window.bindCardEditDelegate = bindCardEditDelegate;
         try { await afterJoinLoadProfile(); } catch (e) { console.warn("[afterJoinLoadProfile]", e); }
         try { window.startTimelog?.(); }      catch (e) { console.warn("[startTimelog]", e); }
         try { window.startWordcount?.(); }    catch (e) {}
+        try { await window.startPet?.(); }    catch (e) { console.warn("[startPet]", e); }
+        try { window.renderPetPanel?.(); }    catch (e) {}
+        try { window.renderMyStatusChip?.(); } catch (e) {}
       }
     };
     wrapped.__profilePatched = true;
@@ -1053,6 +1080,7 @@ window.bindCardEditDelegate = bindCardEditDelegate;
       try { window.bindRecordOpen?.(); }    catch (e) { console.warn("[bindRecordOpen]", e); }
       try { window.hookTimelogStatus?.(); } catch (e) { console.warn("[hookTimelogStatus]", e); }
       try { window.startTimelog?.(); }      catch (e) { console.warn("[startTimelog]", e); }
+      try { window.startPet?.(); }          catch (e) { console.warn("[startPet]", e); }
     };
     wrapped.__profilePatched = true;
     window.init = wrapped;
@@ -1113,7 +1141,7 @@ window.rerenderUserCards = function () {
 (function () {
   const CHOICES = [
     { v: "writing", label: "WORK",      cls: "status-writing" },
-    { v: "focus",   label: "🔥초집중🔥", cls: "status-focus"   },
+    { v: "focus",   label: "🔥WORK🔥",   cls: "status-focus"   },
     { v: "rest",    label: "휴식",       cls: "status-rest"    },
     { v: "away",    label: "자리비움",   cls: "status-away"    }
   ];
@@ -1140,8 +1168,60 @@ window.rerenderUserCards = function () {
          (이 select 에는 oninput 이 걸려 있습니다) */
       sel.dispatchEvent(new Event("input", { bubbles: true }));
       window.renderQuickStatusBtn?.();
+      window.renderMyStatusChip?.();
     }
     close();
+  }
+
+  /* ---------------------------------------------------------------
+     채팅 헤더의 내 상태 칩
+
+     값의 근원은 언제나 #db-status 하나입니다. 칩은 그 값을 비춰
+     보여줄 뿐이에요. 카드 상태표·고르기 판·이 칩 어디서 바꿔도
+     전부 같은 값을 움직이므로 서로 어긋날 수 없습니다. */
+  function renderMyStatusChip() {
+    const chip = document.getElementById("my-status-chip");
+    if (!chip) return;
+    if (!myNick) { chip.classList.add("hidden"); return; }
+
+    const v = document.getElementById("db-status")?.value || "";
+    const c = CHOICES.find(x => x.v === v);
+    chip.classList.remove("hidden",
+      "status-writing", "status-focus", "status-rest", "status-away");
+    if (c) {
+      chip.textContent = c.label;
+      chip.classList.add(c.cls);
+    } else {
+      chip.textContent = "상태 고르기";
+    }
+  }
+  window.renderMyStatusChip = renderMyStatusChip;
+
+  /* 값이 바뀌는 길목마다 칩을 새로 칠합니다 */
+  document.addEventListener("input", (e) => {
+    if (e.target && e.target.id === "db-status") renderMyStatusChip();
+  });
+
+  /* ★ 칩의 클릭은 여기서 직접 겁니다.
+
+     [무엇이 잘못됐었나]
+     data-pick-status 클릭을 감지하는 그물이 **접속자 카드 영역**에만
+     걸려 있었습니다. 칩은 채팅 헤더에 사니까 그물 밖이었어요.
+     그래서 접속자 탭에서는 상태 고르기가 잘 뜨는데, 채팅만 보는
+     화면에서는 칩을 눌러도 아무 일이 없었습니다. 폰에서 딱 그랬어요. */
+  function bindMyStatusChip() {
+    const chip = document.getElementById("my-status-chip");
+    if (!chip || chip._bound) return;
+    chip._bound = true;
+    chip.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      window.openStatusPicker?.(chip);
+    });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindMyStatusChip);
+  } else {
+    bindMyStatusChip();
   }
 
   window.openStatusPicker = function (anchor) {

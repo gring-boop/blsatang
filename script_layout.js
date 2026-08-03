@@ -29,32 +29,42 @@
   /* ---------------------------------------------------------------
      [1] 창과 자리
      --------------------------------------------------------------- */
-  /* TheMagam 은 세 칸 고정입니다.
-     오늘 목표·상태·투두는 창이 아니라 프로필 편집 팝업 안으로 들어갔습니다. */
+  /* [변경] 다섯 칸 → 네 칸
+
+     오늘 목표와 나의 투두는 창에서 빼고, 프로필 카드 아래를 누르면
+     뜨는 팝업 안으로 옮겼습니다. 대신 글자수 칸이 새로 들어왔어요.
+     창이 넷이면 배치 고르기도 훨씬 단순해집니다. */
   const PANELS = [
-    { id: "prof", label: "👥 접속자",   icon: "👥", sel: ".cards-area"   },
-    { id: "pomo", label: "🍅 뽀모도로", icon: "🍅", sel: "#pomo-block"   },
-    { id: "chat", label: "💬 채팅",     icon: "💬", sel: ".chat-sidebar" }
+    { id: "chat", label: "💬 채팅",         icon: "💬", sel: ".chat-sidebar"    },
+    { id: "prof", label: "👥 접속자",       icon: "👥", sel: ".cards-area"      },
+    { id: "pomo", label: "🍅 뽀모도로",     icon: "🍅", sel: "#pomo-block"      },
+    { id: "word", label: "✍️ 글자수",       icon: "✍️", sel: "#wordcount-block" }
   ];
   const PANEL_IDS = PANELS.map(p => p.id);
-  const SLOT_IDS  = ["s1", "s2", "s3"];
+  const SLOT_IDS  = ["s1", "s2", "s3", "s4"];
 
   const SLOT_LABELS = {
-    landscape: { s1: "왼쪽", s2: "가운데", s3: "오른쪽" },
-    portrait:  { s1: "위",   s2: "가운데", s3: "아래"   }
+    landscape: { s1: "왼쪽", s2: "가운데", s3: "오른쪽 위", s4: "오른쪽 아래" },
+    portrait:  { s1: "왼쪽 위", s2: "오른쪽 위", s3: "왼쪽 아래", s4: "오른쪽 아래" }
   };
 
-  /* 접속자는 늘 가운데(s2)입니다. 양옆에 뽀모와 채팅이 붙어요. */
   const DEFAULT_MAP = {
-    landscape: { s1: "pomo", s2: "prof", s3: "chat" },
-    portrait:  { s1: "pomo", s2: "prof", s3: "chat" }
+    landscape: { s1: "chat", s2: "prof", s3: "pomo", s4: "word" },
+    /* 세로 보기는 뽀모를 **위**에 둡니다.
+
+       한 줄에서 마지막 칸이 남는 높이를 다 가져갑니다. 뽀모는 내용이
+       짧아서 아래가 텅 비었어요. 대신 채팅과 글자수는 목록이 길어질 수
+       있으니 남는 높이를 받으면 오히려 좋습니다. */
+    portrait:  { s1: "pomo", s2: "prof", s3: "chat", s4: "word" }
   };
 
-  const KEY  = { landscape: "tmSlotLand", portrait: "tmSlotPort" };
+  /* 저장 키를 새로 팠습니다 — 칸이 다섯에서 넷으로 줄어 옛 값의 뜻이
+     달라졌기 때문입니다. 그대로 쓰면 엉뚱한 창이 엉뚱한 자리에 갑니다. */
+  const KEY  = { landscape: "slotMapLand4", portrait: "slotMapPort4" };
   /* 저장 키에 2를 붙인 이유 — 세로 보기의 쪼개는 순서가 바뀌면서
      "portrait/0" 같은 키의 뜻이 달라졌습니다(예전엔 위쪽 높이, 지금은 왼쪽 폭).
      예전 값을 그대로 쓰면 엉뚱한 크기가 들어가므로 새 키로 시작합니다. */
-  const SKEY = { landscape: "tmSizeLand", portrait: "tmSizePort" };
+  const SKEY = { landscape: "splitSizeLand4", portrait: "splitSizePort4" };
 
   /* ---------------------------------------------------------------
      [2] 배치 나무 — 어떤 자리를 어떻게 쪼갤지
@@ -62,30 +72,32 @@
        h : 가로로 쪼갬(좌우)   v : 세로로 쪼갬(위아래)
        각 가지는 자리 이름이거나, 또 다른 쪼갬입니다.
      --------------------------------------------------------------- */
-  /* [변경] 세 칸을 나란히 세웁니다.
+  /* 가로 : 채팅 | 접속자 | (뽀모 위 / 글자수 아래)
+     세로 : 2칸 × 2줄
 
-     예전에는 "왼쪽 접속자 · 오른쪽을 위아래로 갈라 뽀모와 채팅" 이었어요.
-     오른쪽 두 칸이 세로로 눌려서 뽀모도 채팅도 답답했습니다.
-
-     지금은 셋을 나란히 놓고, **접속자를 늘 가운데**에 둡니다.
-     좌우 뒤집기는 줄 방향만 뒤집는 것(row-reverse)이라, 가운데는
-     가운데에 그대로 있고 양옆만 자리를 바꿉니다. 딱 원하던 동작이에요.
-
-     세로 화면(세로 모니터)에서는 위아래로 쌓습니다. */
+     세로도 한 줄로 길게 쌓아봤는데, 칸 하나하나가 너무 납작해져서
+     쓰기 불편했습니다. 2×2 로 두면 각 칸이 넉넉해집니다.
+     좌우로 먼저 쪼개고 각 줄이 자기 안에서 위아래를 나누므로,
+     왼쪽 줄과 오른쪽 줄의 경계선이 따로 움직입니다. */
   const TREES = {
-    landscape: { dir: "h", kids: ["s1", "s2", "s3"] },
-    portrait:  { dir: "v", kids: ["s1", "s2", "s3"] }
+    landscape: { dir: "h", kids: ["s1", "s2", { dir: "v", kids: ["s3", "s4"] }] },
+    portrait:  { dir: "h", kids: [
+                   { dir: "v", kids: ["s1", "s3"] },
+                   { dir: "v", kids: ["s2", "s4"] }
+                 ] }
   };
 
   /* 처음 열었을 때의 크기 (px). 마지막 가지는 남는 만큼 차지합니다. */
   const DEFAULT_SIZE = {
     /* 창을 따라가는 기본 크기 */
-    "panel/pomo": 320,      // 뽀모 + 글자수 — 왼쪽 줄 폭
-    "panel/prof": 760,      // 접속자 — 가운데, 남는 만큼 넓게
-    "panel/chat": 340,      // 채팅 — 오른쪽 줄 폭
-    /* 위치를 따라가는 값 (첫 칸과 둘째 칸만 정하면 셋째는 남는 만큼) */
+    "panel/chat": 320,
+    "panel/prof": 700,
+    "panel/pomo": 230,      // 뽀모 — 시계와 버튼이 들어갈 만큼
+    "panel/word": 320,
+    /* 위치를 따라가는 값 */
     "landscape/0": 320,
-    "landscape/1": 760
+    "landscape/1": 700,
+    "landscape/2/0": 230
   };
 
   const MIN_PX = 120;        // 어떤 칸도 이보다 작아지지 않습니다
@@ -93,32 +105,22 @@
   /* ---------------------------------------------------------------
      [3] 저장값 다듬기
      --------------------------------------------------------------- */
-  /* =================================================================
-     자리 정리 — 빈 칸은 허용하지 않습니다.
-
-     [FIX] 예전에 "비우기" 기능으로 칸을 비워둔 분은, 그 기능이 없어진
-     뒤에도 저장된 빈 값이 그대로 남아 창이 사라진 채 갇혔습니다.
-     되돌릴 방법도 함께 없어졌으니까요.
-
-     이제 규칙은 셋뿐입니다.
-       ① 접속자 — 고정
-       ②③ 뽀모도로와 채팅 — 둘 중 어느 것이 위인지만 다릅니다
-     무엇이 저장돼 있어도 이 모양으로 맞춰서 돌려줍니다.
-     ================================================================= */
   function normalizeSlotMap(raw, orient) {
-    /* 접속자는 가운데 고정. 뽀모와 채팅이 양옆 어디에 서는지만 다릅니다.
-       (좌우 뒤집기 버튼으로도 같은 효과를 낼 수 있어서, 사실상 취향 문제) */
-    const chatFirst = !!(raw && raw.s1 === "chat");
-    return {
-      s1: chatFirst ? "chat" : "pomo",
-      s2: "prof",
-      s3: chatFirst ? "pomo" : "chat"
-    };
+    const out = {};
+    const used = new Set();
+    for (const slot of SLOT_IDS) {
+      const v = raw && raw[slot];
+      if (PANEL_IDS.includes(v) && !used.has(v)) { out[slot] = v; used.add(v); }
+      else out[slot] = null;
+    }
+    if (!used.size) return { ...DEFAULT_MAP[orient] };
+    return out;
   }
 
   function loadSlotMap(orient) {
     let raw = null;
     try { raw = JSON.parse(AppStore.getItem(KEY[orient]) || "null"); } catch (e) {}
+    if (!raw) return { ...DEFAULT_MAP[orient] };
     return normalizeSlotMap(raw, orient);
   }
   function saveSlotMap(orient, map) {
@@ -175,122 +177,11 @@
   }
 
   /** 가지치기한 나무를 실제 DOM으로 만듭니다 */
-  /* =================================================================
-     남는 공간을 누가 받는가
-
-     예전에는 "마지막 가지"가 무조건 받았습니다. 그래서 오른쪽 줄에
-     [채팅][뽀모] 순으로 놓으면 뽀모가 남는 공간을 다 먹었습니다.
-     뽀모는 내용이 두세 줄뿐이라 아래가 텅 빈 채로 늘어나 있었고,
-     줄일 방법도 없었습니다.
-
-     이제는 "늘어나도 쓸모 있는 창"이 받습니다. 채팅은 길수록 좋고,
-     접속자 카드도 많을수록 좋지만, 뽀모는 커져도 얻는 게 없습니다.
-     숫자가 작을수록 먼저 받습니다.
-     ================================================================= */
-  const GROW_RANK = { chat: 1, prof: 2, pomo: 9 };
-
-  /* =================================================================
-     오른쪽 줄 통째로 접기
-
-     예전에는 채팅만 따로 접었습니다. 그러면 접힌 자리에 얇은 레일이
-     남고, 그 아래위로 빈 공간이 붕 떴습니다. 큰 칸이 넓어지지도
-     않았어요 — 접힌 것은 채팅 하나뿐이고 오른쪽 줄은 그대로 폭을
-     차지했으니까요.
-
-     이제 오른쪽 줄(뽀모+채팅)을 하나로 접습니다. 접히면 그 줄이
-     화면에서 빠지고, 접속자 칸이 남은 폭을 전부 가져갑니다.
-     뒤집힌 상태에서도 같은 방식으로 동작합니다 — 접히는 것은
-     "오른쪽"이 아니라 "곁줄"이라서요.
-     ================================================================= */
-  const SIDE_KEY = "tmSideCollapsed";
-
-  function isSideCollapsed() {
-    try { return AppStore.getItem(SIDE_KEY) === "1"; } catch (e) { return false; }
-  }
-  function paintSideToggle() {
-    const on = isSideCollapsed();
-    document.body.classList.toggle("side-collapsed", on);
-
-    const btn = document.getElementById("side-toggle-btn");
-    if (btn) {
-      btn.textContent = on ? "❮" : "❯";
-      btn.setAttribute("aria-pressed", on ? "true" : "false");
-      btn.title = on ? "오른쪽 줄 펼치기 (뽀모·채팅)" : "오른쪽 줄 접기 (뽀모·채팅)";
-      btn.setAttribute("aria-label", btn.title);
-    }
-    /* [고침 2026-08-03] 레일은 "채팅 접힘"의 손잡이입니다.
-       예전엔 옛 오른쪽줄 접기(on)를 따라가서, 배치를 다시 짤 때마다
-       (좌우 뒤집기 포함) 레일이 사라져 채팅을 되펼 수 없었습니다. */
-    const rail = document.getElementById("chat-rail");
-    if (rail) rail.classList.toggle("hidden",
-      !document.body.classList.contains("chat-collapsed"));
-    const rail2 = document.getElementById("pomo-rail");
-    if (rail2) rail2.classList.toggle("hidden", !on);
-  }
-  window.toggleSideCollapsed = function () {
-    try { AppStore.setItem(SIDE_KEY, isSideCollapsed() ? "0" : "1"); } catch (e) {}
-    applyLayout(true);
-    /* 펼칠 때는 채팅을 맨 아래로 — 접혀 있는 동안 쌓인 것을 보여줍니다 */
-    if (!isSideCollapsed()) setTimeout(() => window.scrollChatToBottom?.(true), 60);
-  };
-  window.isSideCollapsed = isSideCollapsed;
-
-  /* ② ③ 서로 바꾸기 — 접속자(①) 자리는 건드리지 않습니다 */
-  window.swapSideSlots = function () {
-    const orient = currentOrient();
-    const map = loadSlotMap(orient);
-    const a = map.s2, b = map.s3;
-    map.s2 = b; map.s3 = a;
-    saveSlotMap(orient, map);
-    applyLayout(true);
-  };
-
-  function leafPanels(node, map, out = []) {
-    if (typeof node === "string") { if (map[node]) out.push(map[node]); return out; }
-    node.kids.forEach(k => leafPanels(k, map, out));
-    return out;
-  }
-
-  /* 이 가지에 뽀모나 채팅이 들어 있는가 (= 접히는 곁줄인가) */
-  function hasSidePanels(node, map) {
-    const ids = leafPanels(node, map);
-    return ids.length > 0 && ids.every(id => id !== "prof");
-  }
-
-  function pickGrowIndex(node, map) {
-    /* [고침 2026-08-03] 접힌 채팅은 후보에서 뺍니다.
-       채팅이 남는 공간 1순위(GROW_RANK 1)라, 접힌 채팅이 뽑히면
-       0px 칸이 "받은 셈"이 되어 남는 공간이 빈 채로 남았습니다. */
-    const folded = document.body.classList.contains("chat-collapsed");
-    let best = Infinity, bestIdx = node.kids.length - 1;
-    node.kids.forEach((kid, i) => {
-      const ids = leafPanels(kid, map);
-      if (folded && ids.length > 0 && ids.every(pid => pid === "chat")) return;
-      const ranks = ids.map(pid => GROW_RANK[pid] ?? 5);
-      const r = ranks.length ? Math.min(...ranks) : 99;
-      if (r < best) { best = r; bestIdx = i; }
-    });
-    return bestIdx;
-  }
-
-  /* 크기는 자리(위치)가 아니라 창을 따라갑니다.
-
-     위치로 기억하면, 뽀모와 채팅을 맞바꿨을 때 "뽀모 자리의 높이"가
-     채팅에 적용됩니다. 창을 따라가게 하면 뽀모는 어디로 가도 자기
-     높이를 기억합니다. */
-  function sizeKeyFor(kid, map, keyPrefix, i) {
-    if (typeof kid === "string" && map[kid]) return "panel/" + map[kid];
-    return keyPrefix + "/" + i;
-  }
-
   function buildDom(node, orient, map, sizes, keyPrefix) {
     if (typeof node === "string") {
       const el = panelEl(node, map);
       if (el) {
         el.classList.remove("panel-off");
-        el.classList.remove("chat-collapsed-slot");
-        el.classList.remove("pomo-collapsed-slot");
-        el.style.overflow = "";
         el.style.gridArea = "";
         el.dataset.slot = node;
       }
@@ -300,62 +191,28 @@
     const box = document.createElement("div");
     box.className = "split split-" + node.dir;
 
-    /* 접혀 있으면 곁줄(뽀모+채팅이 든 가지)을 아예 넣지 않습니다.
-       숨기기만 하면 flex 계산에 남아 빈 자리가 생깁니다. */
-    const sideFolded = isSideCollapsed();
-    const kids = sideFolded
-      ? node.kids.filter(k => typeof k === "string" || !hasSidePanels(k, map))
-      : node.kids;
-
-    const growIdx = pickGrowIndex({ kids }, map);
-
-    kids.forEach((kid, i) => {
+    node.kids.forEach((kid, i) => {
       const child = buildDom(kid, orient, map, sizes, keyPrefix + "/" + i);
       if (!child) return;
 
-      /* 채팅을 접었으면 그 칸을 0으로 좁힙니다.
-         [고침 2026-08-03] 채팅이 하위 가지 안에 들어 있는 배치에서는
-         문자열 잎만 검사하던 탓에 가지가 저장된 폭을 그대로 차지해
-         빈 기둥이 남았습니다. "채팅만 든 가지"도 통째로 접습니다. */
-      const _chatFolded = document.body.classList.contains("chat-collapsed");
-      const _pomoFolded = isSideCollapsed();
-      const _foldTest = (k, pid) => (
-        typeof k === "string"
-          ? map[k] === pid
-          : (() => { const ids = leafPanels(k, map);
-                     return ids.length > 0 && ids.every(x => x === pid); })()
-      );
-      const isCollapsedPomo = _pomoFolded && _foldTest(kid, "pomo");
-      const isCollapsedChat = _chatFolded && (
-        typeof kid === "string"
-          ? map[kid] === "chat"
-          : (() => { const ids = leafPanels(kid, map);
-                     return ids.length > 0 && ids.every(pid => pid === "chat"); })()
-      );
+      /* 채팅을 접었으면 그 칸만 레일 폭으로 좁힙니다.
+         (자리를 어디로 옮겼든 "채팅이 있는 칸"이 좁혀집니다) */
+      const isCollapsedChat =
+        typeof kid === "string" && map[kid] === "chat" &&
+        document.body.classList.contains("chat-collapsed");
 
-      const last = (i === kids.length - 1);
+      const last = (i === node.kids.length - 1);
       if (isCollapsedChat) {
-        /* 칸을 0으로 접고 표식을 남깁니다 — 레일(#chat-rail)은 아래
-           applyLayout 끝에서 이 표식 "바깥"에 끼워져 손잡이가 됩니다. */
-        child.style.flex = "0 0 0px";
+        child.style.flex = "0 0 46px";
         child.style.minWidth = "0";
         child.style.minHeight = "0";
-        child.style.overflow = "hidden";
-        child.classList.add("chat-collapsed-slot");
-      } else if (isCollapsedPomo) {
-        /* [2026-08-03] 뽀모·글자수 줄 접기 — 채팅 접기와 같은 방식 */
-        child.style.flex = "0 0 0px";
-        child.style.minWidth = "0";
-        child.style.minHeight = "0";
-        child.style.overflow = "hidden";
-        child.classList.add("pomo-collapsed-slot");
-      } else if (i === growIdx) {
-        // 남는 공간을 받는 가지 (아래 pickGrowIndex 가 고릅니다)
+      } else if (last) {
+        // 마지막 가지는 남는 공간을 다 차지합니다
         child.style.flex = "1 1 0";
         child.style.minWidth = "0";
         child.style.minHeight = "0";
       } else {
-        const key = sizeKeyFor(kid, map, keyPrefix, i);
+        const key = keyPrefix + "/" + i;
         const px = Math.max(MIN_PX, Number(sizes[key] ?? DEFAULT_SIZE[key] ?? 260));
 
         /* [FIX] 예전엔 flex: 0 0 <크기> 로 못 박았습니다. 그래서 저장된
@@ -375,15 +232,11 @@
       }
       box.appendChild(child);
 
-      const nextFolded = !last && (
-        (_chatFolded && _foldTest(kids[i + 1], "chat")) ||
-        (_pomoFolded && _foldTest(kids[i + 1], "pomo"))
-      );
-      if (!last && !isCollapsedChat && !isCollapsedPomo && !nextFolded) {
+      if (!last) {
         // 이 가지와 다음 가지 사이의 손잡이
         const grip = document.createElement("div");
         grip.className = "split-grip " + (node.dir === "h" ? "grip-v" : "grip-h");
-        grip.dataset.key = sizeKeyFor(kid, map, keyPrefix, i);
+        grip.dataset.key = keyPrefix + "/" + i;
         grip.dataset.dir = node.dir;
         grip.tabIndex = 0;
         grip.setAttribute("role", "separator");
@@ -516,7 +369,7 @@
     // 같은 상태면 다시 만들지 않습니다 (화면 깜빡임 방지)
     /* 좁은 화면 여부와 지금 보는 창도 서명에 넣습니다.
        안 넣으면 탭을 눌러도 "같은 상태"로 보고 그냥 돌아갑니다. */
-    const sig = JSON.stringify([orient, chatRight, map, isSideCollapsed(),
+    const sig = JSON.stringify([orient, chatRight, map,
                                 isNarrow(), isNarrow() ? narrowCurrent() : null]);
     if (!force && sig === _lastSignature) { syncSizes(); return; }
     _lastSignature = sig;
@@ -539,17 +392,14 @@
         document.querySelectorAll(p.sel).forEach(el => attic.appendChild(el));
       }
       if (rail0) attic.appendChild(rail0);
-      /* [고침 2026-08-03] 뽀모 레일도 피신 — 안 하면 뿌리를 비울 때
-         통째로 지워져서, 접은 뽀모·글자수 줄을 다시 펼 수 없었습니다. */
-      const railP0 = document.getElementById("pomo-rail");
-      if (railP0) attic.appendChild(railP0);
 
       /* [중요] 목표·투두는 이제 창이 아니지만, 문서에는 살아 있어야 합니다.
 
-         TheMagam 에서 이 둘을 PANELS 에서 뺐습니다. 그런데 아래에서
-         뿌리를 비우기 때문에, 보관함으로 피신시키지 않으면 통째로
-         삭제됩니다. 그러면 설정을 열어도 목표·투두 칸이 텅 비고,
-         투두를 적어도 저장이 되지 않습니다. */
+         창 목록(PANELS)에서 뺐는데, 아래에서 뿌리를 비우기 때문에
+         보관함으로 피신시키지 않으면 **화면 아래에 그대로 남아 떠돕니다.**
+         실제로 그랬습니다 — 세 칸 아래에 목표와 투두가 통짜로 붙어
+         나왔어요. 여기로 치워두면 화면에서 사라지고, 카드 아래를
+         눌렀을 때 팝업 안으로 옮겨져 나타납니다. */
       ["status-block", "todo-block"].forEach(id => {
         const el = document.getElementById(id);
         if (el) attic.appendChild(el);
@@ -580,7 +430,9 @@
       if (p.id === "chat") _narrowUnread = 0;
       renderNarrowTabs(p.id);
       renderNarrowBadge();
+      renderHiddenChips(map);
       renderSlotMap();
+      renderSlotPicker();
       return;
     }
 
@@ -598,32 +450,19 @@
     }
     root.classList.toggle("flip", chatRight);
 
-    // 채팅 레일은 채팅(또는 접힌 채팅 가지)의 바로 바깥 옆에 붙어 다닙니다
+    // 채팅 레일은 채팅 옆에 붙어 다닙니다
     const rail = document.getElementById("chat-rail");
     const chatEl = document.querySelector(".chat-sidebar");
     if (rail && chatEl && chatEl.parentNode) {
-      const slot = root.querySelector(".chat-collapsed-slot") || chatEl;
-      if (slot.parentNode) {
-        slot.parentNode.insertBefore(rail, slot);
-        rail.style.flex = "0 0 auto";
-      }
-    }
-    // 뽀모·글자수 레일도 같은 방식으로
-    const rail2 = document.getElementById("pomo-rail");
-    const pomoEl = document.querySelector(".pane-pomo");
-    if (rail2 && pomoEl && pomoEl.parentNode) {
-      const slot2 = root.querySelector(".pomo-collapsed-slot") || pomoEl;
-      if (slot2.parentNode) {
-        slot2.parentNode.insertBefore(rail2, slot2);
-        rail2.style.flex = "0 0 auto";
-      }
+      chatEl.parentNode.insertBefore(rail, chatEl);
+      rail.style.flex = "0 0 auto";
     }
 
-    paintSideToggle();
+    renderHiddenChips(map);
     renderSlotMap();
+    renderSlotPicker();
     bindGrips();
   }
-
 
   /** 크기만 다시 반영 (구조는 그대로) */
   function syncSizes() {
@@ -756,23 +595,43 @@
   /* ---------------------------------------------------------------
      [7] 치운 창 되돌리기
      --------------------------------------------------------------- */
+  function renderHiddenChips(map) {
+    const host = document.getElementById("hidden-panels");
+    if (!host) return;
+    const shown = new Set(Object.values(map).filter(Boolean));
+    const hidden = PANELS.filter(p => !shown.has(p.id));
+
+    host.classList.toggle("hidden", hidden.length === 0);
+    host.innerHTML = hidden.map(p => `
+      <button type="button" class="hidden-chip" data-restore="${p.id}"
+              title="${p.label} 다시 열기" aria-label="${p.label} 다시 열기">
+        <span aria-hidden="true">${p.icon}</span>
+      </button>
+    `).join("");
+  }
+
+  function restorePanel(pid) {
+    const orient = currentOrient();
+    const map = loadSlotMap(orient);
+    let target = SLOT_IDS.find(s => !map[s]) || SLOT_IDS[SLOT_IDS.length - 1];
+    for (const s of SLOT_IDS) if (map[s] === pid) map[s] = null;
+    map[target] = pid;
+    saveSlotMap(orient, map);
+    applyLayout(true);
+  }
+
   /* ---------------------------------------------------------------
      [8] 설정 — 자리 그림과 목록
      --------------------------------------------------------------- */
   /* 실제 화면 모양을 그대로 축소한 그림.
      세로 보기는 세로로 길쭉하게 세워야 "세로 모니터"라는 게 눈에 들어옵니다. */
-  /* 실제 화면과 같은 모양으로 그립니다.
-
-     ① 왼쪽 · ② 가운데(접속자) · ③ 오른쪽.
-     좌우 뒤집기를 켜면 그림도 같이 뒤집혀야 합니다 — 안 그러면
-     그림을 보고 고른 자리와 실제 자리가 서로 반대가 됩니다. */
   const MAP_SHAPE = {
     landscape: "height:150px; max-width:100%;" +
-               "grid-template-columns: 1fr 1.9fr 1fr; grid-template-rows: 1fr;" +
-               "grid-template-areas:'s1 s2 s3';",
-    portrait:  "height:190px; max-width:100%;" +
-               "grid-template-columns: 1fr; grid-template-rows: 1fr 1.6fr 1fr;" +
-               "grid-template-areas:'s1' 's2' 's3';"
+               "grid-template-columns: 1fr 1.7fr 1fr; grid-template-rows: 1fr 1fr;" +
+               "grid-template-areas:'s1 s2 s3' 's1 s2 s4';",
+    portrait:  "height:230px; max-width:240px; margin-left:auto; margin-right:auto;" +
+               "grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;" +
+               "grid-template-areas:'s1 s2' 's3 s4';"
   };
 
   function renderSlotMap() {
@@ -783,27 +642,42 @@
     const labels = SLOT_LABELS[orient];
     const flip = document.body.classList.contains("chat-right");
 
-    /* 뒤집기는 열 순서를 바꾸는 것으로 표현합니다.
-       direction:rtl 은 글자 방향까지 뒤집어서 이름이 이상하게 보였습니다. */
-    /* 가운데는 가운데 그대로, 양끝만 맞바꿉니다 */
-    const shape = flip
-      ? MAP_SHAPE[orient].replace("'s1 s2 s3'", "'s3 s2 s1'")
-                         .replace("'s1' 's2' 's3'", "'s3' 's2' 's1'")
-      : MAP_SHAPE[orient];
-    host.setAttribute("style", shape);
+    host.setAttribute("style", MAP_SHAPE[orient] + (flip ? "direction:rtl;" : ""));
     host.innerHTML = SLOT_IDS.map((slot, i) => {
       const p = PANELS.find(x => x.id === map[slot]);
-      return `<div class="slot-cell" style="grid-area:${slot}">
+      return `<div class="slot-cell${p ? "" : " empty"}" style="grid-area:${slot};direction:ltr">
                 <span class="slot-cell-head">
                   <span class="slot-no">${i + 1}</span>
-                  <span class="slot-cell-name">${p ? p.label : ""}</span>
+                  <span class="slot-cell-name">${p ? p.label : "비움"}</span>
                 </span>
                 <span class="slot-cell-pos">${labels[slot]}</span>
               </div>`;
     }).join("");
   }
 
+  function renderSlotPicker() {
+    const host = document.getElementById("slot-picker");
+    if (!host) return;
+    const orient = currentOrient();
+    const map = loadSlotMap(orient);
+    const labels = SLOT_LABELS[orient];
 
+    host.innerHTML = SLOT_IDS.map((slot, i) => `
+      <div class="slot-row">
+        <label class="slot-name" for="slot-${slot}">
+          <span class="slot-no">${i + 1}</span>${labels[slot]}
+        </label>
+        <select class="slot-sel" id="slot-${slot}" data-slot="${slot}">
+          <option value=""${map[slot] ? "" : " selected"}>— 비우기 —</option>
+          ${PANELS.map(p => `
+            <option value="${p.id}"${map[slot] === p.id ? " selected" : ""}>${p.label}</option>
+          `).join("")}
+        </select>
+      </div>
+    `).join("");
+  }
+
+  /** 이미 다른 자리에 있는 창을 고르면 서로 맞바꿉니다 */
   function assignSlot(slot, panelId) {
     const orient = currentOrient();
     const map = loadSlotMap(orient);
@@ -850,6 +724,16 @@
         e.preventDefault(); e.stopPropagation(); resetSlotMap();
       });
     }
+    const chips = document.getElementById("hidden-panels");
+    if (chips && !chips._bound) {
+      chips._bound = true;
+      chips.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-restore]");
+        if (!btn) return;
+        e.preventDefault(); e.stopPropagation();
+        restorePanel(btn.dataset.restore);
+      });
+    }
   }
 
   /* ---------------------------------------------------------------
@@ -858,9 +742,10 @@
   window.LayoutSlots = {
     PANELS, SLOT_IDS, SLOT_LABELS, DEFAULT_MAP, TREES, DEFAULT_SIZE, MIN_PX,
     normalizeSlotMap, prune, loadSlotMap, saveSlotMap,
-    assignSlot, resetSlotMap, resetSizes, isSideCollapsed
+    assignSlot, restorePanel, resetSlotMap, resetSizes
   };
   window.applyLayout      = () => applyLayout(true);
+  window.renderSlotPicker = renderSlotPicker;
   window.renderSlotMap    = renderSlotMap;
   window.bindLayoutUI     = bindLayoutUI;
   window.resetSplitSizes  = resetSizes;

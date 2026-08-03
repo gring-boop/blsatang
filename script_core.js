@@ -15,14 +15,14 @@
 
      [해결] 모든 열쇠 앞에 방 이름표를 붙입니다.
 
-         pomoSessions_2026-07-31   →   tm:pomoSessions_2026-07-31
+         pomoSessions_2026-07-31   →   bl:pomoSessions_2026-07-31
 
      이름표가 다르니 두 방이 서로를 건드릴 수 없습니다.
 
      [옮겨주기] 예전에 저장된 값은 이름표가 없습니다. 그대로 두면
      테마와 배치가 초기화된 것처럼 보이므로, 처음 한 번 옮겨옵니다.
      ===================================================================== */
-const STORE_ROOM = "tm";          // 이 방의 이름표
+const STORE_ROOM = "bl";          // 이 방의 이름표
 
 function _mkStore(raw) {
     const P = STORE_ROOM + ":";
@@ -99,21 +99,24 @@ window.AppSession = AppSession;
   // =====================================================
   // Firebase config
   // =====================================================
-  /* =====================================================================
-     TheMagam 전용 파이어베이스 (프로젝트: themagam-158f7)
+  /* 벨사탕 작업실 전용 파이어베이스.
 
-     벨사탕 작업실과 데이터가 완전히 분리됩니다.
-     방을 옮기거나 새로 만들 때는 이 덩어리만 갈아끼우면 됩니다.
-     databaseURL 이 실제 방 주소입니다 — 여기가 틀리면 아무것도 안 맞습니다.
-     ===================================================================== */
+     [왜 바꿨나]
+     예전에는 처음 만드신 분의 `writer-chat` 프로젝트를 쓰고 있었습니다.
+     남의 서버 위에 얹혀 있으면, 그쪽에서 프로젝트를 지우거나 규칙을
+     바꿀 때 이 방이 예고 없이 멈춥니다. 손쓸 방법도 없고요.
+     그래서 이 방만의 프로젝트(blsatang)로 옮겼습니다.
+
+     더마감(themagam-158f7)과도 완전히 다른 프로젝트입니다.
+     두 방의 데이터는 어떤 경우에도 섞이지 않습니다. */
   const firebaseConfig = {
-    apiKey: "AIzaSyD1YV5KlgkwBSEpDupiwMcWtryrlfCFyGc",
-    authDomain: "themagam-158f7.firebaseapp.com",
-    databaseURL: "https://themagam-158f7-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "themagam-158f7",
-    storageBucket: "themagam-158f7.firebasestorage.app",
-    messagingSenderId: "429789102223",
-    appId: "1:429789102223:web:22263ce9440c144baa70fa"
+    apiKey: "AIzaSyAehU1VdOmIWuioo0XSWe_K0cALBla2-tM",
+    authDomain: "blsatang.firebaseapp.com",
+    databaseURL: "https://blsatang-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "blsatang",
+    storageBucket: "blsatang.firebasestorage.app",
+    messagingSenderId: "695081273479",
+    appId: "1:695081273479:web:2983d4614af102b02bd022"
   };
 
   try {
@@ -410,8 +413,7 @@ window.AppSession = AppSession;
 
       document.getElementById("modal").style.display = "none";
       document.getElementById("exit-screen").classList.add("hidden");
-      /* [2026-08-03] 채팅 머리말은 "Chat" 고정 — 접속 현황은 맨 위 브랜드 줄로 갔습니다 */
-      document.getElementById("my-info").innerText = "Chat";
+      document.getElementById("my-info").innerText = myNick;
 
       // ✅ 1) 닉 귀속 테마 먼저 로드/적용 (UI 안정화)
       try { await window.afterJoinLoadNickTheme?.(); } catch(e){ console.warn("[afterJoinLoadNickTheme failed]", e); }
@@ -439,7 +441,6 @@ window.AppSession = AppSession;
       callIfFn("updateStatus", true);
       callIfFn("listenStatus");
       callIfFn("listenPomodoro");
-      callIfFn("listenNotice");
 
       _statusIntervalId = setInterval(() => callIfFn("updateStatus", false), PRESENCE_POLL_MS);
 
@@ -463,17 +464,6 @@ window.AppSession = AppSession;
 
   async function leaveRoom() {
     if (!myNick) return;
-
-    /* [2026-08-03] 나가기 전 마무리 —
-       ① 열려 있는 작업 구간을 지금까지로 저장 (워크 타임이 날아가지 않게)
-       ② users/{닉}/timeCur 를 지워서 묵은 구간이 남지 않게
-       ③ 상태를 AWAY 로 저장해 두어 다음 입장 때 AWAY 로 시작 */
-    try {
-      const sel = document.getElementById("db-status");
-      if (sel) sel.value = "away";
-      window.savePersonalData?.();
-    } catch (e) {}
-    try { await window.finalizeTimelogOnLeave?.(); } catch (e) {}
 
     await cancelPresenceOnDisconnect();
     await db.ref("status/" + myNick).remove();
@@ -602,7 +592,7 @@ window.AppSession = AppSession;
     // ✅ init은 "로그인 전 프리뷰"만: 기본테마 + 폰트 + 타이머 표시
     // (닉 귀속 로딩은 join() 이후 afterJoinLoadNickTheme에서 처리)
     try {
-      const previewTheme = AppStore.getItem("writerTheme") || "📜 원고와 잉크";
+      const previewTheme = AppStore.getItem("writerTheme") || "Light (iOS)";
       callIfFn("applyTheme", previewTheme);
     } catch(e) {}
 

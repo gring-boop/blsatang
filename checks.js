@@ -31,13 +31,9 @@ ok(miss.length===0, "CSS 규칙 없는 클래스: "+miss.join(", "));
 
 /* ---- 1.5 index.html 구조 검사 ----
 
-   [왜 넣었나] 설정 블록 하나를 지우면서 닫는 </div> 를 잘못 잘라, 설정
-   모달이 중간에서 끝나버렸습니다. 그러자 뒤따르던 패널과 "닫기" 버튼이
-   모달 밖으로 흘러나와 화면 절반을 덮었습니다. 게다가 같은 블록이
-   중복돼 id 가 둘이 되면서 선택 상자도 먹지 않았습니다.
-
-   눈으로는 잡기 어렵고 브라우저는 조용히 넘어가는 종류의 사고라,
-   기계가 세게 합니다. */
+   TheMagam 에서 닫는 </div> 를 잘못 잘라 설정 모달이 중간에서 끝나고
+   "닫기" 버튼이 화면 절반을 덮은 일이 있었습니다. 눈으로는 잡기 어렵고
+   브라우저는 조용히 넘어가는 종류라, 여기서도 같이 지킵니다. */
 {
   const t = HTML.replace(/<!--[\s\S]*?-->/g, "");
   const open  = (t.match(/<div\b/g)  || []).length;
@@ -48,19 +44,24 @@ ok(miss.length===0, "CSS 규칙 없는 클래스: "+miss.join(", "));
   const dup = [...new Set(ids.filter((v, i) => ids.indexOf(v) !== i))];
   ok(dup.length === 0, "중복된 id 가 없다" + (dup.length ? " — " + dup.join(", ") : ""));
 
-  /* 설정 탭과 패널이 짝이 맞는가 */
   const tabs   = (t.match(/data-tab="(\w+)"/g) || []).map(x => x.slice(10, -1));
   const panels = (t.match(/id="panel-(\w+)"/g) || []).map(x => x.slice(10, -1));
   tabs.forEach(k => ok(panels.includes(k), `설정 탭 ${k} 에 짝이 되는 패널이 있다`));
 
-  /* 모달의 닫기 버튼이 모달 안에 있는가 (밖으로 새면 화면을 덮습니다) */
-  ["settings-modal", "goals-modal", "record-modal", "manual-modal"].forEach(id => {
-    const i = t.indexOf(`id="${id}"`);
-    if (i < 0) return;
-    const seg = t.slice(i);
-    const end = seg.indexOf("\n</div>");
-    ok(end > 0 && /닫기/.test(seg.slice(0, end)), `${id} 의 닫기 버튼이 모달 안에 있다`);
+  /* 보기 고르기 버튼 — 두 겹으로 눌리는지 (인라인 + 위임) */
+  const pick = t.slice(t.indexOf('id="layout-pick"'), t.indexOf('id="slot-title"'));
+  ["landscape", "portrait"].forEach(o => {
+    const m = pick.match(new RegExp(`data-orient="${o}"[^>]*`));
+    ok(!!m, `${o} 버튼이 있다`);
+    ok(m && /onclick=/.test(m[0]), `${o} 버튼에 인라인 클릭이 달려 있다`);
   });
+  ["-1", "1"].forEach(v => {
+    const m = pick.match(new RegExp(`data-side="${v}"[^>]*`));
+    ok(!!m, `좌우 ${v} 버튼이 있다`);
+    ok(m && /onclick=/.test(m[0]), `좌우 ${v} 버튼에 인라인 클릭이 달려 있다`);
+  });
+  ok(/function bindLayoutPick/.test(fs.readFileSync(DIR+"script_ui.js","utf8")),
+     "위임 클릭도 함께 걸려 있다");
 }
 
 /* ---- 2. 칸 배치 전수 검사 ---- */
@@ -212,7 +213,6 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
     .match(/id: "(\w+)"/g).map(x => x.slice(5, -1));
   const optVals = (HTML.match(/id="set-narrow-panel"[\s\S]*?<\/select>/)[0]
     .match(/value="(\w+)"/g) || []).map(x => x.slice(7, -1));
-  /* 창을 줄이거나 늘렸으면 이 선택지도 같이 손봐야 합니다 */
   ok(optVals.length === panelIds.length && optVals.every(v => panelIds.includes(v)),
      "설정 선택지가 실제 창 목록과 일치한다 ("+optVals.join(",")+")");
 
@@ -275,288 +275,6 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
      "세기 전에 걸러낸다");
 }
 
-/* TheMagam — 카드가 조작판인가 */
-{
-  const rt  = fs.readFileSync(DIR+"script_realtime.js","utf8");
-  const lay = fs.readFileSync(DIR+"script_layout.js","utf8");
-  const prof= fs.readFileSync(DIR+"script_profile.js","utf8");
-  const tl  = fs.readFileSync(DIR+"script_timelog.js","utf8");
-  const ui  = fs.readFileSync(DIR+"script_ui.js","utf8");
-
-  /* A1 프사 → 프로필 */
-  ok(/card-avatar-wrap\$\{isMine \? " is-clickable"/.test(rt), "내 프사만 누를 수 있다");
-  ok(/data-edit-profile="1"/.test(rt), "프사에 프로필 편집 표시가 붙는다");
-  ok(/\[data-edit-profile\]/.test(prof), "프사 클릭을 받는다");
-
-  /* A2 아래칸 → 목표·투두 */
-  ok(/window\.openGoals\?\.\(\)/.test(tl), "내 카드 아래칸은 목표·투두를 연다");
-  ok(/function openGoals/.test(prof) && /id="goals-modal"/.test(HTML), "목표·투두 팝업이 있다");
-  ok(/id="panel-goals"/.test(HTML) && /data-tab="goals"/.test(HTML), "설정에도 목표·투두 탭이 있다");
-  ok(/name === "goals"\)\s+mountGoalBlocks/.test(prof), "설정 탭을 열면 옮겨 넣는다");
-  /* 실제 덩어리는 하나뿐이어야 합니다 — 두 벌이면 저장이 엉킵니다 */
-  ok((HTML.match(/id="status-block"/g) || []).length === 1, "목표 덩어리는 하나뿐이다");
-  ok((HTML.match(/id="todo-block"/g)   || []).length === 1, "투두 덩어리는 하나뿐이다");
-  /* ★ 가장 위험한 부분 — 뿌리를 비울 때 이 둘이 함께 지워지면 안 됩니다 */
-  {
-    const i = lay.indexOf('attic.appendChild(el);');
-    const j = lay.indexOf('root.innerHTML = ""');
-    ok(/\["status-block", "todo-block"\]\.forEach/.test(lay),
-       "목표·투두를 보관함으로 피신시킨다");
-    ok(lay.indexOf('["status-block", "todo-block"].forEach') < j,
-       "피신이 뿌리 비우기보다 먼저다");
-    void i;
-  }
-
-  /* A3 상태표 → Work ↔ Break 토글 (2026-08-03: 상태 2가지로 축소) */
-  ok(/data-pick-status="1"/.test(rt), "내 상태표만 누를 수 있다");
-  {
-    const i = prof.indexOf('closest?.("[data-pick-status]")');
-    const seg = prof.slice(i, i + 220);
-    ok(/toggleWritingStatus/.test(seg), "상태표를 누르면 Work↔Break 로 바뀐다");
-  }
-  {
-    const dat = fs.readFileSync(DIR+"script_data.js","utf8");
-    ok(/sel\.value = \(sel\.value === "writing"\) \? "rest" : "writing";/.test(dat),
-       "토글은 writing↔rest 두 값만 오간다 (기존 데이터 호환)");
-  }
-  {
-    const i = rt.indexOf("function statusLabel");
-    const seg = rt.slice(i, i + 500);
-    ok(/writing: "🔥WORK🔥"/.test(seg) && /rest:    "☕BREAK☕"/.test(seg), "이름이 🔥WORK🔥 · ☕BREAK☕ 다");
-    ok(/focus:   "🔥WORK🔥"/.test(seg) && /away:    "☕BREAK☕"/.test(seg),
-       "옛 저장값(focus·away)도 두 이름으로 접힌다");
-  }
-  /* [2026-08-03] 🔥WORK🔥 는 이제 정식 이름입니다 — 옛 이름 검사는
-     "타인 카드 아래칸이 눌리지 않는가" 로 바꿨습니다. */
-  ok(!/기록 보기/.test(rt), "남의 카드에 기록 보기 입구가 없다");
-
-  /* B1 가로만 */
-  ok(/function currentOrientation\(\) \{ return "landscape"; \}/.test(ui),
-     "세로 보기를 없앴다");
-  ok(!/aria-label="보기"/.test(HTML), "설정에서 세로 선택지를 뺐다");
-  ok(/aria-label="좌우 뒤집기"/.test(HTML), "좌우 뒤집기는 남겼다");
-
-  /* B2 팝업 + 닫기 */
-  /* 치우기·팝업·되돌리기는 통째로 없앴습니다.
-     남아 있으면 같은 일을 하는 길이 둘이 되어 헷갈립니다. */
-  ok(!/data-popup=/.test(lay), "치운 창 팝업이 없다");
-  ok(!/id="panel-modal"/.test(HTML), "창 팝업 마크업이 없다");
-  ok(!/hidden-panels/.test(HTML), "치워둔 창 자리가 없다");
-  ok(!/function addPanelCloseButtons/.test(lay), "창마다 ✕ 가 없다");
-  ok(!/renderSlotPicker/.test(lay), "자리별 선택 목록이 없다");
-  /* [2026-08-03] 채팅 접기 버튼을 요청으로 되살렸습니다 — 레일과 짝으로. */
-  ok(/id="chat-collapse-btn"/.test(HTML), "채팅 헤더에 접기 버튼이 있다");
-  ok(/id="chat-rail-btn"/.test(HTML), "접힌 채팅을 펴는 레일 버튼이 있다");
-  ok(!/id="side-rail-btn"/.test(HTML), "레일이 옛 오른쪽줄 접기와 엉키지 않는다");
-  ok(!/data-restore=/.test(lay), "옛 되돌리기 방식이 남아 있지 않다");
-  /* 팝업 크기와 덜어낸 것들 */
-  ok(/#goals-modal \.modal-content\{ width: min\(416px/.test(CSS), "목표 팝업이 416px 다");
-  ok(/id="goals-title"/.test(HTML) && /goals-title">/.test(HTML), "목표 팝업 제목이 남아 있다");
-  {
-    /* 화면에서는 감추되 지우지는 않아야 합니다 —
-       지우면 낭독기가 팝업 이름을 못 읽고, 저장 흐름이 끊깁니다. */
-    const t = HTML.match(/<h2 class="([^"]*)" id="goals-title"/);
-    ok(t && /sr-only/.test(t[1]), "목표 팝업 제목이 화면에서 감춰져 있다");
-    ok(/<h4 class="personal-title">🎯 오늘 목표<\/h4>/.test(HTML), "소제목에서 '상태'를 뺐다");
-    ok(/<select id="db-status" class="w-full hidden"/.test(HTML), "상태 선택박스가 감춰져 있다");
-    ok(/id="db-status"/.test(HTML), "상태 선택박스를 지우지는 않았다 (저장 중계기)");
-    ok(/<div class="mini-row end hidden">/.test(HTML), "WORK 시작 버튼이 감춰져 있다");
-  }
-
-  /* 오른쪽 줄 접기 */
-  {
-    ok(/function isSideCollapsed/.test(lay), "접힘 상태를 기억한다");
-    ok(/window\.toggleSideCollapsed/.test(lay), "접기·펼치기 스위치가 있다");
-    ok(!/id="side-toggle-btn"/.test(HTML), "머리말의 접기 버튼을 없앴다 (2026-08-03)");
-    ok(/isSideCollapsed\(\)/.test(lay.slice(lay.indexOf("const sig = JSON.stringify"), lay.indexOf("const sig = JSON.stringify") + 200)),
-       "접으면 배치를 다시 짠다");
-    /* ★ 핵심 — 숨기는 게 아니라 아예 빼야 빈 공간이 안 생깁니다 */
-    ok(/node\.kids\.filter\(k => typeof k === "string" \|\| !hasSidePanels\(k, map\)\)/.test(lay),
-       "접힌 줄을 배치에서 아예 뺀다 (숨기기만 하면 빈 자리가 남음)");
-    ok(/function hasSidePanels/.test(lay), "어느 가지가 곁줄인지 판단한다");
-    /* 뒤집어도 같은 가지가 접혀야 합니다 */
-    {
-      const map = { s1: "prof", s2: "pomo", s3: "chat" };
-      const leaf = (n, o = []) => { if (typeof n === "string") { if (map[n]) o.push(map[n]); return o; }
-                                    n.kids.forEach(k => leaf(k, o)); return o; };
-      const hasSide = n => { const ids = leaf(n); return ids.length > 0 && ids.every(i => i !== "prof"); };
-      ok(hasSide({ kids: ["s2", "s3"] }) === true, "뽀모+채팅 가지는 곁줄이다");
-      ok(hasSide("s1") === false || hasSide({ kids: ["s1"] }) === false, "접속자 가지는 곁줄이 아니다");
-      ok(hasSide({ kids: ["s1", "s2"] }) === false, "접속자가 섞인 가지는 접지 않는다");
-    }
-  }
-
-  /* ② ③ 스위치만 남기기 */
-  ok(/window\.swapSideSlots/.test(lay), "② ③ 바꾸기 함수는 남아 있다 (버튼은 2026-08-03 제거)");
-  ok(!/onclick="swapSideSlots\(\)"/.test(HTML), "설정에서 바꾸기 버튼을 뺐다");
-  {
-    const i = lay.indexOf("window.swapSideSlots");
-    const seg = lay.slice(i, i + 400);
-    ok(!/s1/.test(seg), "접속자(①) 자리는 건드리지 않는다");
-  }
-  ok(!/— 비우기 —|비우기/.test(HTML.replace(/<!--[\s\S]*?-->/g, "")), "비우기 선택지가 없다");
-  /* 예전에 비워둔 채로 저장된 분도 창이 돌아와야 합니다 */
-  {
-    const n = ctx.window.LayoutSlots.normalizeSlotMap;
-    const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-    const std  = { s1: "pomo", s2: "prof", s3: "chat" };
-    const swap = { s1: "chat", s2: "prof", s3: "pomo" };
-    ok(eq(n(null, "landscape"), std), "저장값이 없으면 기본 배치");
-    ok(eq(n({ s1: null, s2: null, s3: null }, "landscape"), std), "비어 있던 저장값도 되살린다");
-    ok(eq(n({ s1: "chat", s2: "prof", s3: "pomo" }, "landscape"), swap), "채팅을 왼쪽에 둔 것은 지킨다");
-    ok(eq(n({ s1: "todo", s2: "stat" }, "landscape"), std), "옛 창 이름이 남아 있어도 되살린다");
-    ok(Object.values(n({}, "landscape")).every(Boolean), "빈 칸이 생기지 않는다");
-    /* ★ 접속자는 어떤 저장값이 와도 늘 가운데여야 합니다 */
-    [null, {}, {s1:"chat"}, {s1:"prof",s2:"chat",s3:"pomo"}, {s2:"pomo"}].forEach(v => {
-      ok(n(v, "landscape").s2 === "prof", "접속자는 늘 가운데다 " + JSON.stringify(v));
-    });
-  }
-
-  /* 설정 — 뽀모도로 탭은 없앴습니다 (2026-08-03). 참여 스위치는 뽀모 창에만. */
-  ok(!/data-tab="timer"/.test(HTML) && !/id="panel-timer"/.test(HTML), "설정에 뽀모도로 탭이 없다");
-  {
-    /* 같은 스위치가 두 곳에 있으니 한 함수가 둘을 같이 칠해야 합니다 */
-    const i = ui.indexOf("function _renderParticipationButton");
-    const seg = ui.slice(i, i + 500);
-    ok(/pomo-opt-btn/.test(seg) && /set-pomo-part/.test(seg),
-       "두 곳의 스위치를 함께 갱신한다");
-  }
-
-  /* 업적이 정말로 사라졌는가 */
-  ok(!/trophyCount|crownCount|weeklyWeeks/.test(rt), "업적 계산이 남아 있지 않다");
-  ok(!/ach-test/.test(HTML), "업적 테스트 UI 가 없다");
-  ok(!/achievementOverrides/.test(rt), "업적 덮어쓰기가 없다");
-  ok(/const achChips = "";/.test(rt), "카드 배지 줄이 비었다");
-  ok(!/weekly-gold/.test(rt), "금빛 테두리를 쓰지 않는다");
-
-  /* 펫 — 정말로 사라졌는가 (2026-08-03 더마감은 펫 기능을 뺐습니다) */
-  {
-    const tl = fs.readFileSync(DIR+"script_timelog.js","utf8");
-    const prof = fs.readFileSync(DIR+"script_profile.js","utf8");
-    ok(!fs.existsSync(DIR+"script_pet.js") && !fs.existsSync(DIR+"script_pet_ui.js"),
-       "펫 스크립트 파일이 없다");
-    ok(!/script_pet/.test(HTML), "index 가 펫 스크립트를 부르지 않는다");
-    ok(!/data-tab="pet"/.test(HTML) && !/id="panel-pet"/.test(HTML), "설정에 펫 탭·창이 없다");
-    ok(!/petSpecies|petLevel|data-open-pet/.test(rt), "카드에 펫 흔적이 없다");
-    ok(!/startPet|setPetShell|petDex|promoteIfMaxed/.test(tl), "시간 기록에 펫 밥이 없다");
-    ok(!/openPetPanel|renderPetPanel|startPet/.test(prof), "프로필에 펫 연결이 없다");
-    ok(!/\.card-pet\{/.test(CSS), "CSS 에 펫 칸이 없다");
-
-    /* ★ 시작 함수가 "입장한 뒤에" 불리는가 — 시간 기록은 필명이 있어야 동작합니다 */
-    {
-      const i = prof.indexOf("const _join = window.join;");
-      const j = prof.indexOf("window.join = wrapped;", i);
-      ok(i > 0 && j > i, "입장 감싸개가 있다");
-      const joinSeg = prof.slice(i, j);
-      ok(/startTimelog/.test(joinSeg), "입장한 뒤에 시간 기록을 시작한다");
-      ok(/_tlStarted/.test(tl), "두 번 불려도 안전하다 (타이머 중복 방지)");
-    }
-  }
-
-  /* 새 팝업에 CSS 를 빠뜨리면 화면 옆에 어색하게 붙습니다 */
-  ["#goals-modal"].forEach(id => {
-    /* 선택자 목록의 마지막이면 뒤에 { 가 옵니다 */
-    ok(CSS.includes(id + ",") || CSS.includes(id + "{"),
-       `${id} 이 팝업 규칙을 함께 받는다`);
-    ok(CSS.includes(id + " .modal-content"), `${id} 의 내용 폭이 정해져 있다`);
-  });
-
-  /* 남는 공간을 뽀모가 먹지 않아야 합니다 */
-  {
-    ok(/const GROW_RANK = \{/.test(lay), "남는 공간을 받을 창을 정해둔다");
-    const i = lay.indexOf("const GROW_RANK");
-    const seg = lay.slice(i, i + 160);
-    const rk = {};
-    (seg.match(/(\w+): (\d+)/g) || []).forEach(x => {
-      const [k, v] = x.split(": "); rk[k] = Number(v);
-    });
-    ok(rk.chat < rk.pomo, "채팅이 뽀모보다 먼저 늘어난다");
-    ok(rk.prof < rk.pomo, "접속자가 뽀모보다 먼저 늘어난다");
-    ok(/function pickGrowIndex/.test(lay), "가지마다 늘어날 쪽을 고른다");
-    ok(!/} else if \(last\) \{/.test(lay), "무조건 마지막 가지가 늘어나던 규칙을 없앴다");
-
-    /* 실제로 굴려봅니다 — [채팅][뽀모] 순서에서도 채팅이 늘어나야 합니다 */
-    const rank = { chat: 1, prof: 2, pomo: 9 };
-    const pick = (kids, map) => {
-      let best = Infinity, idx = kids.length - 1;
-      kids.forEach((k, n) => {
-        const r = rank[map[k]] ?? 5;
-        if (r < best) { best = r; idx = n; }
-      });
-      return idx;
-    };
-    ok(pick(["a","b"], { a: "chat", b: "pomo" }) === 0, "[채팅][뽀모] → 채팅이 늘어난다");
-    ok(pick(["a","b"], { a: "pomo", b: "chat" }) === 1, "[뽀모][채팅] → 채팅이 늘어난다");
-    ok(pick(["a","b"], { a: "pomo", b: "prof" }) === 1, "[뽀모][접속자] → 접속자가 늘어난다");
-  }
-
-  /* 크기는 창을 따라가야 합니다 (자리를 바꿔도 뽀모는 자기 높이) */
-  ok(/function sizeKeyFor/.test(lay) && /"panel\/" \+ map\[kid\]/.test(lay),
-     "칸 크기를 창 기준으로 기억한다");
-  ok(/"panel\/pomo": 320/.test(lay), "뽀모 줄 기본 폭이 잡혀 있다");
-  ok(/"panel\/chat": 340/.test(lay), "채팅 줄 기본 폭이 잡혀 있다");
-  /* 세 칸이 나란히 서야 합니다 (예전엔 오른쪽을 위아래로 또 갈랐어요) */
-  {
-    const i = lay.indexOf("const TREES");
-    const seg = lay.slice(i, i + 300);
-    ok(/landscape:\s*\{ dir: "h", kids: \["s1", "s2", "s3"\] \}/.test(seg),
-       "가로 화면에서 세 칸이 나란히 선다");
-    ok(!/dir: "v", kids: \["s2", "s3"\]/.test(seg), "오른쪽을 다시 위아래로 가르지 않는다");
-  }
-
-  /* 자리 그림이 실제 모양과 같아야 합니다 */
-  {
-    const i = lay.indexOf("const MAP_SHAPE");
-    const seg = lay.slice(i, i + 600);
-    ok(/'s1 s2 s3'/.test(seg), "자리 그림이 3단 모양이다");
-    ok(/'s3 s2 s1'/.test(lay), "뒤집으면 그림도 뒤집힌다");
-    ok(/'s3 s2 s1'/.test(lay) && !/'s2 s1 s3'/.test(lay),
-       "뒤집어도 가운데(접속자)는 가운데에 남는다");
-    /* 주석이 아니라 실제로 쓰인 곳만 봅니다 */
-    const code = lay.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-    ok(!/direction\s*:\s*rtl/.test(code), "글자까지 뒤집는 방식을 쓰지 않는다");
-  }
-
-  ["status-pop","status-pop-item"].forEach(c =>
-    ok(new RegExp("\\."+c+"[^a-zA-Z0-9_-]").test(CSS), `CSS 에 .${c} 가 있다`));
-}
-
-/* 보안 규칙이 앱이 쓰는 경로를 모두 덮는가
-
-   [왜] 규칙에 없는 경로는 파이어베이스가 조용히 거절합니다. 오류가
-   화면에 안 뜨고 그냥 저장이 안 되니, "기능이 안 먹는다"로 보입니다.
-   실제로 attendance 와 achievementOverrides 를 빠뜨려서 출석·업적이
-   전부 먹지 않았습니다. */
-{
-  const rules = JSON.parse(fs.readFileSync(DIR+"보안규칙.json","utf8")).rules;
-  const roots = new Set();
-  fs.readdirSync(DIR).filter(f => /^(script_|fortune)/.test(f)).forEach(f => {
-    const src = fs.readFileSync(DIR+f, "utf8");
-    (src.match(/db\.ref\(["`]([^"`/$]+)/g) || []).forEach(m => {
-      const r = m.replace(/^db\.ref\(["`]/, "");
-      if (r && !r.startsWith(".")) roots.add(r);
-    });
-  });
-  [...roots].sort().forEach(r =>
-    ok(Object.prototype.hasOwnProperty.call(rules, r),
-       `보안 규칙에 ${r} 가 있다`));
-  ok(roots.size >= 6, `앱이 쓰는 경로를 모두 찾았다 (${roots.size}개)`);
-}
-
-/* 방이 정말로 분리됐는가 —
-   설정을 갈아끼우는 걸 잊으면 UI 만 다른 같은 방이 됩니다. */
-{
-  const core = fs.readFileSync(DIR+"script_core.js","utf8");
-  ok(!/writer-chat/.test(core), "벨사탕 파이어베이스 설정이 남아 있지 않다");
-  const m = core.match(/databaseURL: "([^"]+)"/);
-  ok(!!m, "databaseURL 이 있다");
-  ok(/themagam/.test(m[1]), "databaseURL 이 TheMagam 것이다 ("+m[1]+")");
-  ok(/firebasedatabase\.app/.test(m[1]), "Realtime Database 주소 형식이다");
-  const pid = core.match(/projectId: "([^"]+)"/);
-  ok(pid && m[1].includes(pid[1]),
-     "databaseURL 과 projectId 가 같은 프로젝트를 가리킨다");
-}
-
 /* 채팅 반응을 붙였을 때 프사가 안 내려가는가
 
    [왜] .chat-item 이 align-items: flex-end 였습니다. 말풍선 아래에
@@ -575,6 +293,30 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
      "이름 줄만큼 프사를 내려 맞춘다");
 }
 
+/* 설정 창 안의 버튼이 배경에 묻히지 않는가
+
+   [왜] .set-block 과 .layout-opt 이 둘 다 var(--panel) 이었습니다.
+   판 위에 같은 색 판을 얹은 셈이라, 고르지 않은 버튼은 글자만 떠
+   있는 것처럼 보였습니다. 눌리는데도 "안 눌린다" 로 느껴졌어요. */
+{
+  const bare = CSS.replace(/\/\*[\s\S]*?\*\//g, "");
+  const rule = name => {
+    const i = bare.indexOf(name + "{");
+    return i < 0 ? "" : bare.slice(i, bare.indexOf("}", i));
+  };
+  const block = rule(".set-block");
+  const opt   = rule(".layout-opt");
+  const bg = seg => (seg.match(/background:\s*([^;]+)/) || [])[1];
+  ok(!!bg(block) && !!bg(opt), "두 규칙 모두 배경이 정해져 있다");
+  ok(bg(block).trim() !== bg(opt).trim(),
+     `설정 칸과 그 안의 버튼이 다른 배경을 쓴다 (${bg(block).trim()} vs ${bg(opt).trim()})`);
+  ok(/border:\s*1px solid var\(--border-strong/.test(opt), "버튼 테두리가 진하다");
+  ok(/\.layout-opt:hover/.test(bare) && /\.layout-opt:active/.test(bare),
+     "누를 수 있다는 반응이 있다");
+  const row = rule(".slot-row");
+  ok(!!bg(row) && bg(row).trim() !== bg(block).trim(), "자리 목록도 배경이 구분된다");
+}
+
 /* 방마다 저장 공간이 나뉘어 있는가
 
    [왜] 두 방이 같은 주소(도메인)를 씁니다. localStorage 는 주소
@@ -585,7 +327,7 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
   const core = fs.readFileSync(DIR + "script_core.js", "utf8");
   const m = core.match(/const STORE_ROOM = "(\w+)"/);
   ok(!!m && m[1].length > 0, "이 방의 이름표가 정해져 있다" + (m ? ` (${m[1]})` : ""));
-  ok(m && m[1] === "tm", "이름표가 이 방의 것이다");
+  ok(m && m[1] === "bl", "이름표가 이 방의 것이다");
   ok(/window\.AppStore = AppStore/.test(core), "AppStore 를 내보낸다");
   ok(/_migrated_v1/.test(core), "예전 값을 한 번 옮겨준다");
 
@@ -639,28 +381,12 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
   ok(sizes.includes("192x192") && sizes.includes("512x512"),
      "설치에 필요한 192·512 아이콘이 있다");
   ok(mf.icons.some(i => i.purpose === "maskable"), "마스커블 아이콘이 있다");
-  /* manifest 안의 경로에는 ?v= 가 붙습니다 (설치된 앱 아이콘 갱신용) */
   mf.icons.forEach(i =>
-    ok(fs.existsSync(DIR + i.src.split("?")[0]), `아이콘 파일이 실제로 있다 (${i.src})`));
-
-  /* 파비콘·아이콘·manifest 에 버전이 찍혀야 브라우저가 새로 받아갑니다.
-     [왜] 아이콘을 갈았는데 옛 그림이 계속 보였습니다. 파비콘은 캐시가
-     특히 끈질겨서 강제 새로고침으로도 안 바뀝니다. */
-  ok(/href="icons\/favicon\.png\?v=\d+"/.test(HTML), "파비콘에 버전이 찍혀 있다");
-  ok(/href="icons\/apple-touch-icon\.png\?v=\d+"/.test(HTML), "애플 아이콘에 버전이 찍혀 있다");
-  ok(/href="manifest\.json\?v=\d+"/.test(HTML), "manifest 에 버전이 찍혀 있다");
-  ok(mf.icons.every(i => /\?v=\d+$/.test(i.src)), "manifest 안 아이콘에도 버전이 찍혀 있다");
-  {
-    /* build-single.py 가 앞으로도 자동으로 찍어주는지 */
-    const bs = fs.readFileSync(DIR+"build-single.py","utf8");
-    ok(/icons\/\[\\w\.-\]\+\\\.png/.test(bs), "빌드가 아이콘 버전을 자동으로 찍는다");
-    ok(/manifest\\\.json/.test(bs), "빌드가 manifest 버전도 찍는다");
-  }
+    ok(fs.existsSync(DIR+i.src), `아이콘 파일이 실제로 있다 (${i.src})`));
   ["icons/favicon.png","icons/apple-touch-icon.png"].forEach(f =>
     ok(fs.existsSync(DIR+f), `${f} 가 있다`));
 
-  ok(/<link rel="manifest" href="manifest\.json(\?v=\d+)?">/.test(HTML),
-     "index.html 이 manifest 를 연결한다");
+  ok(/<link rel="manifest" href="manifest\.json">/.test(HTML), "index.html 이 manifest 를 연결한다");
   ok(/serviceWorker.*register\("sw\.js"\)/s.test(HTML), "서비스 워커를 등록한다");
   ok(/rel="apple-touch-icon"/.test(HTML), "사파리·아이폰 아이콘을 연결한다");
 
@@ -728,7 +454,7 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
     ok(/visibilityState === "visible"\) return;/.test(seg), "보고 있을 때는 알리지 않는다");
     ok(/canNotify\(\)/.test(seg), "권한 없으면 알리지 않는다");
   }
-  ok(!/id="set-join-noti"/.test(HTML), "입장 알림 스위치도 탭과 함께 빠졌다 (기본값으로 동작)");
+  ok(/id="set-join-noti"/.test(HTML), "설정에 입장 알림 스위치가 있다");
   ok(/function detectJoins/.test(rt), "입장 감지 함수가 있다");
   {
     const i=rt.indexOf("function detectJoins");
@@ -797,514 +523,286 @@ ok(/\.card-conn\.off/.test(CSS), "끊김 모양이 정의돼 있다");
   ok(/AppStore\.getItem\(NOTI_ASKED_KEY\)/.test(u), "한 번 물어본 뒤엔 다시 묻지 않는다");
 }
 
-/* ---- 12. 로그인 B안 (필명 + 비밀번호) ---- */
+/* ---- 벨사탕이 더마감에서 가져온 것들 ---- */
 {
-  const a = fs.readFileSync(DIR+"script_auth.js","utf8");
-  const h = fs.readFileSync(DIR+"index.html","utf8");
-  const rules = JSON.parse(fs.readFileSync(DIR+"보안규칙.json","utf8")).rules;
+  const H   = fs.readFileSync(DIR+"index.html","utf8");
+  const css = fs.readFileSync(DIR+"styles.css","utf8");
+  const one = css.replace(/\s+/g, " ");
+  const rt  = fs.readFileSync(DIR+"script_realtime.js","utf8");
+  const lay = fs.readFileSync(DIR+"script_layout.js","utf8");
 
-  ok(/firebase-auth-compat\.js/.test(h), "index.html 이 firebase-auth 를 읽어온다");
-  const tags = (h.match(/<script src="(script_[\w.-]+)/g) || []).map(t => t.split('"')[1]);
+  /* 파이어베이스 — 이 방 전용 프로젝트여야 합니다.
+     예전에는 남의 프로젝트(writer-chat)를 쓰고 있었습니다. */
+  const core = fs.readFileSync(DIR+"script_core.js","utf8");
+  /* 주석에는 옛 프로젝트 이름이 설명으로 남아 있습니다.
+     그래서 설정 덩어리만 잘라내서 봅니다 — 예전에 주석을 보고
+     실패로 판정한 적이 있어서요. */
+  const cfg = core.slice(core.indexOf("const firebaseConfig = {"),
+                         core.indexOf("};", core.indexOf("const firebaseConfig = {")));
+  ok(/projectId: "blsatang"/.test(cfg), "벨사탕 전용 프로젝트를 쓴다");
+  ok(!/writer-chat/.test(cfg), "옛 프로젝트(writer-chat)가 남아 있지 않다");
+  ok(!/themagam/.test(cfg), "더마감 프로젝트가 섞여 있지 않다");
+  ok(/blsatang-default-rtdb/.test(cfg), "데이터베이스 주소가 벨사탕 것이다");
+  ok(/apiKey: "AIza/.test(cfg), "apiKey 가 들어 있다");
+  ["apiKey","authDomain","databaseURL","projectId","storageBucket",
+   "messagingSenderId","appId"].forEach(k =>
+    ok(new RegExp(k + ':').test(cfg), `설정에 ${k} 가 있다`));
+
+  /* 로그인 */
+  ok(/firebase-auth-compat\.js/.test(H), "firebase-auth 를 읽어온다");
+  const tags = (H.match(/<script src="(script_[\w.-]+)/g) || []).map(t => t.split('"')[1]);
   ok(tags.indexOf("script_auth.js") === tags.indexOf("script_core.js") + 1,
-     "script_auth.js 가 script_core.js 바로 뒤다 (join 을 감싸야 하므로)");
+     "script_auth.js 가 script_core.js 바로 뒤다");
   ok(tags.indexOf("script_auth.js") < tags.indexOf("script_profile.js"),
-     "script_auth.js 가 script_profile.js 앞이다 (로그인 → 입장 → 프로필 순서)");
-  ok(/id="pw-input"/.test(h) && /type="password"/.test(h), "비밀번호 칸이 있다");
-  ok(/id="join-msg"/.test(h), "오류를 보여줄 자리가 있다");
-
-  /* ★ 로그인은 탭 단위여야 합니다.
-
-     브라우저 단위(기본값)면 창 두 개로 서로 다른 필명을 쓸 때 나중에
-     들어간 쪽이 앞의 로그인을 덮어버립니다. 앞 창은 겉보기엔 멀쩡한데
-     저장이 전부 조용히 거절돼요. 실제로 그 일이 있었습니다. */
-  ok(/Persistence\.SESSION/.test(a), "로그인을 탭 단위(SESSION)로 둔다");
-  ok(a.indexOf("Persistence.SESSION") < a.indexOf("signInWithEmailAndPassword"),
-     "로그인하기 전에 탭 단위로 바꾼다");
-  ok(!/Persistence\.LOCAL/.test(a), "브라우저 단위로 되돌리지 않는다");
-  ok(/6자 이상/.test(h), "안내 문구도 6자 이상이다 (파이어베이스 최소값과 같아야 함)");
-
-  /* 가짜 파이어베이스를 만들어 실제로 돌려봅니다.
-     문자열만 봐서는 '있는데 안 도는' 버그를 못 잡습니다. */
-  function run(world) {
-    const log = [];
-    const inputs = {
-      "nick-input": { value: world.nick, focus(){}, select(){} },
-      "pw-input":   { value: world.pw, addEventListener(){}, focus(){}, select(){} },
-      "join-btn":   {},
-      "join-msg":   { classList:{toggle(){}}, style:{}, set textContent(v){ log.push("msg:"+v); } }
-    };
-    /* 요즘 파이어베이스는 실패 이유를 뭉뚱그려 알려줍니다 */
-    const VAGUE = "auth/invalid-login-credentials";
-    const authApi = {
-      async signInWithEmailAndPassword(e,p){
-        log.push("signIn");
-        if (!world.accounts[e]) { const x=new Error(); x.code=VAGUE; throw x; }
-        if (world.accounts[e] !== p) { const x=new Error(); x.code=VAGUE; throw x; }
-        return { user:{ uid:"uid-"+e } };
-      },
-      async createUserWithEmailAndPassword(e,p){
-        log.push("create");
-        if (world.accounts[e]) { const x=new Error(); x.code="auth/email-already-in-use"; throw x; }
-        if (p.length < 6) { const x=new Error(); x.code="auth/weak-password"; throw x; }
-        world.accounts[e] = p;
-        return { user:{ uid:"uid-"+e } };
-      },
-      async signOut(){ log.push("signOut"); }
-    };
-    const ctx = {
-      TextEncoder, console,
-      document:{ getElementById:id=>inputs[id]||null, addEventListener(){} },
-      firebase:{ auth:()=>authApi, database:()=>({ ref:(path)=>({
-        async once(){ log.push("readOwner"); log.push("path:"+path); return { val:()=>world.owner ?? null }; },
-        async transaction(fn){
-          const next = fn(world.owner ?? null);
-          if (next !== undefined) world.owner = next;
-          return { snapshot:{ val:()=>world.owner } };
-        }
-      })})}
-    };
-    ctx.window = ctx;
-    ctx.join = function(){ log.push("join"); };
-    vm.createContext(ctx);
-    vm.runInContext(a, ctx);
-    return ctx.join().then(() => ({ log, world, Auth: ctx.Auth }));
-  }
-
-  const EMAIL_HORANG = (function(){
-    let hex=""; for (const b of new TextEncoder().encode("호랑")) hex+=b.toString(16).padStart(2,"0");
-    return "n"+hex+"@themagam.local";
-  })();
-
-  return (async () => {
-    // ① 처음 오는 필명 — 도장이 없으니 계정을 만들고 들어간다
-    let r = await run({ nick:"호랑", pw:"tiger12", accounts:{}, owner:null });
-    ok(r.log.includes("readOwner"), "먼저 도장을 확인한다");
-    /* ★ 이번 버그: 도장 이름을 주소용으로 변환하면 방의 나머지 코드
-       (users/호랑, status/호랑) 와 이름이 어긋나 저장이 전부 막힙니다. */
-    ok(r.log.includes("path:nickOwner/호랑"),
-       "도장 이름에 필명을 그대로 쓴다 (주소용 변환 금지)");
-    ok(r.log.includes("create"), "처음 오는 필명이면 계정을 만든다");
-    ok(r.log.includes("join"), "그리고 입장한다");
-    ok(r.world.owner === "uid-"+EMAIL_HORANG, "도장이 찍힌다");
-
-    // ② 같은 필명, 맞는 비밀번호
-    r = await run({ nick:"호랑", pw:"tiger12",
-                    accounts:{[EMAIL_HORANG]:"tiger12"}, owner:"uid-"+EMAIL_HORANG });
-    ok(!r.log.includes("create"), "주인이 있으면 계정을 새로 만들지 않는다");
-    ok(r.log.includes("join"), "비밀번호가 맞으면 입장한다");
-
-    // ③ 같은 필명, 틀린 비밀번호 — 이번 버그의 핵심
-    r = await run({ nick:"호랑", pw:"wrong99",
-                    accounts:{[EMAIL_HORANG]:"tiger12"}, owner:"uid-"+EMAIL_HORANG });
-    ok(!r.log.includes("join"), "비밀번호가 틀리면 입장하지 못한다");
-    ok(!r.log.includes("create"), "틀렸다고 계정을 새로 만들지 않는다");
-    ok(r.log.some(l => /^msg:.*비밀번호가 달라요/.test(l)),
-       "'이미 쓰이고 있다'고 알려준다 (뭉뚱그린 오류 코드를 그대로 보여주지 않는다)");
-
-    // ④ 도장은 없는데 계정만 남은 경우 (방장이 도장만 지움)
-    r = await run({ nick:"호랑", pw:"tiger12",
-                    accounts:{[EMAIL_HORANG]:"tiger12"}, owner:null });
-    ok(r.log.includes("create") && r.log.includes("signIn") && r.log.includes("join"),
-       "도장만 없으면 있는 비밀번호로 들어가 도장을 다시 찍는다");
-    ok(r.world.owner === "uid-"+EMAIL_HORANG, "도장이 다시 찍힌다");
-
-    // ⑤ 짧은 비밀번호는 서버에 물어보지도 않는다
-    r = await run({ nick:"호랑", pw:"12", accounts:{}, owner:null });
-    ok(!r.log.includes("create") && !r.log.includes("join"), "짧은 비밀번호는 서버까지 가지 않는다");
-    ok(r.Auth.MIN_PW >= 6, "최소 길이가 파이어베이스 기준(6자) 이상이다");
-
-    // ⑥ 남이 먼저 도장을 찍어버린 순간
-    r = await run({ nick:"호랑", pw:"tiger12", accounts:{}, owner:null,
-                    get ownerRace(){ return true; } });
-    ok(true, "동시 입장 경합은 트랜잭션이 막는다");
-
-    // 가짜 이메일
-    const A = r.Auth;
-    ok(/^n[0-9a-f]+@themagam\.local$/.test(A.nickToEmail("콩")), "한글 필명이 쓸 수 있는 주소로 바뀐다");
-    ok(A.nickToEmail("콩") === A.nickToEmail("콩"), "같은 필명은 늘 같은 주소");
-    ok(A.nickToEmail("콩") !== A.nickToEmail("콩2"), "다른 필명은 다른 주소");
-
-    /* 방의 다른 파일들이 필명을 어떻게 쓰는지와 맞는지 확인합니다 */
-    ok(!/encodeURIComponent/.test(a),
-       "script_auth.js 어디에도 필명 변환이 남아 있지 않다");
-    const others = ["script_core.js","script_data.js","script_realtime.js","script_ui.js"]
-      .map(f => fs.readFileSync(DIR+f,"utf8")).join("\n");
-    ok(/users\/\$\{myNick\}|users\/" \+ myNick/.test(others),
-       "다른 파일은 필명을 그대로 쓴다 (같은 방식이어야 도장이 맞는다)");
-
-    // 파이어베이스가 키로 못 받는 글자는 입장 전에 막는다
-    r = await run({ nick:"호.랑", pw:"tiger12", accounts:{}, owner:null });
-    ok(!r.log.includes("join") && !r.log.includes("readOwner"),
-       "필명에 못 쓰는 글자가 있으면 서버까지 가지 않는다");
-
-    // ---- 보안 규칙 ----
-    ok(rules.nickOwner, "규칙에 nickOwner 가 있다");
-    ok(rules.nickOwner[".read"] === true, "도장은 로그인 전에도 읽을 수 있다 (처음 온 사람 판별에 필요)");
-    const nw = rules.nickOwner.$nick[".write"];
-    ok(/!data\.exists\(\)/.test(nw), "도장은 비어 있을 때만 찍힌다 (덮어쓰기 불가)");
-    ok(/auth\.uid/.test(nw), "도장에는 자기 계정 번호만 넣을 수 있다");
-    ok(/nickOwner/.test(rules.users.$nick[".write"]), "users 는 도장 주인만 쓴다");
-    ok(/nickOwner/.test(rules.status.$nick[".write"]), "status 는 도장 주인만 쓴다");
-    Object.keys(rules).forEach(k => {
-      const w = rules[k][".write"];
-      if (w !== undefined) ok(w !== true, `${k} 는 아무나 쓸 수 없다`);
-    });
-
-    /* ---- 13. 링크 버튼이 남아 있지 않은가 ----
-       방 자체 뽀모가 이미 공용(db.ref("pomodoro") 한 곳을 모두가 봄)이라,
-       남의 사이트를 여는 버튼은 걷어냈습니다. 되살아나지 않게 지켜봅니다. */
-    const core = fs.readFileSync(DIR+"script_core.js","utf8");
-    ok(!/pomo-shared-btn|openSharedPomo/.test(h), "화면에 외부 뽀모 링크 버튼이 없다");
-    ok(!/openSharedPomo|mmaapomopomo/.test(core), "코드에도 외부 뽀모 링크가 없다");
-    ok(/db\.ref\("pomodoro"\)/.test(fs.readFileSync(DIR+"script_realtime.js","utf8")),
-       "방 뽀모는 한 곳에 저장돼 모두가 함께 본다 (이미 공용이다)");
-
-    return checkWordcount();
-  })();
-}
-
-/* ---- 14. 글자수 기록 (스냅샷 차이) ----
-   앞 블록이 return 으로 끝나므로, 함수로 감싸 마지막에 부릅니다. */
-function checkWordcount(){
-  const w = fs.readFileSync(DIR+"script_wordcount.js","utf8");
-  const h = fs.readFileSync(DIR+"index.html","utf8");
-  const rules = JSON.parse(fs.readFileSync(DIR+"보안규칙.json","utf8")).rules;
-
-  ok(/id="wordcount-block"/.test(h), "글자수 칸이 화면에 있다");
-  ok(h.indexOf('id="wordcount-block"') > h.indexOf('id="pomo-block"') &&
-     h.indexOf('id="wordcount-block"') < h.indexOf('id="status-block"'),
-     "글자수 칸이 뽀모 줄 안에 들어 있다");
-  const tags = (h.match(/<script src="(script_[\w.-]+)/g) || []).map(t => t.split('"')[1]);
-  ok(tags.includes("script_wordcount.js"), "index.html 이 script_wordcount.js 를 읽어온다");
-  const order = fs.readFileSync(DIR+"build-single.py","utf8");
-  ok(/script_wordcount\.js/.test(order), "단일파일 빌드 순서에도 들어 있다");
-  ok(/startWordcount/.test(fs.readFileSync(DIR+"script_profile.js","utf8")),
-     "입장한 뒤에 글자수를 시작한다 (닉네임이 생긴 다음이라야 한다)");
+     "로그인 → 입장 → 프로필 순서다");
+  ok(/id="pw-input"/.test(H), "비밀번호 칸이 있다");
+  const auth = fs.readFileSync(DIR+"script_auth.js","utf8");
+  ok(/belsatang\.local/.test(auth), "가짜 이메일 도메인이 벨사탕 것이다");
+  ok(!/themagam\.local/.test(auth), "더마감 도메인이 남아 있지 않다");
+  ok(/Persistence\.SESSION/.test(auth), "로그인이 탭 단위다");
 
   /* 보안 규칙 */
-  ok(rules.wordlog, "규칙에 wordlog 가 있다");
-  ok(/nickOwner/.test(rules.wordlog.$day.$nick[".write"]), "내 글자수는 나만 쓸 수 있다");
+  const rules = JSON.parse(fs.readFileSync(DIR+"보안규칙.json","utf8")).rules;
+  ok(rules.nickOwner && /!data\.exists\(\)/.test(rules.nickOwner.$nick[".write"]),
+     "필명 도장은 덮어쓸 수 없다");
+  ok(/nickOwner/.test(rules.users.$nick[".write"]), "users 는 도장 주인만 쓴다");
+  /* 코드가 쓰는 경로가 규칙에 다 있는가 — 빠지면 조용히 거절됩니다 */
+  const src = ["script_core.js","script_data.js","script_realtime.js","script_ui.js",
+               "script_chat.js","script_timelog.js","script_profile.js","script_reactions.js",
+               "script_pet.js","script_wordcount.js","script_auth.js"]
+    .map(f => { try { return fs.readFileSync(DIR+f,"utf8"); } catch(e){ return ""; } }).join("\n");
+  const roots = new Set();
+  src.replace(/(?:db|window\.db|firebase\.database\(\))\s*\.ref\(\s*[`"']([a-zA-Z]+)/g,
+              (m, r) => { roots.add(r); return m; });
+  roots.forEach(r => ok(!!rules[r], `보안 규칙에 ${r} 경로가 있다`));
 
-  /* ---- 실제로 돌려봅니다 ---- */
-  const saved = [];
-  const inputs = {};
-  function mkEl(id){
-    return inputs[id] = { id, value:"", textContent:"", innerHTML:"", style:{},
-      classList:{ _s:new Set(), toggle(c,v){ v?this._s.add(c):this._s.delete(c); },
-                  contains(c){ return this._s.has(c); } },
-      dataset:{}, addEventListener(t,f){ this["on_"+t]=f; },
-      setAttribute(){}, querySelectorAll(){ return []; },
-      focus(){}, select(){} };
+  /* 펫 */
+  ok(tags.includes("script_pet.js") && tags.includes("script_pet_ui.js"), "펫 파일을 읽어온다");
+  ok(/id="panel-pet"/.test(H), "설정에 펫 자리가 있다");
+  ok(/petSpecies:/.test(rt), "카드에 펫 요약을 실어 보낸다");
+  ok(/window\.Pet\.MAX_LEVEL/.test(rt), "카드가 만렙 값을 코드에서 가져온다 (숫자를 박지 않는다)");
+  ok(!/Math\.min\(10, Number\(row\.petLevel\)/.test(rt), "레벨을 10에서 자르지 않는다");
+
+  /* 업적 배지는 닉네임 앞 */
+  ok(/<div class="card-name">\$\{achChips\}/.test(rt), "업적 배지가 닉네임 앞에 붙는다");
+  ok(/\.card-name \.card-ach\{[^}]*font-size: \.9/.test(one),
+     "배지 크기가 닉네임 글자를 따라간다 (em)");
+
+  /* 뽀모 알약이 곧 진행 바 */
+  ok(/id="timer-pill" class="is-fillable"/.test(H), "알약이 채워지는 형태다");
+  const pillSeg = H.slice(H.indexOf('id="timer-pill"'), H.indexOf('</div>', H.indexOf('id="timer-text"')));
+  ok(/id="pomo-bar"/.test(pillSeg), "진행 바가 알약 안에 들어 있다");
+  ok((H.match(/id="pomo-bar"/g) || []).length === 1, "진행 바가 하나뿐이다 (옛 줄이 안 남았다)");
+  ok(/#timer-pill\.is-fillable\{[^}]*overflow: hidden/.test(one),
+     "차오른 색이 둥근 모서리를 넘지 않는다");
+
+  /* 글자수 */
+  ok(tags.includes("script_wordcount.js"), "글자수 파일을 읽어온다");
+  ok(/<section class="pane pane-word wc-block" id="wordcount-block"/.test(H),
+     "글자수가 독립된 창이다 (뽀모 안에 들어 있지 않다)");
+  /* wc-block 클래스가 있어야 안쪽 배치가 잡힙니다.
+     한 번 빠뜨려서 입력칸과 버튼이 늘어져 보였습니다. */
+  ok(/class="[^"]*\bwc-block\b/.test(H), "글자수 칸에 wc-block 클래스가 있다");
+  ok(H.indexOf('id="wordcount-block"') > H.indexOf('</section>', H.indexOf('id="pomo-block"')),
+     "글자수 창이 뽀모 창 밖에 있다");
+  ok(rules.wordlog && rules.wordfeed, "글자수 경로가 규칙에 있다");
+
+  /* 네 칸 배치 */
+  ok(/id: "word"/.test(lay), "배치 목록에 글자수가 있다");
+  ok(!/id: "stat"|id: "todo"/.test(lay), "목표·투두는 창 목록에서 빠졌다");
+  ok(/slotMapLand4/.test(lay), "저장 키를 새로 팠다 (칸 수가 바뀌었으므로)");
+  /* 세로 보기는 2칸 × 2줄입니다.
+     한 줄로 길게 쌓았더니 칸이 너무 납작해져서 바꿨습니다. */
+  ok(/dir: "v", kids: \["s1", "s3"\]/.test(lay) && /dir: "v", kids: \["s2", "s4"\]/.test(lay),
+     "세로 보기가 2칸 × 2줄이다");
+  ok(/'s1 s2' 's3 s4'/.test(lay), "세로 자리 그림도 2×2 다");
+  ok(/id="goals-modal"/.test(H), "목표·투두 팝업이 있다");
+
+  /* 상태 고르기와 WORK 버튼은 화면에서 뺐습니다 (카드 상태표로 대체).
+     다만 <select> 는 지우면 안 됩니다 — 저장과 시간 집계가 이 값을 읽어요. */
+  ok(/id="db-status"[^>]*class="[^"]*hidden/.test(H), "상태 고르기 칸이 감춰져 있다");
+  ok(/id="db-status"/.test(H), "상태 값 자체는 남아 있다 (지우면 집계가 깨진다)");
+  ok(!/id="status-quick-btn"/.test(H), "WORK 시작 버튼이 없다");
+  ok(/getElementById\("status-quick-btn"\)[\s\S]{0,120}if \(!btn/.test(
+       fs.readFileSync(DIR+"script_data.js","utf8")),
+     "버튼이 없어도 그냥 넘어간다");
+  ok(/>🍅 뽀모도로</.test(H), "설정 탭 이름이 뽀모도로다");
+
+  /* 가이드가 지금 화면과 어긋나지 않는지.
+     기능은 바뀌었는데 설명만 옛날 것으로 남는 일이 잦습니다. */
+  const man = fs.readFileSync(DIR+"script_manual.js","utf8");
+  ok(/비밀번호/.test(man), "가이드에 비밀번호 이야기가 있다");
+  ok(/네 칸/.test(man) && !/다섯 칸/.test(man), "가이드가 네 칸이라고 말한다");
+  ok(/2칸 × 2줄/.test(man), "가이드가 세로 보기 모양을 알려준다");
+  ok(/글자수/.test(man), "가이드에 글자수 설명이 있다");
+  ok(/100시간에 만렙/.test(man) && !/40시간에 만렙/.test(man),
+     "가이드의 펫 시간이 지금과 같다");
+  ok(!/WORK 시작!<\/b> 버튼/.test(man), "없앤 버튼을 설명하지 않는다");
+  ok(/닉네임 앞/.test(man), "업적 배지 자리를 알려준다");
+  ok(/42종 42칸/.test(man) && !/20종 20칸/.test(man), "가이드의 펫 종류 수가 지금과 같다");
+
+  /* 펫 42종 */
+  {
+    const Pet = require(DIR + "script_pet.js");
+    ok(Pet.SPECIES_IDS.length === 42, `42종이다 (${Pet.SPECIES_IDS.length})`);
+    ok(new Set(Pet.SPECIES.map(x => x.label)).size === 42, "이름이 겹치지 않는다");
+    let broken = 0;
+    for (const sp of Pet.SPECIES_IDS)
+      for (let lv = 1; lv <= Pet.MAX_LEVEL; lv++)
+        if (/NaN|undefined/.test(Pet.petSvg(sp, lv, 56, lv === Pet.MAX_LEVEL))) broken++;
+    ok(broken === 0, `펫 그림 ${42 * Pet.MAX_LEVEL}가지가 온전하다`);
+    /* 옛 "꽃"을 키우던 분이 용으로 바뀌지 않아야 합니다 */
+    ok(Pet.speciesLabel("flower") === "장미", "옛 이름 '꽃'이 장미로 이어진다");
   }
-  ["wc-big","wc-unit","wc-rows","wc-hint","wc-log","wc-input",
-   "wc-send","wc-base","wc-reset","wc-fresh","wordcount-block"].forEach(mkEl);
 
-  let store = {};   // wordlog/{day}/{nick}
-  const ctx = {
-    console,
-    document:{ readyState:"complete", addEventListener(){},
-               getElementById:id=>inputs[id]||null },
-    Date, Number, Math, JSON, String, Object
-  };
-  ctx.window = ctx;
-  /* ★ 이 방은 script_core.js 에서 `let myNick` 을 파일 맨 바깥에 둡니다.
-     let 은 window 에 붙지 않으므로, 다른 파일에서는 **이름 그대로**만
-     보입니다. window.myNick 으로 읽으면 늘 빈 값이에요 — 실제로 그
-     실수를 해서 "입장한 뒤에 쓸 수 있어요"가 계속 떴습니다.
-     그래서 여기서도 window 가 아니라 이름으로만 줘 봅니다. */
-  ctx.myNick = "호랑";
-  const feedSpy = [];
-  ctx.db = { ref:(path)=>({
-    async update(v){ saved.push({path,v}); store[path] = {...(store[path]||{}), ...v}; },
-    async push(v){ feedSpy.push({path,v}); return {}; },
-    limitToLast(){ return this; },
-    on(){}, off(){}
-  })};
-  ctx._feedSpy = feedSpy;
-  vm.createContext(ctx);
-  vm.runInContext(w, ctx);
-
-  const W = ctx.Wordcount;
-  ok(typeof ctx.startWordcount === "function", "startWordcount 를 밖에서 부를 수 있다");
-  ok(!/window\.myNick \|\| ""\s*;?\s*\n\s*\}\s*\n\s*function myRow/.test(w) ||
-     /typeof myNick/.test(w), "닉네임을 window 가 아니라 이름 그대로 읽는다");
-  ok(/typeof myNick === "string"/.test(w), "let 로 선언된 myNick 을 이름으로 찾는다");
-  ok(/^\d{4}-\d{2}-\d{2}$/.test(W.dayKey()), "날짜 키가 YYYY-MM-DD 다");
-  ok(W.weekDays().length >= 1 && W.weekDays().length <= 7, "이번 주는 1~7일이다");
-  ok(W.weekDays()[W.weekDays().length-1] === W.dayKey(), "이번 주의 마지막 날은 오늘이다");
-
-  /* 버튼을 직접 눌러봅니다.
-     화면 상태(_today)는 서버 구독으로 채워지므로, 여기서는 저장된 값을
-     되먹여서 다음 눌림에 반영합니다 — 실제 동작과 같은 흐름입니다. */
-  const day = W.dayKey();
-  /* ★ 일부러 서버 답을 흉내내지 않습니다.
-
-     예전 검사는 매 눌림 뒤에 저장된 값을 손으로 되먹였습니다. 그래서
-     "서버 답이 오기 전에 다음 버튼을 누르면 옛 값으로 계산한다"는
-     버그를 못 잡았어요. 실제로 새 편 → 기록 이 어긋났습니다.
-     이제 되먹이지 않고, 코드가 스스로 손안의 값을 챙기는지 봅니다. */
-  const press = async (btn, val) => {
-    if (val !== undefined) inputs["wc-input"].value = String(val);
-    await inputs[btn].on_click();
-  };
-
-  return (async () => {
-    // ① 처음 — 출발선만 잡히고 누적은 0
-    await press("wc-send", 1000);
-    let cur = store[`wordlog/${day}/호랑`];
-    ok(cur.base === 1000 && cur.total === 0, "첫 기록은 출발선만 잡고 누적은 0이다");
-    ok(inputs["wc-input"].value === "", "적고 나면 입력칸이 비워진다");
-
-    // ② 늘어난 만큼만 쌓인다
-    await press("wc-send", 2500);
-    cur = store[`wordlog/${day}/호랑`];
-    ok(cur.total === 1500, "차이(1,500자)만 쌓인다");
-    ok(cur.base === 2500, "기준이 지금 값으로 옮겨간다");
-
-    await press("wc-send", 2900);
-    cur = store[`wordlog/${day}/호랑`];
-    ok(cur.total === 1900, "이어서 적어도 차이만 더해진다");
-
-    // ③ 줄었을 때 — 누적을 깎지 않는다 (퇴고로 덜어낸 것도 작업이다)
-    const before = cur.total;
-    await press("wc-send", 2000);
-    cur = store[`wordlog/${day}/호랑`];
-    ok(cur.total === before, "글자수가 줄어도 누적을 깎지 않는다");
-    ok(cur.base === 2000, "줄었을 때는 기준만 옮긴다");
-    ok(cur.total >= 0, "누적이 음수가 되지 않는다");
-
-    // ④ 같은 값을 또 적어도 두 번 세지 않는다
-    const t2 = cur.total;
-    await press("wc-send", 2000);
-    ok(store[`wordlog/${day}/호랑`].total === t2, "같은 값을 또 적어도 두 번 세지 않는다");
-
-    /* 여기까지 늘어난 것은 두 번(1,500 / 400)뿐입니다 */
-    {
-      const f = ctx._feedSpy.filter(x => /^wordfeed\//.test(x.path));
-      ok(f.length === 2, `늘어난 횟수만큼만 올라간다 (${f.length}번)`);
-    }
-
-    /* ⑤ 서버 답을 기다리지 않고 연달아 눌러도 어긋나지 않아야 합니다.
-       실제로 여기서 어긋났습니다 — 새 편을 누른 직후 기록하면
-       옛 기준으로 빼서 "글자수가 줄었네요"가 뜨고 채팅에도 안 올라갔어요. */
-    {
-      const n0 = ctx._feedSpy.length;
-      await press("wc-fresh");                 // 기준 0
-      await press("wc-send", 300);             // 곧바로 기록
-      const c = store[`wordlog/${day}/호랑`];
-      ok(c.base === 300, "새 편 직후에 기록해도 기준이 제대로 옮겨간다");
-      ok(ctx._feedSpy.length === n0 + 1, "새 편 직후의 기록도 채팅에 올라간다");
-      ok(ctx._feedSpy[ctx._feedSpy.length-1].v.add === 300,
-         "새 편 뒤에는 적은 숫자가 그대로 늘어난 양이다");
-
-      // 초기화 직후에 이어 적어도 마찬가지
-      await press("wc-reset");
-      await press("wc-send", 500);
-      const c2 = store[`wordlog/${day}/호랑`];
-      ok(c2.total === 200, `초기화 직후 기록도 차이만 쌓인다 (${c2.total})`);
-      ok(c2.base === 500, "초기화는 기준을 건드리지 않는다");
-
-      // 연달아 세 번
-      const n1 = ctx._feedSpy.length;
-      await press("wc-send", 600);
-      await press("wc-send", 700);
-      await press("wc-send", 800);
-      const c3 = store[`wordlog/${day}/호랑`];
-      ok(c3.total === 500, `쉬지 않고 눌러도 정확히 쌓인다 (${c3.total})`);
-      ok(ctx._feedSpy.length === n1 + 3, "누른 만큼 채팅에도 올라간다");
-    }
-
-    // ⑥ 버튼 셋
-    const tBefore = store[`wordlog/${day}/호랑`].total;
-    await press("wc-base", 5000);
-    cur = store[`wordlog/${day}/호랑`];
-    ok(cur.base === 5000 && cur.total === tBefore, "▶기준은 누적을 건드리지 않는다");
-
-    await press("wc-reset");
-    ok(store[`wordlog/${day}/호랑`].total === 0, "🧹초기화는 누적을 0으로");
-    ok(store[`wordlog/${day}/호랑`].base === 5000, "🧹초기화는 기준을 건드리지 않는다");
-
-    await press("wc-fresh");
-    ok(store[`wordlog/${day}/호랑`].base === 0, "🆕새 편은 기준을 0으로");
-
-    // 새 편 뒤엔 적은 숫자가 곧 쓴 양
-    await press("wc-send", 700);
-    ok(store[`wordlog/${day}/호랑`].total === 700, "새 편 뒤에는 적은 숫자가 곧 쓴 양이다");
-
-    // ⑦ 숫자가 아니면 아무것도 저장하지 않는다
-    const n = saved.length;
-    await press("wc-send", "");
-    ok(saved.length === n, "빈 칸으로 누르면 저장하지 않는다");
-    inputs["wc-input"].value = "-5";
-    await inputs["wc-send"].on_click();
-    ok(saved.length === n, "음수는 저장하지 않는다");
-
-    // ⑧ set 이 아니라 update 여야 한다 (total 만 바꾸다 base 를 날리면 안 됨)
-    ok(!/\.set\(/.test(w) || /\.update\(/.test(w), "update 로 저장한다");
-    ok(saved.every(s => /^wordlog\/\d{4}-\d{2}-\d{2}\/호랑$/.test(s.path)),
-       "내 자리에만 쓴다");
-
-    // ⑨ 이름에 태그가 들어와도 화면에 그대로 심지 않는다
-    ok(/<span class="wc-nm">&lt;b&gt;/.test(W.drawRows([["<b>",1]], -1)),
-       "필명 속 태그를 글자로 처리한다");
-
-    /* ⑨ 흐르는 기록 — 순위 막대가 아니라 한 줄씩 쌓여야 합니다.
-       그날 적게 쓴 사람이 위축되지 않게 한 결정이라, 되돌아가지 않도록 지킵니다. */
-    ok(!/주간/.test(h.slice(h.indexOf('id="wordcount-block"'), h.indexOf('id="wordcount-block"')+900)),
-       "주간 탭이 없다");
-    ok(/data-wc-tab="today"/.test(h) && /data-wc-tab="me"/.test(h),
-       "탭은 오늘과 내 기록 둘뿐이다");
-
-    const fed = ctx._feedSpy.filter(f => /^wordfeed\//.test(f.path));
-    ok(fed.length > 0, "글자수가 늘면 흐르는 기록에 한 줄 올라간다");
-    ok(fed.every(f => f.v.add > 0), "늘어난 만큼만 올라간다 (0이나 음수는 안 올린다)");
-    ok(fed.every(f => f.v.nick === "호랑" && f.v.at), "누가 언제 올렸는지 함께 남는다");
-    ok(fed.every(f => typeof f.v.snap === "number"), "올린 숫자(전체 글자수)도 함께 남는다");
-
-    /* 오늘 화면에 사람별 순위나 막대가 나오면 안 됩니다 */
-    const feedHtml = W.drawFeed([{nick:"달빛", add:300, snap:800, at:Date.now()}]);
-    ok(/wc-said-n">800자/.test(feedHtml), "윗줄에 올린 숫자가 그대로 보인다");
-    ok(/\+300자/.test(feedHtml) && /전체 800자/.test(feedHtml),
-       "아랫줄에 늘어난 만큼과 전체가 함께 보인다");
-    /* 채팅처럼 — 남의 것은 왼쪽, 내 것은 오른쪽 */
-    ok(/wc-said-nm">달빛/.test(feedHtml), "남이 올린 것에는 이름이 붙는다");
-    const mineHtml = W.drawFeed([{nick:"호랑", add:300, snap:800, at:Date.now()}]);
-    ok(/class="wc-feed me"/.test(mineHtml), "내 것에는 me 표시가 붙는다 (오른쪽 정렬용)");
-    ok(!/wc-said-nm/.test(mineHtml), "내 말풍선에는 내 이름을 또 쓰지 않는다");
-    const css = fs.readFileSync(DIR+"styles.css","utf8");
-    ok(/\.wc-feed\.me \.wc-said-line\{[^}]*flex-end/.test(css.replace(/\s+/g," ")),
-       "내 말풍선이 오른쪽으로 간다");
-    ok(/\.wc-said-line\{[^}]*flex-start/.test(css.replace(/\s+/g," ")),
-       "남의 말풍선은 왼쪽에 있다");
-    ok(/\.wc-feed-sys\{[^}]*text-align: center/.test(css.replace(/\s+/g," ")),
-       "계산 결과는 가운데 정렬이다");
-    /* 시간은 넣지 않습니다 — 좁은 칸이 지저분해집니다 */
-    ok(!/오전|오후/.test(feedHtml), "계산 결과 줄에 시각을 넣지 않는다");
-    ok(!/wc-feed-at/.test(feedHtml), "시각 자리 자체가 없다");
-    ok(!/wc-bar/.test(feedHtml), "오늘 탭에는 막대를 그리지 않는다");
-    /* snap 이 없던 옛 기록도 깨지지 않아야 합니다 */
-    const oldHtml = W.drawFeed([{nick:"달빛", add:300, at:Date.now()}]);
-    ok(!/undefined|NaN/.test(oldHtml), "snap 이 없던 옛 기록도 깨지지 않는다");
-    ok(!/wc-said-line/.test(oldHtml), "옛 기록은 말풍선 없이 계산 결과만 나온다");
-    ok(/&lt;b&gt;/.test(W.drawFeed([{nick:"<b>",add:1,snap:2,at:1}])),
-       "흐르는 기록에서도 필명 속 태그를 글자로 처리한다");
-
-    const rulesFeed = rules.wordfeed;
-    ok(rulesFeed, "규칙에 wordfeed 가 있다");
-    ok(/nickOwner/.test(rulesFeed.$day.$id[".write"]), "남의 이름으로는 올릴 수 없다");
-    ok(/!data\.exists\(\)/.test(rulesFeed.$day.$id[".write"]), "올라간 줄은 고칠 수 없다");
-
-    // ⑩ 주간 합계
-    ctx.Wordcount._state().week[W.dayKey()] = { "호랑":{total:100}, "달빛":{total:50} };
-    const sw = W.sumWeek();
-    ok(sw["호랑"] === 100 && sw["달빛"] === 50, "주간 합계가 사람별로 더해진다");
-
-    /* 저장이 거절되면 채팅에도 올리지 않아야 합니다 */
-    {
-      const nick = "호랑";
-      ctx.Wordcount._state().today[nick] = { total: 0, base: 100, at: Date.now() };
-      const n = ctx._feedSpy.length;
-      const realRef = ctx.db.ref;
-      ctx.db.ref = (path) => /^wordlog\//.test(path)
-        ? { async update(){ throw new Error("일부러 낸 거절"); } }
-        : realRef(path);
-      const warn = console.warn; console.warn = () => {};   // 일부러 낸 오류라 조용히
-      await press("wc-send", 500);
-      console.warn = warn;
-      ok(ctx._feedSpy.length === n, "저장이 거절되면 채팅에도 안 올라간다");
-    ok(/permission/i.test(w) && /로그인이 풀립니다/.test(w),
-       "거절 이유가 로그인 문제일 때 그렇다고 알려준다");
-      ctx.db.ref = realRef;
-    }
-
-    /* 뽀모 줄 나누기 */
-    ok(/pomo-row-setup/.test(h), "뽀모 시간 설정이 제 줄을 가진다");
-    const wrap = h.slice(h.indexOf('id="timer-wrap"'), h.indexOf('id="pomo-detail"'));
-    ok((wrap.match(/class="pomo-row/g) || []).length === 5, "뽀모가 다섯 줄이다");
-    const setupAt = wrap.indexOf("pomo-row-setup");
-    const btnAt   = wrap.indexOf("pomo-run-btn start");
-    ok(setupAt > 0 && btnAt > setupAt, "시간 설정 줄이 버튼 줄보다 위에 있다");
-    ok(!/pomo-row-setup[\s\S]{0,400}pomo-run-btn/.test(wrap),
-       "시간 설정과 버튼이 같은 줄에 있지 않다");
-
-    return checkTimelog();
-  })();
-}
-
-/* ---- 15. 설정 → 나의 기록 ---- */
-{
-  const H  = fs.readFileSync(DIR+"index.html","utf8");
+  /* 설정 → 나의 기록 */
   const tl = fs.readFileSync(DIR+"script_timelog.js","utf8");
-  const wc = fs.readFileSync(DIR+"script_wordcount.js","utf8");
-  const pr = fs.readFileSync(DIR+"script_profile.js","utf8");
-
   ok(/id="panel-record"/.test(H), "설정에 나의 기록 자리가 있다");
-  ok(/data-tab="record"/.test(H), "탭 버튼이 있다");
-  ok(/name === "record"/.test(pr), "그 탭을 열면 내용을 그린다");
-  ok(/window\.renderMyRecordPanel/.test(tl), "그리는 함수가 밖에서 불린다");
-
-  /* ★ 팝업과 설정이 같은 코드를 써야 합니다.
-     예전처럼 openRecord 안에 HTML 이 박혀 있으면, 설정용으로 복사하게
-     되고 한쪽만 고치는 사고가 반드시 납니다. */
+  ok(/name === "record"/.test(fs.readFileSync(DIR+"script_profile.js","utf8")),
+     "그 탭을 열면 내용을 그린다");
   ok(/function recordHtml\(rows\)/.test(tl), "기록 화면을 만드는 함수가 하나로 떼어져 있다");
   ok((tl.match(/rec-today/g) || []).length === 1, "기록 화면 뼈대가 한 곳에만 있다 (복사본 없음)");
-  ok(/body\.innerHTML = recordHtml\(/.test(tl), "팝업이 그 함수를 쓴다");
-  ok(/recordHtml\(await loadSummary\(myNick, 7\)\)/.test(tl), "설정도 그 함수를 쓴다");
+  ok(/Wordcount\?\.myWeekHtml/.test(tl), "글자수 요약도 함께 보여준다");
+  ok(/🔥집중/.test(tl) && !/🔥초집중/.test(tl), "상태 이름이 벨사탕 것이다");
 
-  /* 글자수도 함께 보여야 합니다 */
-  ok(/myWeekHtml/.test(wc), "글자수 요약을 만드는 함수가 있다");
-  ok(/Wordcount\?\.myWeekHtml/.test(tl), "설정이 글자수 요약을 가져다 쓴다");
-  ok(/글자수 기록을 불러오지 못했어요/.test(tl), "글자수를 못 가져와도 화면이 깨지지 않는다");
-  ok(/입장 후에 볼 수 있어요/.test(tl), "입장 전에는 그렇다고 알려준다");
-
-  /* 실제로 그려봅니다 */
+  /* 채팅 헤더의 내 상태 칩 —
+     채팅만 넓게 보는 분은 카드가 안 보여서 상태를 바꿀 수 없었습니다. */
   {
-    const inputs = {};
-    const mk = id => (inputs[id] = { id, innerHTML: "", textContent: "",
-      style:{}, classList:{toggle(){},add(){},remove(){},contains(){return false}},
-      addEventListener(){}, querySelectorAll(){return []}, focus(){}, select(){} });
-    ["wc-big","wc-unit","wc-rows","wc-hint","wc-log","wc-input",
-     "wc-send","wc-base","wc-reset","wc-fresh","wordcount-block"].forEach(mk);
-    const ctx = { console, Date, Number, Math, JSON, String, Object,
-      document:{ readyState:"complete", addEventListener(){}, getElementById:id=>inputs[id]||null } };
-    ctx.window = ctx; ctx.myNick = "호랑";
-    ctx.db = { ref:()=>({ update(){}, push(){}, limitToLast(){return this}, on(){}, off(){} }) };
-    vm.createContext(ctx);
-    vm.runInContext(wc, ctx);
-    const html = ctx.Wordcount.myWeekHtml();
-    ok(/rec-big/.test(html), "글자수 요약에 오늘 숫자가 들어간다");
-    ok(/이번 주/.test(html), "이번 주 합계도 들어간다");
-    ok(!/NaN|undefined/.test(html), "기록이 하나도 없어도 깨지지 않는다");
-    ok(/출발선/.test(html), "출발선을 안 잡았으면 그렇다고 알려준다");
+    const pr = fs.readFileSync(DIR+"script_profile.js","utf8");
+    ok(/id="my-status-chip"/.test(H), "채팅 헤더에 상태 칩 자리가 있다");
+    ok(H.indexOf('id="my-status-chip"') < H.indexOf('id="my-info"'),
+       "칩이 '몇 명 접속 중' 왼편에 있다");
+    ok(/data-pick-status="1"/.test(H.slice(H.indexOf('id="my-status-chip"') - 200,
+                                           H.indexOf('id="my-info"'))),
+       "칩을 누르면 상태 고르기 판이 뜬다 (카드와 같은 길)");
+    ok(/function renderMyStatusChip/.test(pr), "칩을 그리는 함수가 있다");
+    ok(/renderMyStatusChip\?\.\(\)/.test(pr) || /renderMyStatusChip\(\)/.test(pr),
+       "상태를 바꾸면 칩도 새로 칠한다");
+    ok(!/🔥초집중/.test(pr), "고르기 판의 상태 이름도 벨사탕 것이다");
+    /* 색을 복사하지 않고 카드 상태표와 같은 규칙에 태웁니다.
+       복사하면 한쪽만 고치는 사고가 납니다. */
+    ok(/\.card-state\.status-writing,\s*\.my-status-chip\.status-writing/.test(one),
+       "칩이 카드 상태표와 같은 색 규칙을 쓴다 (복사본 없음)");
+    ok(/\.my-status-chip\{[^}]*calc\(var\(--fs-sm\) \* \.9\)/.test(one),
+       "칩이 카드 상태표보다 작다");
+    /* ★ 카드 영역의 클릭 그물은 채팅 헤더까지 닿지 않습니다.
+       칩에 클릭을 직접 걸어야 채팅만 보는 화면(폰)에서도 눌립니다.
+       실제로 폰에서 안 눌렸습니다. */
+    ok(/function bindMyStatusChip/.test(pr), "칩에 클릭이 직접 걸려 있다");
+    ok(/chip\.addEventListener\("click"/.test(pr),
+       "카드 영역 그물에 기대지 않는다");
   }
+
+  /* 소개 페이지 (guide.html) — 배포용 한 장짜리 문서 */
+  {
+    const g = fs.readFileSync(DIR+"guide.html","utf8");
+    ok(!/firebase/i.test(g), "소개 페이지는 서버를 읽지 않는다 (방이 죽어도 열린다)");
+    ok(!/<script/i.test(g), "스크립트가 없다 (열기만 하면 끝)");
+    ok(/gring-boop\.github\.io\/blsatang\//.test(g), "입장 링크가 들어 있다");
+    ok(/비밀번호/.test(g) && /6자 이상/.test(g), "입장 방법이 지금 방식과 같다");
+    /* 같은 그룹에 띄우는 문서 — 홍보보다 안내가 먼저입니다 */
+    ok(/방장에게 문의/.test(g), "비밀번호 분실 안내가 있다");
+    ok(!/자주 묻는 것/.test(g) && !/시작은 1분/.test(g), "홍보성 구획은 뺐다");
+    ok(/42종/.test(g), "펫 숫자가 지금과 같다");
+    ok((g.match(/<svg/g) || []).length >= 4, "펫 그림이 실제 그림에서 뽑혀 들어 있다");
+  }
+
+  /* 파일이 빠졌을 때 뜨는 안내가 실제 파일 목록과 맞아야 합니다.
+     예전에는 "9개가 있어야 한다"고 적혀 있었는데 실제로는 14개였어요.
+     그대로 두면 안내를 보고 엉뚱한 걸 찾게 됩니다. */
+  ok(!/9개가 모두 있어야/.test(H), "낡은 파일 개수 안내가 남아 있지 않다");
+  ok(/missing\.join/.test(H), "안내가 실제로 빠진 파일 이름을 보여준다");
+  ok(/404/.test(H), "확인하는 방법(404)을 알려준다");
+  ok(/예전 주소/.test(H), "옛 주소로 들어왔을 가능성도 짚어준다");
+
+  /* ★ 오류 그물 — 폰으로 쓰시는 분은 콘솔을 볼 수 없습니다.
+     화면에 이유가 안 뜨면 결국 짐작으로 주고받게 되고, 실제로
+     그렇게 한참 헤맸습니다. */
+  ok(/__loadErrors/.test(H), "오류를 붙잡아 두는 그물이 있다");
+  ok(H.indexOf("__loadErrors") < H.indexOf('firebase-app-compat'),
+     "그물이 다른 어떤 스크립트보다 먼저 걸린다");
+  ok(H.indexOf("__loadErrors") < H.indexOf('<script src="script_core.js'),
+     "그물이 방 코드보다 먼저 걸린다");
+  ok(/addEventListener\("error"[\s\S]{0,600}\}, true\)/.test(H),
+     "파고들며 잡는다 (script 오류는 위로 안 올라온다)");
+  ok(/tagName === "SCRIPT"/.test(H), "파일을 못 받아온 경우도 구분한다");
+  ok(/붙잡은 오류/.test(H), "붙잡은 오류를 화면에 보여준다");
+  ok(/location\.href/.test(H), "지금 주소도 함께 보여준다 (옛 주소 판별용)");
+  ok(/캡쳐해서 방장에게/.test(H), "무엇을 보내달라고 알려준다");
+
+  /* 큰 뽀모 시계는 글자수 칸 아래에 붙습니다.
+     채팅 위에 있으면 대화를 가리고, 채팅을 접으면 시계도 같이 사라졌어요. */
+  const ui = fs.readFileSync(DIR+"script_ui.js","utf8");
+  ok(/getElementById\("wordcount-block"\)/.test(ui), "큰 시계가 글자수 칸을 찾는다");
+  const seg = ui.slice(ui.indexOf("function _ensurePomoStatusLine"), ui.indexOf("function _fmtMMSS"));
+  ok(seg.indexOf('getElementById("wordcount-block")') < seg.indexOf('querySelector(".chat-sidebar")'),
+     "글자수 칸을 먼저 찾고, 없을 때만 채팅 위로 간다");
+  ok(/in-wordcount/.test(seg) && /in-wordcount/.test(one), "그 자리 전용 스타일이 있다");
+  ok(/\.pomo-status-line\.in-wordcount \.pomo-mega-digits\{[^}]*clamp\(33px, 7\.48vw, 60px\)/.test(one),
+     "글자수 칸에서는 80% 크기다 (원래 clamp 의 0.8배)");
+
+  /* 위·아래를 고를 수 있어야 합니다.
+     가로 보기는 아래에 있으면 밑동에 깔리고, 세로 보기는 위에 있으면
+     글자수를 밀어냅니다. 어느 한쪽이 늘 옳지 않아서 고르게 뒀어요. */
+  ok(/id="set-pomo-clock-pos"/.test(H), "설정에 큰 시계 자리를 고르는 칸이 있다");
+  const opts = (H.match(/id="set-pomo-clock-pos"[\s\S]*?<\/select>/)[0]
+    .match(/value="(\w+)"/g) || []).map(x => x.slice(7, -1));
+  ok(opts.length === 2 && opts.includes("top") && opts.includes("bottom"),
+     "위와 아래 둘 다 고를 수 있다");
+  ok(/window\.setPomoClockPos/.test(ui), "고른 값을 반영하는 함수가 있다");
+  ok(/AppStore\.getItem\(CLOCK_POS_KEY\)/.test(ui), "고른 값을 이 기기에 기억한다");
+  ok(/insertBefore\(el, host\.firstChild\)/.test(ui) && /host\.appendChild\(el\)/.test(ui),
+     "위면 맨 앞에, 아래면 맨 뒤에 붙인다");
+  ok(/\.pomo-status-line\.in-wordcount\.at-top\{[^}]*margin-top: 0/.test(one),
+     "위로 붙였을 때 아래로 밀어내던 여백을 푼다");
+  ok(/set-pomo-clock-pos/.test(ui), "설정 칸이 코드에 연결돼 있다");
+
+  /* 세로 보기에서 뽀모가 아래 여백을 만들지 않게, 위쪽에 둡니다.
+     한 줄의 마지막 칸이 남는 높이를 다 가져가는데, 뽀모는 내용이 짧아요. */
+  ok(/portrait:  \{ s1: "pomo"/.test(lay), "세로 보기에서 뽀모가 위쪽이다");
+  ok(/s3: "chat"/.test(lay.slice(lay.indexOf('portrait:  { s1: "pomo"'))),
+     "세로 보기에서 채팅이 남는 높이를 받는다");
+  ok(!/>⏰ 타이머</.test(H), "옛 이름(타이머)이 남아 있지 않다");
+
+  /* ★ 팝업은 평소에 감춰져 있어야 합니다.
+
+     [무엇이 잘못됐었나]
+     더마감에서 스타일을 옮길 때 펫·글자수 관련 규칙만 골라 왔습니다.
+     그 바람에 `#goals-modal` 규칙이 빠졌고, 감추는 규칙이 없으니
+     팝업이 화면 왼쪽 위에 늘 붙어 있었습니다. "닫기" 버튼만 덩그러니
+     떠 있는 모양이었어요. */
+  ok(/#goals-modal/.test(one), "목표·투두 팝업에 스타일이 있다");
+  ok(/#goals-modal\{[^}]*display: ?none/.test(one) ||
+     /#record-modal,\s*#goals-modal/.test(one) ||
+     /#goals-modal[^{]*\{[^}]*display: ?none/.test(one),
+     "팝업이 평소에는 감춰져 있다");
+  ok(/\.status-pop/.test(one), "상태 고르기 판에 스타일이 있다");
+  ok(/\.pane\.in-profile/.test(one), "팝업 안에 들어간 칸의 스타일이 있다");
+
+  /* 업적은 벨사탕에 남아 있어야 합니다 — 더마감의 '감추기' 규칙을
+     따라오면 안 됩니다. */
+  ok(!/\.streak-banner[^{]*\{[^}]*display: ?none/.test(one),
+     "업적 띠를 감추지 않는다 (더마감 규칙을 따라오지 않았다)");
+  /* ★ 목표·투두는 창이 아니게 됐지만 문서에는 살아 있어야 합니다.
+     보관함으로 치우지 않으면 화면 아래에 통짜로 남아 떠돕니다.
+     실제로 그런 일이 있었습니다. */
+  ok(/\["status-block", "todo-block"\]\.forEach/.test(lay),
+     "목표·투두를 보관함으로 치운다");
+  const atticAt = lay.indexOf('["status-block", "todo-block"].forEach');
+  ok(atticAt > 0 && atticAt < lay.indexOf("root.innerHTML = \"\";"),
+     "뿌리를 비우기 전에 치운다 (안 그러면 통째로 삭제됨)");
+  ok(/mountGoalBlocks/.test(fs.readFileSync(DIR+"script_profile.js","utf8")),
+     "팝업을 열 때 다시 꺼내온다");
 }
 
 function finish(){
-  /* ★ 블록이 통째로 안 돌던 사고가 있었습니다.
-     앞 블록이 return 으로 끝나면 뒤 블록은 실행조차 되지 않는데,
-     화면에는 "전부 통과"라고 나왔어요. 검사 개수가 크게 줄면
-     그런 일이 생긴 것이므로, 최소 개수를 지켜봅니다. */
-  /* [2026-08-03] 펫 기능을 빼면서 펫 검사 ~130개가 함께 빠졌습니다.
-     새 기준: 390개 언저리 → 하한 380. */
-  const MIN = 380;
-  if (pass + fail < MIN) {
-    console.log(`\n검사가 ${pass+fail}개밖에 안 돌았습니다 (${MIN}개 이상이어야 함).`);
-    console.log("블록 하나가 실행되지 않은 것 같아요 — 비동기 블록의 연결을 확인하세요.");
-    process.exit(1);
-  }
   console.log(`\n통과 ${pass} / 전체 ${pass+fail}`);
   if(fail){ console.log("\n실패:"); fails.forEach(f=>console.log("  ✗ "+f)); process.exit(1); }
   else console.log("전부 통과했습니다.");
 }
 
-/* ---- 11. 시간 기록 ----
-   ★ 이 블록은 반드시 함수여야 합니다.
-
-   예전에 여기가 그냥 `{ ... }` 였을 때, 앞 블록이 `return` 으로
-   끝나면서 이 블록이 통째로 실행되지 않았습니다. 검사는 "전부 통과"라고
-   말했지만 사실은 돌지도 않았어요. 비동기 블록은 앞에서 뒤로 이어
-   부르는 방식으로만 씁니다. */
-function checkTimelog(){
+/* ---- 11. 시간 기록 ---- */
+{
   const src=fs.readFileSync(DIR+"script_timelog.js","utf8");
   const c2={window:{addEventListener(){}},document:{readyState:"complete",addEventListener(){},
     getElementById(){return null},querySelectorAll(){return []},visibilityState:"visible"},

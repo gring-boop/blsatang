@@ -22,7 +22,7 @@
    있고, 관리할 일도 늘어나니까요. 그래서 필명을 가짜 이메일로 바꿔서
    씁니다.
 
-       콩  →  n<필명을 16진수로>@themagam.local
+       콩  →  n<필명을 16진수로>@belsatang.local
 
    16진수로 바꾸는 이유는 한글·이모지·공백이 이메일에 못 들어가기
    때문입니다. 이 주소로는 메일이 오가지 않고, 오직 파이어베이스가
@@ -36,7 +36,7 @@
 (function () {
   "use strict";
 
-  const MAIL_DOMAIN = "themagam.local";
+  const MAIL_DOMAIN = "belsatang.local";
   /* 파이어베이스가 6자 미만을 아예 거부합니다. 4자로 안내하면
      "정했는데 안 된다"는 일이 생기므로 처음부터 6자로 받습니다. */
   const MIN_PW = 6;

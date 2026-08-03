@@ -334,26 +334,17 @@ textarea{ width: 100%; resize: none; }
   flex-wrap: wrap;
 }
 .mini-row.end{ justify-content: flex-end; }
-.mini-hint.right,
 .hint.right{ text-align: right; }
 
 /* 힌트/설명 텍스트 — 기존엔 rgba(60,60,67,.55) 하드코딩이라
    다크 테마에서 배경에 묻혀 사실상 안 보였음 → 토큰 사용 */
-.hint,
-.mini-hint,
-.personal-area small,
-.personal-area .guide,
-.personal-area .help,
-.personal-area .desc{
+.hint{
   font-size: var(--fs-xs);
   line-height: 1.4;
   color: var(--muted);
   font-weight: var(--fw-normal);
 }
-.hint{ margin-top: var(--sp-2); }
-.mini-hint{ margin-top: var(--sp-2); }
-
-/* 스크린리더 전용 */
+.hint{ margin-top: var(--sp-2); }/* 스크린리더 전용 */
 .sr-only{
   position: absolute;
   width: 1px; height: 1px;
@@ -576,23 +567,7 @@ body.conn-down .user-card.is-me .card-conn i:nth-child(4){ opacity: .22; }
   opacity: .75;
   transition: opacity var(--anim-fast), border-color var(--anim-fast);
 }
-.hidden-chip:hover{ opacity: 1; border-color: var(--accent-ring); }
-.hidden-chip-badge{
-  position: absolute;
-  top: -5px; right: -5px;
-  min-width: 15px;
-  height: 15px;
-  padding: 0 3px;
-  border-radius: var(--r-full);
-  background: var(--danger, #E5484D);
-  color: #fff;
-  font-size: 9.5px;
-  font-weight: 700;
-  line-height: 15px;
-  text-align: center;
-}
-
-/* 설정 — 자리 그림 (실제 배치를 그대로 축소한 모양) */
+.hidden-chip:hover{ opacity: 1; border-color: var(--accent-ring); }/* 설정 — 자리 그림 (실제 배치를 그대로 축소한 모양) */
 .slot-map{
   display: grid;
   gap: 5px;
@@ -661,7 +636,18 @@ body.conn-down .user-card.is-me .card-conn i:nth-child(4){ opacity: .22; }
 
 /* 설정 — 자리마다 놓을 창 */
 .slot-picker{ display: flex; flex-direction: column; gap: 7px; }
-.slot-row{ display: flex; align-items: center; gap: 9px; }
+/* 자리 목록도 같은 이유로 또렷하게 (판 위의 판이 안 되도록) */
+.slot-row{
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 7px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin-bottom: 5px;
+}
+.slot-row:last-child{ margin-bottom: 0; }
 .slot-name{
   display: flex;
   align-items: center;
@@ -671,6 +657,7 @@ body.conn-down .user-card.is-me .card-conn i:nth-child(4){ opacity: .22; }
   line-height: 1.3;
 }
 .slot-sel{ flex: 1 1 auto; min-width: 0; }
+.slot-picker{ display: flex; flex-direction: column; margin-top: var(--sp-2); }
 
 /* WORK 시작 버튼 — 저장 버튼을 없앤 만큼 그 자리까지 차지합니다 */
 #status-quick-btn{
@@ -835,16 +822,7 @@ body.conn-down .user-card.is-me .card-conn i:nth-child(4){ opacity: .22; }
   font-size: calc(var(--fs-sm) * .85);
   letter-spacing: .2px;
   color: var(--sub-muted);
-}
-
-.pomo-status-line .pomo-mega-session{
-  font-size: calc(var(--fs-xs) * .85);
-  font-weight: var(--fw-normal);
-  color: var(--time-muted);
-  letter-spacing: .2px;
-}
-
-.pomo-status-line .pomo-mega-digits{
+}.pomo-status-line .pomo-mega-digits{
   /* 뷰포트 반응형: 사이드바 폭이 좁아져도 숫자가 넘치지 않음 */
   font-size: clamp(41px, 9.35vw, 75px);   /* 기존의 85% */
   font-weight: var(--fw-bold);
@@ -887,18 +865,7 @@ body.conn-down .user-card.is-me .card-conn i:nth-child(4){ opacity: .22; }
   flex-wrap: wrap;
   flex: 0 0 auto;
   min-height: 0;
-}
-
-.timer-main{
-  flex: 1 1 480px;
-  min-width: 280px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  min-height: 0;
-}
-
-#timer-pill{
+}#timer-pill{
   display: flex;
   align-items: center;
   gap: var(--sp-2);
@@ -973,15 +940,7 @@ body.conn-down .user-card.is-me .card-conn i:nth-child(4){ opacity: .22; }
   border: 1px solid var(--border);
   background: var(--panel2);
 }
-.pomo-setup-running.hidden{ display: none !important; }
-
-.pomo-mini-row{
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
-
-.pomo-progress{
+.pomo-setup-running.hidden{ display: none !important; }.pomo-progress{
   flex: 1;
   height: 12px;
   border-radius: var(--r-full);
@@ -997,21 +956,7 @@ body.conn-down .user-card.is-me .card-conn i:nth-child(4){ opacity: .22; }
   background: var(--me);
   opacity: .7;
   transition: width 900ms linear;
-}
-
-.pomo-session-pill{
-  flex: 0 0 auto;
-  padding: 7px 12px;
-  border-radius: var(--r-full);
-  border: 1px solid var(--border);
-  background: var(--panel2);
-  font-weight: var(--fw-medium);
-  font-size: var(--fs-xs);
-  color: var(--muted-strong);
-  user-select: none;
-}
-
-#pomo-opt-btn{
+}#pomo-opt-btn{
   border-radius: var(--r-full);
   padding: 8px 14px;
   font-size: var(--fs-sm);
@@ -1028,6 +973,10 @@ body.conn-down .user-card.is-me .card-conn i:nth-child(4){ opacity: .22; }
   transition: transform var(--anim-fast), background var(--anim-fast);
 }
 #pomo-opt-btn:hover{ background: var(--fill-1); }
+/* [추가 2026-08-02] 참여 버튼의 starter 표시 — "starter"는 살짝 작게,
+   닉네임은 "참여 중"과 같은 크기로 */
+.pomo-starter-lb{ font-size: .82em; opacity: .75; }
+.pomo-starter-nm{ font-size: 1em; font-weight: var(--fw-medium); }
 #pomo-opt-btn:active{ transform: scale(.97); }
 
 .pomo-detail{
@@ -1070,18 +1019,7 @@ body.conn-down .user-card.is-me .card-conn i:nth-child(4){ opacity: .22; }
   gap: var(--sp-3);
 }
 
-/* 상태 문구 + 진행바를 한 줄에 */
-.pomo-line{
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  min-width: 0;
-}
-.pomo-line #timer-pill{ flex: 0 1 auto; min-width: 0; max-width: max-content; }
-.pomo-line #timer-pill span{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pomo-line .pomo-progress{ flex: 1 1 auto; min-width: 60px; }
-
-/* 25분 / 5분 사이 구분 */
+/* 상태 문구 + 진행바를 한 줄에 *//* 25분 / 5분 사이 구분 */
 .pomo-setup-sep{
   color: var(--time-muted);
   font-weight: var(--fw-medium);
@@ -1164,11 +1102,7 @@ body.conn-down .user-card.is-me .card-conn i:nth-child(4){ opacity: .22; }
   flex: 0 0 auto;
 }
 .pomo-row-1 #timer-pill{ flex: 1 1 auto; }
-.pomo-row-2 #pomo-opt-btn{ width: 100%; justify-content: center; }
-.pomo-row-3 .pomo-progress{ flex: 1 1 auto; width: 100%; }
-
-.pane-pomo .timer-main{ flex: 0 0 auto; min-width: 0; width: 100%; }
-/* 마지막 줄은 줄바꿈 없이 한 줄 유지 */
+.pomo-row-2 #pomo-opt-btn{ width: 100%; justify-content: center; }/* 마지막 줄은 줄바꿈 없이 한 줄 유지 */
 .pane-pomo .timer-controls{ width: 100%; flex-wrap: nowrap; gap: 6px; }
 .pane-pomo .timer-controls #pomo-setup{ margin-right: auto; }
 .pane-pomo .timer-controls #pomo-detail-toggle{ order: 99; }
@@ -1216,16 +1150,7 @@ body.pomo-nonpart .pomo-status-line{
   align-items: center;
   gap: var(--sp-2);
 }
-.todo-foot > .ghost-btn{ flex: 0 0 auto; }
-.todo-foot-hint{
-  margin: 0;
-  flex: 1 1 auto;
-  min-width: 0;
-  line-height: 1.3;
-}
-
-
-/* -------- 모양 무늬 --------
+.todo-foot > .ghost-btn{ flex: 0 0 auto; }/* -------- 모양 무늬 --------
    해·달·별 같은 그림은 그라데이션으로 못 그리므로 작은 SVG를 씁니다.
    다만 SVG 파일 안의 색은 CSS 변수로 바꿀 수 없어서,
    "모양을 오려내는 틀(mask)"로 쓰고 색은 그 아래에서 칠합니다.
@@ -1637,14 +1562,21 @@ body.pomo-nonpart .pomo-status-line{
   background: var(--fill-2);
   color: var(--muted-strong);
 }
-.card-state.status-writing{ background: rgba(255,59,48,.60);  border-color: rgba(255,59,48,.73);  color: #8E2420; }
-.card-state.status-focus  { background: rgba(255,159,10,.63); border-color: rgba(255,159,10,.76); color: #7A4406; }
-.card-state.status-rest   { background: rgba(48,209,88,.61);  border-color: rgba(48,209,88,.73);  color: #0B5A46; }
-.card-state.status-away   { background: var(--fill-2);        border-color: var(--border);        color: var(--muted); }
+.card-state.status-writing,
+.my-status-chip.status-writing{ background: rgba(255,59,48,.60);  border-color: rgba(255,59,48,.73);  color: #8E2420; }
+.card-state.status-focus,
+.my-status-chip.status-focus  { background: rgba(255,159,10,.63); border-color: rgba(255,159,10,.76); color: #7A4406; }
+.card-state.status-rest,
+.my-status-chip.status-rest   { background: rgba(48,209,88,.61);  border-color: rgba(48,209,88,.73);  color: #0B5A46; }
+.card-state.status-away,
+.my-status-chip.status-away   { background: var(--fill-2);        border-color: var(--border);        color: var(--muted); }
 
-:root[data-is-dark="true"] .card-state.status-writing{ color: #FFA59E; }
-:root[data-is-dark="true"] .card-state.status-focus  { color: #FFCE85; }
-:root[data-is-dark="true"] .card-state.status-rest   { color: #8CE8C6; }
+:root[data-is-dark="true"] .card-state.status-writing,
+:root[data-is-dark="true"] .my-status-chip.status-writing{ color: #FFA59E; }
+:root[data-is-dark="true"] .card-state.status-focus,
+:root[data-is-dark="true"] .my-status-chip.status-focus  { color: #FFCE85; }
+:root[data-is-dark="true"] .card-state.status-rest,
+:root[data-is-dark="true"] .my-status-chip.status-rest   { color: #8CE8C6; }
 
 /* 카드 아래쪽 — 닉네임 · 목표 · 진척 바 · 지표를 한 덩어리로 묶습니다.
    둥근 상자로 감싸서 프사·배지와 시각적으로 갈라 보이게 했고,
@@ -1730,6 +1662,23 @@ body.pomo-nonpart .pomo-status-line{
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* [추가 2026-08-02] 닉네임 뒤 만렙 도감 수 — 미니 알약 배지 (n/42) */
+.card-name .card-dex{
+  display: inline-block;
+  font-size: .62em;
+  font-weight: var(--fw-medium);
+  line-height: 1.5;
+  color: var(--text-dim);
+  background: var(--fill-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  padding: 0 7px;
+  margin-left: 5px;
+  vertical-align: 2px;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .card-goal{ margin-top: 0; }
@@ -1868,22 +1817,7 @@ body.pomo-nonpart .pomo-status-line{
 
 /* =====================================================================
    [10] 개인 영역 — 필드 & 투두
-   ===================================================================== */
-.field-label{
-  font-weight: var(--fw-normal);
-  font-size: var(--fs-sm);
-  color: var(--muted);
-  letter-spacing: -.1px;
-}
-.field-label .field-title{
-  display: block;
-  font-weight: var(--fw-medium);
-  font-size: var(--fs-sm);
-  margin-bottom: 6px;
-  color: var(--muted-strong);
-}
-
-#db-today-goal-text{
+   ===================================================================== */#db-today-goal-text{
   font-size: var(--fs-lg);
   font-weight: var(--fw-medium);
   padding: 11px 14px;
@@ -2100,32 +2034,7 @@ body.pomo-nonpart .pomo-status-line{
   align-items: flex-start;
   min-height: 0;
 }
-.chat-sidebar > .header .mini-row{ padding-top: 1px; }
-.online-pill{ white-space: nowrap; }
-
-.online-pill{
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 11px;
-  border-radius: var(--r-full);
-  border: 1px solid var(--border);
-  background: var(--panel2);
-  font-weight: var(--fw-medium);
-  font-size: var(--fs-xs);
-  color: var(--muted-strong);
-  flex: 0 0 auto;
-}
-.online-dot{
-  width: 8px;
-  height: 8px;
-  border-radius: var(--r-full);
-  background: var(--success);
-  box-shadow: 0 0 0 3px var(--success-soft);
-}
-.online-more{ border-style: dashed; opacity: .9; }
-
-/* 헤더의 글씨 +/− 버튼(--font-size)이 여기 안쪽에만 적용됩니다.
+.chat-sidebar > .header .mini-row{ padding-top: 1px; }/* 헤더의 글씨 +/− 버튼(--font-size)이 여기 안쪽에만 적용됩니다.
    아래 자식들의 em은 모두 이 값을 기준으로 계산돼요. */
 #chat-box{
   font-size: var(--font-size);
@@ -2210,8 +2119,7 @@ body.pomo-nonpart .pomo-status-line{
 .chat-item.other .msg-content{ align-items: flex-start; }
 
 .user-name{
-  /* 0.64em → 0.73em. 기준 글자 18px 에서 약 1.5포인트 커집니다. */
-  font-size: 0.73em;
+  font-size: 0.64em;
   color: var(--name-muted);
   margin-left: var(--sp-1);
   font-weight: var(--fw-medium);
@@ -2772,18 +2680,7 @@ body.pomo-nonpart .pomo-status-line{
 /* =====================================================================
    기록 팝업 (카드 아래쪽 상자를 누르면)
    ===================================================================== */
-/* [FIX] 새로 만든 두 팝업이 화면 옆에 어색하게 붙던 문제
-
-   #goals-modal 과 #panel-modal 을 만들면서 CSS 를 빠뜨렸습니다.
-   이 파일은 팝업을 id 로 하나하나 꾸미고 있어서, 규칙이 없는 팝업은
-   그냥 문서 흐름에 얹힌 평범한 상자로 나옵니다. 화면 가운데 뜨지도
-   않고 어둡게 덮이지도 않아요.
-
-   같은 규칙을 함께 받도록 선택자에 나란히 적습니다. 앞으로 팝업을
-   더 만들 때도 여기에 이름을 추가해야 합니다. */
-#record-modal,
-#goals-modal,
-#record-modal-legacy-unused{
+#record-modal{
   position: fixed; inset: 0;
   display: none;
   align-items: center;
@@ -2794,17 +2691,12 @@ body.pomo-nonpart .pomo-status-line{
   -webkit-backdrop-filter: blur(10px);
   padding: var(--sp-4);
 }
-#record-modal .modal-content,
-#goals-modal .modal-content,
-#panel-modal .modal-content{
+#record-modal .modal-content{
   width: min(460px, 100%);
   max-height: calc(100vh - 32px);
   max-height: calc(100dvh - 32px);
   overflow: auto;
 }
-
-/* 목표·투두는 입력칸 몇 개뿐이라 좁아도 됩니다 (520 → 416) */
-#goals-modal .modal-content{ width: min(416px, 100%); }
 
 /* 카드 아래쪽 상자 — 누를 수 있다는 걸 보이게 */
 .card-foot[data-record-of]{ cursor: pointer; transition: filter var(--anim-fast); }
@@ -3198,6 +3090,16 @@ input[type="range"]:focus{ box-shadow: none; }
 .layout-pick{ display: flex; flex-direction: column; }
 .pick-row{ display: flex; gap: var(--sp-2); flex-wrap: wrap; }
 
+/* [FIX] 안 고른 버튼이 버튼처럼 안 보이던 문제
+
+   .set-block 도 배경이 var(--panel) 인데 버튼도 같은 값을 썼습니다.
+   판 위에 같은 색 판을 얹은 셈이라, 테두리 1px 만 남고 그마저
+   옅은 테마에서는 거의 사라졌습니다. 그래서 "고른 것만 버튼처럼
+   보이고 나머지는 글자만 떠 있는" 모양이 됐고, 눌러도 되는지조차
+   알 수 없었습니다. 실제로는 눌리고 있었는데도요.
+
+   판보다 한 겹 밝은 면을 쓰고 테두리를 진하게 올려서, 고르지 않은
+   것도 분명히 버튼으로 보이게 합니다. */
 .layout-opt{
   flex: 1 1 140px;
   min-width: 0;
@@ -3206,18 +3108,21 @@ input[type="range"]:focus{ box-shadow: none; }
   align-items: center;
   gap: 7px;
   padding: 10px 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong, rgba(0,0,0,.28));
   border-radius: var(--r-md);
-  background: var(--panel);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
   color: var(--text);
   cursor: pointer;
-  transition: border-color var(--anim-fast), background var(--anim-fast);
+  transition: border-color var(--anim-fast), background var(--anim-fast),
+              box-shadow var(--anim-fast), transform var(--anim-fast);
 }
 .layout-opt.slim{ flex-direction: row; justify-content: center; padding: 8px; }
-.layout-opt:hover{ background: var(--fill-1); }
+.layout-opt:hover{ background: var(--fill-1); box-shadow: 0 2px 6px rgba(0,0,0,.10); }
+.layout-opt:active{ transform: translateY(1px); }
 .layout-opt.selected{
   border-color: var(--accent-ring);
-  box-shadow: inset 0 0 0 1px var(--accent-ring);
+  box-shadow: inset 0 0 0 1px var(--accent-ring), 0 1px 3px rgba(0,0,0,.08);
   background: var(--accent-soft);
 }
 
@@ -3325,7 +3230,16 @@ input[type="range"]:focus{ box-shadow: none; }
   justify-content: center;
   transition: background var(--anim-fast), color var(--anim-fast), transform var(--anim-fast);
 }
-.icon-btn svg{ width: 16px; height: 16px; display: block; }
+.icon-btn svg{ width: 16px; height: 16px; display: block; flex: none; }
+/* [추가 2026-08-02] 아이콘 옆 문구 — 아이콘만으로는 모르겠다는 분들이 많아서.
+   문구가 있는 버튼은 정사각형을 풀고 알약처럼 늘어납니다. */
+.icon-btn.labeled{ width: auto; padding: 0 9px 0 7px; gap: 4px; }
+.icon-btn-label{
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  line-height: 1;
+}
 .icon-btn:hover{ background: var(--fill-2); color: var(--text); }
 .icon-btn:active{ transform: scale(.94); }
 .icon-btn.danger{ color: var(--on-danger-btn); border-color: var(--danger-line); }
@@ -3411,59 +3325,17 @@ body.chat-collapsed .chat-sidebar{ display: none; }
   margin-top: var(--sp-1);
 }
 
-/* -------- 손잡이 -------- */
-.col-grip,
-.row-grip{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  padding: 0;
-  min-width: 0;
-  min-height: 0;
-  z-index: 5;
-}
-.col-grip{ cursor: col-resize; touch-action: none; }
-.row-grip{ cursor: row-resize; touch-action: none; }
-
-.col-grip span,
-.row-grip span{
-  border-radius: var(--r-full);
-  background: var(--border);
-  transition: background var(--anim-fast), width var(--anim-fast), height var(--anim-fast);
-}
-.col-grip span{ width: 3px; height: 40px; }
-.row-grip span{ height: 3px; width: 40px; }
-
-.col-grip:hover span, .col-grip.dragging span, .col-grip:focus-visible span{
-  background: var(--accent-ring); height: 64px;
-}
-.row-grip:hover span, .row-grip.dragging span, .row-grip:focus-visible span{
-  background: var(--accent-ring); width: 64px;
-}
-.col-grip:focus-visible, .row-grip:focus-visible{ outline: none; }
-
-/* [FIX] 세로형이 깨지던 원인
+/* -------- 손잡이 -------- *//* [FIX] 세로형이 깨지던 원인
 
    손잡이도 격자의 칸 하나를 차지합니다. 그런데 배치마다 있는 칸이 달라요.
    없는 칸을 가리키면 브라우저가 격자 밖에 줄을 새로 만들어 붙이고,
    그 바람에 아래 창들이 통째로 밀려 서로 겹쳤습니다.
 
    예전엔 CSS에서 배치별로 하나씩 숨겼는데 빠뜨리기 쉬웠습니다.
-   이제 script_layout.js 가 "이 배치에 없는 손잡이"에 .grip-off 를 붙입니다. */
-.col-grip.grip-off,
-.row-grip.grip-off{ display: none !important; }
-
-/* 좁은 화면에서는 접기·손잡이를 감춥니다 */
+   이제 script_layout.js 가 "이 배치에 없는 손잡이"에 .grip-off 를 붙입니다. *//* 좁은 화면에서는 접기·손잡이를 감춥니다 */
 @media (max-width: 980px){
-  .chat-collapse-btn{ display: none !important; }
-  .col-grip, .row-grip{ display: none !important; }
-  body.layout-portrait .row-grip[data-grip="prof"]{ display: none !important; }
-}
-body.narrow-chat-focus .chat-collapse-btn,
-body.narrow-chat-focus .col-grip,
-body.narrow-chat-focus .row-grip{ display: none !important; }
+  .chat-collapse-btn{ display: none !important; }}
+body.narrow-chat-focus .chat-collapse-btn{ display: none !important; }
 
 /* 채팅 헤더의 접기 버튼 */
 .chat-collapse-btn{
@@ -3492,22 +3364,7 @@ body.narrow-chat-focus .row-grip{ display: none !important; }
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-}
-.profile-emoji-preview{
-  width: 52px;
-  height: 52px;
-  flex: 0 0 auto;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--border);
-  background: var(--fill-1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px;
-  line-height: 1;
-  user-select: none;
-}
-.profile-emoji-meta{ min-width: 0; }
+}.profile-emoji-meta{ min-width: 0; }
 /* 좁은 패널에서 "사진 올리기"가 두 줄로 꺾이던 것 방지 */
 .profile-emoji-meta .ghost-btn{ white-space: nowrap; flex: 0 0 auto; }
 .profile-emoji-meta .set-row{ flex-wrap: wrap; }
@@ -3540,69 +3397,9 @@ body.narrow-chat-focus .row-grip{ display: none !important; }
   font-weight: var(--fw-bold);
   letter-spacing: -.2px;
 }
-.profile-emoji-meta .hint{ margin-top: 2px; }
-
-.emoji-picker{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: var(--sp-3);
-}
-.emoji-picker.hidden{ display: none !important; }
-
-.emoji-pick{
-  width: 38px;
-  height: 38px;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--border);
-  background: var(--panel2);
-  font-size: var(--fs-lg);
-  line-height: 1;
-  cursor: pointer;
-  transition: transform var(--anim-fast), border-color var(--anim-fast), background var(--anim-fast);
-}
-.emoji-pick:hover{ background: var(--fill-2); transform: translateY(-1px); }
-.emoji-pick.selected{
-  border-color: var(--accent-ring);
-  box-shadow: 0 0 0 2px var(--accent-soft);
-}
-
-.accent-swatches{
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-.accent-swatch{
-  width: 34px;
-  height: 34px;
-  border-radius: var(--r-full);
-  border: 1px solid var(--border);
-  background: var(--sw, var(--fill-2));
-  cursor: pointer;
-  padding: 0;
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-  transition: transform var(--anim-fast), outline-color var(--anim-fast);
-}
-.accent-swatch:hover{ transform: translateY(-2px); }
-.accent-swatch.selected{ outline-color: var(--accent-ring); }
-.accent-swatch.accent-none{
-  background: var(--panel2);
-  color: var(--muted);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-medium);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* =====================================================================
+.profile-emoji-meta .hint{ margin-top: 2px; }/* =====================================================================
    [14] 레거시 숨김 요소
-   ===================================================================== */
-#btn-share, #btn-stop-share, #btn-watch,
-#btn-share-stop, #share-panel, #watch-modal{ display: none !important; }
-
-/* =====================================================================
+   ===================================================================== *//* =====================================================================
    [15] 반응형
    ---------------------------------------------------------------------
    좁아지면 격자를 풀고 위에서 아래로 한 줄씩 쌓습니다.
@@ -3783,7 +3580,382 @@ body.narrow-chat-focus .narrow-tabs{
   .container{ flex-direction: column; height: auto; }
 }
 
+/* 입장 모달의 안내/오류 한 줄 */
+.join-msg{
+  margin-top: var(--sp-2);
+  font-size: .88rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.join-msg.bad{ color: #D9534F; font-weight: 600; }
 
+
+/* =====================================================================
+   더마감에서 가져온 것 — 펫 · 글자수 · 카드 클릭 표시
+   두 방은 서버가 완전히 다르지만, 보이는 모양은 같게 맞춥니다.
+   ===================================================================== */
+/* =====================================================================
+   TheMagam — 카드가 조작판입니다
+
+   프사 · 상태표 · 아래칸이 각자 다른 문을 엽니다. 눌러도 되는 곳이라는
+   신호를 줘야 하니, 손가락 커서와 살짝 들리는 반응을 답니다.
+   ===================================================================== */
+.card-avatar-wrap.is-clickable,
+.card-state.is-clickable{ cursor: pointer; }
+.card-avatar-wrap.is-clickable:hover .card-avatar{
+  filter: brightness(1.05);
+  box-shadow: 0 0 0 2px var(--accent-line);
+}
+.card-state.is-clickable:hover{ filter: brightness(1.08); }
+.card-avatar-wrap.is-clickable:focus-visible,
+.card-state.is-clickable:focus-visible{
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+/* =====================================================================
+   펫 — 카드의 상태표 아래 자리
+
+   업적 배지를 없애면서 상태표가 위로 올라왔고, 그 아래로 프사 높이만큼
+   빈 자리가 생겼습니다. 펫이 그 자리에 삽니다.
+   ===================================================================== */
+.card-pet{
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+/* [고침 2026-08-02] 펫 크기 — 58px 고정을 버리고 남는 칸을 꽉 채웁니다.
+   svg 는 viewBox 덕에 어떤 크기든 비율 그대로 늘어나요. 위로는 상태
+   알약, 아래로는 레벨·게이지가 있으니 그 사이(flex 남는 높이)와 칸
+   폭 중 작은 쪽에 맞춰집니다 — 옆 칸을 넘지 않는 선에서 최대 크기. */
+.card-pet .pet-svg{
+  display: block;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+}
+/* [고침 2026-08-02] 레벨·게이지 가독성 — 무늬 배경에서 묻히던 문제.
+   트랙이 반투명이라 밑의 무늬가 비쳐 점선처럼 보였습니다.
+   레벨은 반투명 흰 칩 위에, 트랙은 불투명하게 + 5px 로 키웠어요. */
+.card-pet-lv{
+  font-size: var(--fs-3xs, 10px);
+  color: #4a4640;
+  background: rgba(255, 253, 247, .85);
+  border-radius: var(--r-full);
+  padding: 1px 8px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.card-pet-lv b{ color: var(--accent); }
+.card-pet-bar{
+  width: 100%;
+  height: 5px;
+  border-radius: var(--r-full);
+  background: #FFFDF7;
+  border: 1px solid rgba(0, 0, 0, .15);
+  overflow: hidden;
+}
+.card-pet-bar i{
+  display: block;
+  height: 100%;
+  border-radius: var(--r-full);
+  background: #2E8B6B;
+}
+/* =====================================================================
+   펫 관리 창 (설정 → 🐾 펫)
+   ===================================================================== */
+.pet-cur{
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-3);
+  border-radius: var(--radius2);
+  background: var(--glass2);
+  margin-bottom: var(--sp-3);
+}
+.pet-cur-info{ flex: 1; min-width: 0; }
+.pet-cur-name{ font-size: var(--fs-sm); font-weight: var(--fw-bold); }
+.pet-cur-sub{ font-size: var(--fs-2xs); color: var(--muted); margin-top: 1px; }
+.pet-bar{
+  height: 5px;
+  border-radius: var(--r-full);
+  background: rgba(0,0,0,.12);
+  overflow: hidden;
+  margin-top: 6px;
+}
+.pet-bar i{ display: block; height: 100%; border-radius: var(--r-full); background: #2E8B6B; }
+.pet-pick{ display: flex; flex-wrap: wrap; gap: 6px; }
+.pet-sp{
+  width: 58px;
+  padding: 5px 0 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--panel);
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+}
+.pet-sp span{ font-size: 9.5px; color: var(--muted); }
+.pet-sp.on{ border: 2px solid var(--accent); }/* 도감 */
+.pet-dex{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 6px;
+}
+.pet-cell{
+  aspect-ratio: 1;
+  border-radius: var(--r-md);
+  background: var(--glass2);
+  display: flex; align-items: center; justify-content: center;
+}
+.pet-cell.empty{
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+}
+/* 만렙 알림 */
+.pet-toast{
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 9500;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--accent-line);
+  background: var(--panel);
+  box-shadow: 0 10px 28px rgba(0,0,0,.22);
+  font-size: var(--fs-sm);
+  animation: petToastIn .32s ease;
+}
+/* 껍데기 고르기 칸은 이름이 길어서 조금 넓게 */
+.pet-sp.wide{ width: 72px; }
+/* 카드의 펫도 누를 수 있다는 신호 */
+.card-pet.is-clickable{ cursor: pointer; }
+.card-pet.is-clickable:hover .pet-svg{ filter: brightness(1.06); }
+.card-pet.is-clickable:focus-visible{ outline: 2px solid var(--accent-ring); outline-offset: 2px; border-radius: var(--r-sm); }
+/* =====================================================================
+   글자수 기록 — 뽀모 칸 아래
+
+   뽀모 줄은 폭이 좁습니다(기본 320px). 그래서 이 안의 모든 것은
+   가로로 넘치지 않게 만들었어요. 이름은 말줄임, 막대는 퍼센트,
+   숫자는 고정폭 숫자체로 자리가 흔들리지 않게 합니다.
+   ===================================================================== */
+.wc-block{
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  margin-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+  min-height: 0;
+  flex: 1 1 auto;
+}
+.wc-head{ display:flex; align-items:center; justify-content:space-between; gap:var(--sp-2); flex:none; }
+.wc-title{ font-weight: var(--fw-bold); font-size: var(--fs-sm); }
+.wc-tabs{ display:flex; gap:3px; }
+.wc-tab{
+  font-family: inherit; font-size: var(--fs-2xs);
+  padding: 3px 9px; border-radius: var(--r-full);
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text-dim); cursor: pointer;
+}
+.wc-tab.on{ background: var(--text); color: var(--bg); border-color: transparent; font-weight: var(--fw-medium); }
+.wc-mine{ display:flex; align-items:baseline; gap:5px; flex:none; }
+.wc-big{ font-size: var(--fs-2xl); font-weight: var(--fw-bold);
+         font-variant-numeric: tabular-nums; letter-spacing:-.02em; }
+.wc-unit{ font-size: var(--fs-xs); color: var(--text-dim); }
+.wc-rows{
+  display:flex; flex-direction:column; gap:4px;
+  /* [고침 2026-08-02] 글자수 창만 0.5px 키움 (요청) */
+  font-size: calc(var(--fs-xs) + .5px);
+  overflow:auto; min-height: 0; flex: 1 1 auto;
+}
+.wc-row{ display:flex; align-items:center; gap:7px; }
+.wc-nm{ flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* 막대는 최대 40%까지만 — 이름과 숫자 자리를 뺏지 않게 */
+.wc-bar{ flex:0 0 auto; height:4px; border-radius:var(--r-full);
+         background: var(--accent); opacity:.45; max-width:40%; min-width:3px; }
+.wc-n{ flex:0 0 auto; font-variant-numeric: tabular-nums; font-weight: var(--fw-medium); }
+.wc-row.me .wc-nm{ color: var(--accent); font-weight: var(--fw-medium); }
+.wc-empty{ font-size: calc(var(--fs-xs) + .5px); color: var(--text-dim); }
+.wc-log{ margin:0; min-height:16px; font-size: var(--fs-2xs);
+         font-weight: var(--fw-medium); color:#2FA36B; flex:none; }
+.wc-inputline{ display:flex; gap:5px; flex:none; }
+.wc-inputline input{
+  flex:1 1 auto; min-width:0; font: inherit; font-size: var(--fs-sm);
+  padding: 6px 9px; border:1px solid var(--border-strong);
+  border-radius: var(--r-sm); background: var(--surface); color: var(--text);
+}
+.wc-minirow{ display:flex; gap:4px; flex:none; }
+.wc-minirow .ghost-btn{ flex:1 1 0; min-width:0; }
+/* =====================================================================
+   흐르는 글자수 기록 — 채팅처럼 보이게
+
+   · 올린 숫자   : 내 것은 오른쪽, 남의 것은 왼쪽 (말풍선)
+   · 계산 결과   : 방이 알려주는 말이라 가운데
+   · 시간        : 채팅처럼 말풍선 옆에 (2026-08-02 요청)
+
+   순위표처럼 보이지 않게 하려는 배치입니다. 나란히 줄 세우면
+   그날 적게 쓴 사람이 위축되니까요.
+   ===================================================================== */
+.wc-feed{ padding: 6px 0; font-size: calc(var(--fs-xs) + .5px); line-height: 1.4; }
+/* ── 올린 숫자 (말풍선) ── */
+.wc-said-line{ display:flex; justify-content:flex-start; align-items:flex-end; gap:4px; }
+.wc-feed.me .wc-said-line{ justify-content:flex-end; }
+/* [추가 2026-08-02] 말풍선 옆 시각 — 채팅의 msg-time 과 같은 느낌 */
+.wc-said-t{
+  flex:none;
+  font-size: var(--fs-2xs);
+  color: var(--time-muted, var(--text-dim));
+  font-variant-numeric: tabular-nums;
+  padding-bottom: 2px;
+  user-select: none;
+  white-space: nowrap;
+}
+/* [추가 2026-08-02] 내 기록 탭 · "오늘 내 기록" 구분 제목 */
+.wc-me-h{
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  color: var(--text-dim);
+}
+.wc-said{
+  display:inline-flex; align-items:baseline; gap:5px;
+  max-width: 85%;
+  padding: 5px 10px;
+  border-radius: 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  word-break: break-all;
+}
+.wc-feed.me .wc-said{
+  background: var(--accent);
+  border-color: transparent;
+  color: #fff;
+}
+.wc-said-nm{ font-size: var(--fs-2xs); color: var(--text-dim);
+             overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.wc-said-n{ font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }
+/* ── 계산 결과 (가운데) ── */
+.wc-feed-sys{
+  margin-top: 4px;
+  text-align: center;          /* 방이 알려주는 말이라 가운데 */
+  color: var(--text-dim);
+  font-size: calc(var(--fs-2xs) + .5px);
+  word-break: break-all;
+}
+.wc-feed-sys b{ color: var(--text); font-weight: var(--fw-medium); }
+.wc-feed.me .wc-feed-sys b{ color: var(--accent); }
+/* 뽀모 — 시간 설정을 버튼과 다른 줄에 둡니다 (좁은 칸에서 서로 밀려서) *//* 뽀모 — 시작·정지·알림음 버튼도 가운데로 (시간 설정 줄과 맞춥니다) */
+.pomo-row-4.timer-controls{ justify-content: center; }
+
+/* 업적 배지 — 닉네임 앞에 붙습니다.
+
+   em 을 쓰는 이유: px 로 박아두면 글씨 크기 설정을 바꿨을 때 배지만
+   따로 놀아 어색해집니다. em 은 옆 글자를 따라가요. */
+.card-name .card-ach{
+  font-size: .92em;
+  line-height: 1;
+  margin-right: .18em;
+  vertical-align: baseline;
+}
+.card-name .card-ach + .card-ach{ margin-left: -.05em; }
+/* 배지 줄은 이제 쓰지 않습니다 */
+.card-chips{ display: none; }
+
+/* =====================================================================
+   뽀모 알약이 곧 진행 바
+
+   알약 안쪽이 차오르고, 글자는 그 위에 얹힙니다.
+   · overflow:hidden — 차오른 색이 둥근 모서리 밖으로 안 삐져나오게
+   · isolation:isolate — 채움층이 알약 밖 요소와 섞이지 않게
+   ===================================================================== */
+#timer-pill.is-fillable{
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+#timer-pill.is-fillable .pomo-progress{
+  position: absolute;
+  inset: 0;
+  height: auto;              /* 원래 막대 높이를 무시하고 알약을 꽉 채웁니다 */
+  background: transparent;
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+}
+#timer-pill.is-fillable #pomo-bar{
+  height: 100%;
+  border-radius: 0;
+  /* 차오르는 속도를 부드럽게. 1초마다 갱신되므로 그만큼만 줍니다. */
+  transition: width 1s linear;
+}
+/* 글자는 채움층 위에 */
+#timer-pill.is-fillable > #timer-text{
+  position: relative;
+  z-index: 1;
+}
+
+/* 글자수가 독립된 창일 때 — 뽀모 아래에 붙어 있을 때 쓰던 장식을 지웁니다.
+   (더마감에서는 뽀모 칸 안에 살아서 위쪽 구분선과 여백이 필요했습니다) */
+.pane.wc-block{
+  border-top: 0;
+  margin-top: 0;
+}
+
+
+/* =====================================================================
+   더마감에서 마저 가져온 것 — 팝업과 상태 고르기
+
+   처음에 펫·글자수 관련 규칙만 골라 옮겼다가, **목표·투두 팝업**
+   스타일을 빠뜨렸습니다. 그래서 팝업이 화면 왼쪽 위에 그냥 붙어
+   있었어요 (감추는 규칙이 없으니 늘 보이는 상태). 상태 고르기 판도
+   같은 이유로 안 떴습니다.
+
+   ★ 업적 배지를 감추는 규칙은 일부러 가져오지 않았습니다.
+     더마감은 업적을 없앴지만 벨사탕은 그대로 씁니다.
+   ===================================================================== */
+/* =====================================================================
+   기록 팝업 (카드 아래쪽 상자를 누르면)
+   ===================================================================== */
+/* [FIX] 새로 만든 두 팝업이 화면 옆에 어색하게 붙던 문제
+
+   #goals-modal 과 #panel-modal 을 만들면서 CSS 를 빠뜨렸습니다.
+   이 파일은 팝업을 id 로 하나하나 꾸미고 있어서, 규칙이 없는 팝업은
+   그냥 문서 흐름에 얹힌 평범한 상자로 나옵니다. 화면 가운데 뜨지도
+   않고 어둡게 덮이지도 않아요.
+
+   같은 규칙을 함께 받도록 선택자에 나란히 적습니다. 앞으로 팝업을
+   더 만들 때도 여기에 이름을 추가해야 합니다. */
+#record-modal,
+#goals-modal{
+  position: fixed; inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 6300;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: var(--sp-4);
+}
+#record-modal .modal-content,
+#goals-modal .modal-content{
+  width: min(460px, 100%);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+}
+/* 목표·투두는 입력칸 몇 개뿐이라 좁아도 됩니다 (520 → 416) */
+#goals-modal .modal-content{ width: min(416px, 100%); }
 /* =====================================================================
    TheMagam — 목표·상태·투두가 프로필 편집 안으로 들어왔습니다.
 
@@ -3806,29 +3978,7 @@ body.narrow-chat-focus .narrow-tabs{
   color: var(--text);
   margin: 0 0 var(--sp-2);
 }
-/* 팝업 안에서는 접기 버튼이 뜻이 없습니다 */
-.pane.in-profile .pane-collapse-btn{ display: none; }
-
-/* =====================================================================
-   TheMagam — 카드가 조작판입니다
-
-   프사 · 상태표 · 아래칸이 각자 다른 문을 엽니다. 눌러도 되는 곳이라는
-   신호를 줘야 하니, 손가락 커서와 살짝 들리는 반응을 답니다.
-   ===================================================================== */
-.card-avatar-wrap.is-clickable,
-.card-state.is-clickable{ cursor: pointer; }
-.card-avatar-wrap.is-clickable:hover .card-avatar{
-  filter: brightness(1.05);
-  box-shadow: 0 0 0 2px var(--accent-line);
-}
-.card-state.is-clickable:hover{ filter: brightness(1.08); }
-.card-avatar-wrap.is-clickable:focus-visible,
-.card-state.is-clickable:focus-visible{
-  outline: 2px solid var(--accent-ring);
-  outline-offset: 2px;
-}
-
-/* 상태 고르기 판 */
+/* 팝업 안에서는 접기 버튼이 뜻이 없습니다 *//* 상태 고르기 판 */
 .status-pop{
   position: fixed;
   z-index: 9000;
@@ -3856,903 +4006,65 @@ body.narrow-chat-focus .narrow-tabs{
 .status-pop-item:hover{ background: var(--fill-2); }
 /* 지금 고른 것 — 테두리로만 표시합니다. 배경까지 칠하면 상태색과 싸웁니다. */
 .status-pop-item.on{ border-color: var(--accent); font-weight: var(--fw-bold); }
+/* 창마다 오른쪽 위 ✕ *//* 늘 보이면 시끄럽습니다. 마우스를 올렸을 때만. *//* 창을 자리에 붙이는 대신 팝업으로 띄웠을 때 *//* =====================================================================
+   큰 뽀모 시계가 글자수 칸 안에 들어갔을 때
 
-/* 창마다 오른쪽 위 ✕ */
-.panel-close{
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  z-index: 5;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--r-full);
-  background: transparent;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity var(--anim-fast), background var(--anim-fast);
-}
-/* 늘 보이면 시끄럽습니다. 마우스를 올렸을 때만. */
-.cards-area:hover > .panel-close,
-.chat-sidebar:hover > .panel-close,
-.pane:hover > .panel-close{ opacity: .55; }
-.panel-close:hover{ opacity: 1 !important; background: rgba(255,59,48,.12); color: #C0392B; }
-.panel-close:focus-visible{ opacity: 1; outline: 2px solid var(--accent-ring); }
-/* 손가락 화면에는 아예 안 띄웁니다 — 실수로 누르기 쉽습니다 */
-@media (hover: none){ .panel-close{ display: none; } }
-
-/* 창을 자리에 붙이는 대신 팝업으로 띄웠을 때 */
-.panel-pop-host{ display: flex; min-height: 0; }
-.in-popup{
-  flex: 1 1 auto !important;
-  width: auto !important;
-  height: auto !important;
-  max-height: 60vh;
-  min-width: 0 !important;
-  overflow: auto;
-}
-.in-popup .panel-close{ display: none; }
-
-
-/* =====================================================================
-   오른쪽 줄 접기
-
-   접힌 줄은 아예 문서에서 빠지므로(script_layout.js), 여기서는 남은
-   손잡이와 머리말 버튼만 꾸밉니다. 접히면 접속자 칸이 남은 폭을
-   전부 가져가므로 빈 공간이 생기지 않습니다.
+   채팅 위에 있을 때보다 **80% 크기**로 줄입니다. 옆에 다른 것들이
+   함께 있어서, 원래 크기면 칸을 혼자 다 먹습니다.
+   em 이 아니라 %로 줄인 이유: 원래 값이 어디에 정의돼 있든
+   비율로만 깎으면 나중에 원본이 바뀌어도 관계가 유지됩니다.
    ===================================================================== */
-body.side-collapsed .split-root > .split{ gap: 0; }
-#side-toggle-btn{ font-size: 15px; line-height: 1; }
-
-/* 접었을 때 남는 얇은 손잡이 */
-body.side-collapsed .side-rail{
-  display: flex;
-  flex: 0 0 auto;
-  margin-left: var(--sp-1);
+.pomo-status-line.in-wordcount{
+  margin-top: auto;            /* 글자수 칸의 맨 아래에 붙습니다 */
+  flex: none;
+  border-radius: var(--r-md);
+  padding: 6px 10px;
 }
-.side-rail-btn{ font-size: 14px; }
-
-/* 창마다 있던 ✕ 와 접기 버튼은 없앴습니다 */
-.panel-close,
-.chat-collapse-btn,
-.hidden-panels{ display: none !important; }
-
-
-/* ---------------------------------------------------------------
-   입장 모달의 안내/오류 한 줄
-   --------------------------------------------------------------- */
-.join-msg{
-  margin-top: var(--sp-2);
-  font-size: .88rem;
-  line-height: 1.5;
-  color: var(--text-dim);
+.pomo-status-line.in-wordcount .pomo-mega-digits{
+  /* 원래 값 clamp(41px, 9.35vw, 75px) 의 80%.
+     고정 크기로 바꾸지 않고 clamp 를 그대로 유지합니다 —
+     칸이 좁아졌을 때 숫자가 넘치지 않게 하려던 원래 뜻을 지키려고요. */
+  font-size: clamp(33px, 7.48vw, 60px);
+  line-height: 1.05;
 }
-.join-msg.bad{ color: #D9534F; font-weight: 600; }
-
-/* =====================================================================
-   글자수 기록 — 뽀모 칸 아래
-
-   뽀모 줄은 폭이 좁습니다(기본 320px). 그래서 이 안의 모든 것은
-   가로로 넘치지 않게 만들었어요. 이름은 말줄임, 막대는 퍼센트,
-   숫자는 고정폭 숫자체로 자리가 흔들리지 않게 합니다.
-   ===================================================================== */
-.wc-block{
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-  margin-top: var(--sp-2);
-  border-top: 1px solid var(--border);
-  min-height: 0;
-  flex: 1 1 auto;
-}
-.wc-head{ display:flex; align-items:center; justify-content:space-between; gap:var(--sp-2); flex:none; }
-.wc-title{ font-weight: var(--fw-bold); font-size: var(--fs-sm); }
-
-.wc-tabs{ display:flex; gap:3px; }
-.wc-tab{
-  font-family: inherit; font-size: var(--fs-2xs);
-  padding: 3px 9px; border-radius: var(--r-full);
-  border: 1px solid var(--border); background: transparent;
-  color: var(--text-dim); cursor: pointer;
-}
-.wc-tab.on{ background: var(--text); color: var(--bg); border-color: transparent; font-weight: var(--fw-medium); }
-
-.wc-mine{ display:flex; align-items:baseline; gap:5px; flex:none; }
-.wc-big{ font-size: var(--fs-2xl); font-weight: var(--fw-bold);
-         font-variant-numeric: tabular-nums; letter-spacing:-.02em; }
-.wc-unit{ font-size: var(--fs-xs); color: var(--text-dim); }
-
-.wc-rows{
-  display:flex; flex-direction:column; gap:4px;
-  font-size: var(--fs-xs);
-  overflow:auto; min-height: 0; flex: 1 1 auto;
-}
-.wc-row{ display:flex; align-items:center; gap:7px; }
-.wc-nm{ flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-/* 막대는 최대 40%까지만 — 이름과 숫자 자리를 뺏지 않게 */
-.wc-bar{ flex:0 0 auto; height:4px; border-radius:var(--r-full);
-         background: var(--accent); opacity:.45; max-width:40%; min-width:3px; }
-.wc-n{ flex:0 0 auto; font-variant-numeric: tabular-nums; font-weight: var(--fw-medium); }
-.wc-row.me .wc-nm{ color: var(--accent); font-weight: var(--fw-medium); }
-.wc-empty{ font-size: var(--fs-xs); color: var(--text-dim); }
-
-.wc-log{ margin:0; min-height:16px; font-size: var(--fs-2xs);
-         font-weight: var(--fw-medium); color:#2FA36B; flex:none; }
-
-.wc-inputline{ display:flex; gap:5px; flex:none; }
-.wc-inputline input{
-  flex:1 1 auto; min-width:0; font: inherit; font-size: var(--fs-sm);
-  padding: 6px 9px; border:1px solid var(--border-strong);
-  border-radius: var(--r-sm); background: var(--surface); color: var(--text);
-}
-.wc-minirow{ display:flex; gap:4px; flex:none; }
-.wc-minirow .ghost-btn{ flex:1 1 0; min-width:0; }
-
-/* 뽀모 줄이 세로로 늘어날 수 있게 */
-#pomo-block{ display:flex; flex-direction:column; min-height:0; }
-#pomo-block #timer-wrap{ flex:none; }
-
-/* =====================================================================
-   흐르는 글자수 기록 — 채팅처럼 보이게
-
-   · 올린 숫자   : 내 것은 오른쪽, 남의 것은 왼쪽 (말풍선)
-   · 계산 결과   : 방이 알려주는 말이라 가운데
-   · 시간        : 넣지 않습니다 (좁은 칸이 지저분해져서)
-
-   순위표처럼 보이지 않게 하려는 배치입니다. 나란히 줄 세우면
-   그날 적게 쓴 사람이 위축되니까요.
-   ===================================================================== */
-.wc-feed{ padding: 6px 0; font-size: var(--fs-xs); line-height: 1.4; }
-
-/* ── 올린 숫자 (말풍선) ── */
-.wc-said-line{ display:flex; justify-content:flex-start; }
-.wc-feed.me .wc-said-line{ justify-content:flex-end; }
-
-.wc-said{
-  display:inline-flex; align-items:baseline; gap:5px;
-  max-width: 85%;
-  padding: 5px 10px;
-  border-radius: 13px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  word-break: break-all;
-}
-.wc-feed.me .wc-said{
-  background: var(--accent);
-  border-color: transparent;
-  color: #fff;
-}
-.wc-said-nm{ font-size: var(--fs-2xs); color: var(--text-dim);
-             overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.wc-said-n{ font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }
-
-/* ── 계산 결과 (가운데) ── */
-.wc-feed-sys{
-  margin-top: 4px;
-  text-align: center;          /* 방이 알려주는 말이라 가운데 */
-  color: var(--text-dim);
+.pomo-status-line.in-wordcount .tag{
   font-size: var(--fs-2xs);
-  word-break: break-all;
 }
-.wc-feed-sys b{ color: var(--text); font-weight: var(--fw-medium); }
-.wc-feed.me .wc-feed-sys b{ color: var(--accent); }
+.pomo-status-line.in-wordcount.hidden{ display: none; }
 
-/* 뽀모 — 시간 설정을 버튼과 다른 줄에 둡니다 (좁은 칸에서 서로 밀려서) */
-.pomo-row-setup{ display:flex; justify-content:center; }
-.pomo-row-setup .pomo-setup{ margin:0; }
+/* 큰 시계를 글자수 칸 **위**에 붙였을 때.
+   margin-top:auto 를 풀어야 위로 올라붙습니다. */
+.pomo-status-line.in-wordcount.at-top{
+  margin-top: 0;
+  margin-bottom: var(--sp-2);
+}
 
-/* 뽀모 — 시작·정지·알림음 버튼도 가운데로 (시간 설정 줄과 맞춥니다) */
-.pomo-row-4.timer-controls{ justify-content: center; }
-
-/* 설정 → 📊 나의 기록 — 팝업에서 쓰던 조각을 그대로 씁니다.
-   팝업보다 폭이 좁으니 위아래 여백만 조금 줄입니다. */
+/* 설정 → 📊 나의 기록 — 팝업에서 쓰던 조각을 그대로 씁니다. */
 #panel-record .rec-today{ margin-top: 2px; }
 #panel-record .rec-week{ margin-bottom: 4px; }
 #panel-record .set-block + .set-block{ margin-top: var(--sp-3); }
 
 /* =====================================================================
-   [테마 3종 전용 스타일] — applyTheme()이 html 에 붙이는
-   data-theme-style="ink | night | studio" 표식을 읽습니다.
-   색은 applyTheme 이 변수로 넣고, 여기서는 질감·서체·모양만 다룹니다.
+   채팅 헤더의 내 상태 칩
+
+   카드 상태표(.card-state)와 같은 상태색 클래스를 씁니다 —
+   같은 상태면 어디서든 같은 색이어야 헷갈리지 않아요.
+   크기만 카드보다 작게 (헤더 한 줄에 얹히는 물건이라서).
    ===================================================================== */
-
-/* ── A. 📜 원고와 잉크 ─────────────────────────────
-   원고지 괘선이 은은하게 깔린 종이 배경 + 명조 제목 + 한쪽만 각진 말풍선 */
-html[data-theme-style="ink"] body{
-  /* 원고지 격자 — 세로줄 + 가로줄이 만나 칸이 보입니다.
-     색은 원고지 특유의 붉은 갈색(인주 계열), 칸은 24px. */
-  background-image:
-    repeating-linear-gradient(90deg, transparent 0 23px, rgba(163,88,70,.16) 23px 24px),
-    repeating-linear-gradient( 0deg, transparent 0 23px, rgba(163,88,70,.16) 23px 24px);
-}
-html[data-theme-style="ink"] .modal-title,
-html[data-theme-style="ink"] .set-title,
-html[data-theme-style="ink"] .wc-title{
-  font-family: "Noto Serif KR", "Nanum Myeongjo", "AppleMyungjo", serif;
-  letter-spacing: -0.2px;
-}
-html[data-theme-style="ink"] .me .msg-bubble{
-  border-radius: var(--r-lg) 6px var(--r-lg) var(--r-lg);
-}
-html[data-theme-style="ink"] .other .msg-bubble{
-  border-radius: 6px var(--r-lg) var(--r-lg) var(--r-lg);
-  box-shadow: inset 0 0 0 1px rgba(150,120,80,.28); /* 종이 위 잉크선 느낌의 얇은 테두리 */
-}
-
-/* ── B. 🌙 마감 전야 ─────────────────────────────
-   밤샘 작업실 다크 + 앰버 포인트. 숫자(타이머·글자수)는 모노스페이스로 또렷하게 */
-html[data-theme-style="night"] .pomo-mega-digits,
-html[data-theme-style="night"] .wc-big{
-  font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  letter-spacing: .5px;
-}
-
-/* ── C. 💠 조용한 스튜디오 ─────────────────────────────
-   뉴트럴 그레이 위 화이트 카드 — 낮은 그림자로 말풍선을 띄웁니다 */
-html[data-theme-style="studio"] .other .msg-bubble{
-  box-shadow: 0 1px 3px rgba(0,0,0,.07);
-}
-html[data-theme-style="studio"] .me .msg-bubble{
-  box-shadow: 0 2px 8px rgba(47,107,255,.22);
-}
-
-/* ── 테마 선택 칩 — 3종이라 이름이 보이는 넓은 카드형으로 ───────────── */
-.theme-grid{
-  grid-template-columns: 1fr;
-  gap: var(--sp-3);
-}
-.theme-chip{
-  aspect-ratio: auto;
-  height: 62px;
-  max-width: none;
-  border-radius: var(--r-lg);
-}
-.theme-chip::after{
-  clip-path: polygon(72% 0, 100% 0, 100% 100%, 72% 100%);
-}
-.theme-chip .chip-name{
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
-  font-size: var(--fs-md);
+.my-status-chip{
+  appearance: none;
+  font-family: inherit;
+  font-size: calc(var(--fs-sm) * .9);
   font-weight: var(--fw-bold);
-  color: var(--chip-label, #141618);
-  pointer-events: none;
-}
-.theme-chip .chip-dot{ display: none; }
-
-/* =====================================================================
-   [이식 2026-08-03 · 벨사탕 0802] starter 표시 · 아이콘 라벨 · 글자수 피드
-   ===================================================================== */
-/* 참여 버튼의 starter 표시 — "starter"는 살짝 작게, 닉네임은 같은 크기 */
-.pomo-starter-lb{ font-size: .82em; opacity: .75; }
-.pomo-starter-nm{ font-size: 1em; font-weight: var(--fw-medium); }
-
-/* 아이콘 옆 문구 — 아이콘만으로는 모르겠다는 분들이 많아서.
-   문구가 있는 버튼은 정사각형을 풀고 알약처럼 늘어납니다. */
-.icon-btn.labeled{ width: auto; padding: 0 9px 0 7px; gap: 4px; }
-.icon-btn-label{
-  font-size: var(--fs-2xs);
-  font-weight: var(--fw-medium);
-  white-space: nowrap;
-  line-height: 1;
-}
-
-/* 글자수 피드 — 말풍선 옆 시각 (채팅의 msg-time 과 같은 느낌) */
-.wc-said-t{
-  flex: none;
-  font-size: var(--fs-2xs);
-  color: var(--time-muted, var(--text-dim));
-  font-variant-numeric: tabular-nums;
-  padding-bottom: 2px;
-  user-select: none;
-  white-space: nowrap;
-}
-.wc-said-line{ display:flex; justify-content:flex-start; align-items:flex-end; gap:4px; }
-
-/* 내 기록 탭 · "오늘 내 기록" 구분 제목 */
-.wc-me-h{
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-  font-size: var(--fs-2xs);
-  font-weight: var(--fw-bold);
-  color: var(--text-dim);
-}
-
-/* =====================================================================
-   [2026-08-03] 전체 UI 리뉴얼 — 시안 v2
-   · 머리말 브랜드(방 이름 + 도장)
-   · 프로필 카드: 책 표지형 (2형)
-   · 창 제목의 포인트 획
-   ===================================================================== */
-
-/* ── 머리말 브랜드 ── */
-.brand-block{
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-right: auto;   /* 도구 묶음을 오른쪽 끝으로 밀어냅니다 */
-  min-width: 0;
-}
-.brand-title{
-  font-size: var(--fs-lg);
-  font-weight: var(--fw-bold);
-  letter-spacing: -0.3px;
-  color: var(--text);
-  white-space: nowrap;
-}
-.brand-stamp{
-  font-size: var(--fs-2xs);
-  font-weight: var(--fw-bold);
-  padding: 2px 8px;
+  padding: 2px 9px;
   border-radius: var(--r-full);
-  background: var(--accent);
-  color: #fff;
-  white-space: nowrap;
-}
-html[data-theme-style="ink"] .brand-title{ font-family: "Noto Serif KR", serif; }
-html[data-theme-style="ink"] .brand-stamp{
-  /* 전각 도장 — 각진 인주 */
-  border-radius: 4px;
-  font-family: "Noto Serif KR", serif;
-  color: #FAF6EC;
-}
-html[data-theme-style="night"] .brand-stamp{ color: #231A05; }
-html[data-theme-style="studio"] .brand-stamp{ color: #fff; }
-
-/* ── 창 제목의 포인트 획 — 카드 제목마다 인주색 짧은 획 ── */
-.wc-title::before,
-.personal-title::before{
-  content: "";
-  display: inline-block;
-  width: 14px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--accent);
-  margin-right: 7px;
-  vertical-align: 3px;
-}
-
-/* ── 프로필 카드 — 책 표지형 (2형) ─────────────────────────
-   DOM 구조와 클릭 동작(프사=프로필, 상태표=상태, 아래칸=목표·투두/기록)은
-   그대로 두고, 배치만 세로 "책 표지"로 바꿉니다. */
-.user-card{
-  display: flex;
-  flex-direction: column;
-  border-radius: 6px 16px 16px 6px;   /* 왼쪽은 책등처럼 각지게 */
-  border-left: 4px solid var(--accent-line);
-  box-shadow: 0 2px 10px rgba(0,0,0,.07);
-}
-
-/* 프사를 위 가운데로, 상태를 그 아래로 */
-.card-body{
-  flex-direction: column;
-  align-items: center;
-  gap: 7px;
-}
-.card-avatar-wrap{
-  flex: 0 0 auto;
-  width: 62%;
-  max-width: 118px;
-  align-self: center;
-}
-.card-avatar{
-  border-radius: var(--r-full);       /* 원형 프사 — 책 표지의 초상처럼 */
-  border: 2px solid var(--border);
-}
-.card-side{ width: 100%; }
-.card-state-row{ justify-content: center; }
-/* 폭 기준자는 세로 배치에서는 필요 없습니다 (칸 폭이 카드 폭) */
-.card-state-ghost{ display: none; }
-
-/* 아래칸 — 이름·목표·진척을 가운데 정렬 */
-.card-foot{ text-align: center; }
-.card-name{
-  justify-content: center;
-  font-size: var(--fs-lg);
-  letter-spacing: -0.2px;
-}
-.card-goal .goal-line{ text-align: center; }
-
-/* 잉크 테마 — 이름은 명조, 상태표는 도장 */
-html[data-theme-style="ink"] .card-name{ font-family: "Noto Serif KR", serif; }
-html[data-theme-style="ink"] .card-state{
-  border: 1.5px solid currentColor;
-  border-radius: 4px;
-  font-family: "Noto Serif KR", serif;
-}
-
-/* =====================================================================
-   [2026-08-03] 상단바 공지 핀 · 채팅 머리말 · 뽀모 창 리디자인
-   ===================================================================== */
-
-/* ── 공지 핀 — 브랜드 줄의 📌 ── */
-.head-notice{
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-  max-width: 34vw;
-  background: var(--accent-softer);
-  border: 1px dashed var(--accent-line);
-  border-radius: var(--r-full);
-  padding: 4px 12px;
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
+  border: 1px solid var(--border);
+  background: var(--surface);
   color: var(--text);
   cursor: pointer;
-  transition: background var(--anim-fast);
-}
-.head-notice:hover{ background: var(--accent-soft); }
-.head-notice #head-notice-text{
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  margin-right: var(--sp-2);
+  flex: none;
 }
-.head-notice.empty{ opacity: .55; }
-
-/* ── 채팅 머리말 — "— Chat" (포인트 획 + 제목 서체) ── */
-#my-info{ font-weight: var(--fw-bold); }
-#my-info::before{
-  content: "";
-  display: inline-block;
-  width: 14px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--accent);
-  margin-right: 7px;
-  vertical-align: 3px;
-}
-html[data-theme-style="ink"] #my-info,
-html[data-theme-style="ink"] .brand-stamp#head-count{ font-family: "Noto Serif KR", serif; }
-
-/* ── 뽀모 창 제목 — [획] 뽀모 🍅 ── */
-.pomo-pane-title{
-  margin: 10px 12px 0;
-  font-size: var(--fs-md);
-}
-
-/* ── 뽀모 타이머 — 도는 동안은 큰 숫자만 ── */
-#timer-pill[data-phase]{
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  justify-content: center;
-}
-#timer-pill[data-phase] #timer-text{
-  font-size: clamp(32px, 3.6vw, 44px);
-  font-weight: var(--fw-bold);
-  letter-spacing: 1px;
-  line-height: 1.15;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-/* 휴식은 ☕ 만 작게 앞에 */
-#timer-pill[data-phase="rest"] #timer-text::before{
-  content: "☕ ";
-  font-size: .45em;
-  vertical-align: 8px;
-}
-html[data-theme-style="ink"] #timer-pill[data-phase] #timer-text{
-  font-family: "Noto Serif KR", serif;
-}
-html[data-theme-style="night"] #timer-pill[data-phase] #timer-text{
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-}
-/* 시간이 얼마 안 남았을 때(경고)는 숫자를 인주색으로 */
-#timer-pill.timer-warn[data-phase] #timer-text{ color: var(--accent); }
-
-/* =====================================================================
-   [2026-08-03·2차] 채팅 위 타이머 제거 · 헤더 여백 · 카드 이름/안테나
-   ===================================================================== */
-
-/* ── 채팅 위 큰 타이머 줄 — 뽀모 창에 크게 뜨므로 중복이라 뺍니다.
-   (코드는 남겨두고 화면에서만 감춥니다 — 되살리기 쉬움) ── */
-.pomo-status-line{ display: none !important; }
-
-/* ── 맨 위 헤더 — 양쪽에 프로필 카드 폭만큼 숨 쉴 자리 ── */
-.app-head{
-  padding-left: var(--card-w);
-  padding-right: var(--card-w);
-}
-@media (max-width: 1100px){
-  .app-head{ padding-left: 16px; padding-right: 16px; }
-}
-
-/* ── 카드 아래칸 — 닉네임 왼쪽 · 안테나 오른쪽 ── */
-.card-foot{
-  text-align: left;
-  padding-left: 11px;
-  padding-right: 26px;   /* 오른쪽 안테나 자리 */
-}
-.card-name{ justify-content: flex-start; }
-.card-goal .goal-line{ text-align: left; }
-.card-conn{
-  left: auto;
-  right: 7px;
-  top: 9px;
-}
-
-/* ── 안테나 새 디자인 — 신호 막대 대신 잉크 방울(점등) ──
-   막대 4개는 감추고, 상태색 점 하나 + 옅은 링으로 바꿉니다.
-   색은 기존 규칙(currentColor: 초록/붉음)을 그대로 따릅니다. */
-.card-conn i{ display: none; }
-.card-conn{
-  height: auto;
-  padding: 3px;
-  border-radius: var(--r-full);
-}
-.card-conn::after{
-  content: "";
-  display: block;
-  width: 8px;
-  height: 8px;
-  border-radius: var(--r-full);
-  background: currentColor;
-  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent);
-}
-/* 끊겼을 때의 깜빡임(연결 규칙의 connBlink)은 그대로 이어받습니다 */
-
-/* =====================================================================
-   [2026-08-03·3차] 시안 모양 그대로 — 카드 디테일 · 뽀모 버튼 · 보내기 버튼
-   ===================================================================== */
-
-/* ── 프로필 카드 ── */
-/* 프사: 원형 → 둥근 정사각형 */
-.card-avatar{ border-radius: var(--r-md); }
-/* 책등: 왼쪽 색입힘 2배 두껍게 */
-.user-card{ border-left: 8px solid var(--accent-line); }
-/* 닉네임 상자 안 목표·진척 바 — 전부 왼쪽 기준으로 가지런히 */
-.card-goal{ text-align: left; }
-.card-goal .goal-line{ text-align: left; }
-.card-meta{ text-align: left; }
-
-/* ── 뽀모 시간 칩 — 🍅 25분 / ☕ 5분 알약 ── */
-.pomo-setup-field{
-  border: none;
-  border-radius: var(--r-full);
-  padding: 8px 14px;
-  background: var(--fill-2);
-  font-weight: var(--fw-bold);
-  color: var(--muted-strong);
-}
-.pomo-setup-field input{
-  background: transparent;
-  border: none;
-  width: 34px;
-  font-size: var(--fs-sm);
-}
-.pomo-setup-sep{ opacity: .4; }
-
-/* ── 뽀모 버튼 — 시작은 인주색 원, 정지·알림음은 베이지 원 ── */
-.pomo-run-btn{
-  width: 44px;
-  height: 44px;
-  border-radius: var(--r-full);
-  border: none;
-}
-.pomo-run-btn.start{
-  background: var(--accent);
-  color: var(--me-text);
-  box-shadow: 0 3px 10px var(--accent-ring);
-}
-.pomo-run-btn.stop{
-  background: var(--fill-2);
-  color: var(--muted-strong);
-}
-:root[data-is-dark="true"] .pomo-run-btn.start{ color: var(--me-text); }
-:root[data-is-dark="true"] .pomo-run-btn.stop{ color: var(--muted-strong); }
-#pomo-detail-toggle{
-  width: 44px;
-  height: 44px;
-  flex: 0 0 auto;
-  border-radius: var(--r-full);
-  border: none;
-  background: var(--fill-2);
-  font-size: 17px;
-  line-height: 1;
-}
-
-/* ── 채팅 입력 — 알약 입력창 + 인주색 원형 보내기 ── */
-#message{
-  border-radius: 22px;
-  border: 1px solid var(--border);
-}
-.send-btn{
-  border-radius: var(--r-full);
-  border: none;
-  background: var(--accent);
-  color: var(--me-text);
-  font-size: 19px;
-  box-shadow: 0 3px 10px var(--accent-ring);
-}
-.send-btn:active{ transform: scale(.94); }
-
-/* =====================================================================
-   [2026-08-03·4차] 뽀모 배경 격자 · 시간 칩 간격 · 글자수 창 버튼
-   ===================================================================== */
-
-/* ── 뽀모 창 — 접속자 창처럼 원고지 격자가 비치게.
-   (반투명 막이 pane + timer-wrap 두 겹이라 격자가 막혔었습니다) ── */
-.pane-pomo #timer-wrap{ background: transparent; }
-
-/* ── 시간 칩 — / 를 뺀 자리만큼 간격을 좁힙니다 ── */
-#pomo-setup{ gap: 8px; }
-
-/* ── 글자수 창 — 시안 모양 ── */
-/* 입력 상자: 둥근 알약 */
-.wc-inputline{ gap: 7px; }
-.wc-inputline input{
-  border-radius: var(--r-full);
-  padding: 8px 14px;
-  background: var(--card, var(--surface));
-  border: 1px solid var(--border);
-}
-/* 기록 버튼: 인주색 상자 */
-#wc-send{
-  background: var(--accent);
-  color: var(--me-text);
-  border: none;
-  border-radius: var(--r-md);
-  padding: 8px 15px;
-  font-weight: var(--fw-bold);
-  box-shadow: 0 2px 8px var(--accent-ring);
-}
-#wc-send:active{ transform: scale(.96); }
-/* 기준 · 초기화 · 새 편: 테두리 없는 베이지 상자 3등분 */
-.wc-minirow{ gap: 7px; }
-.wc-minirow .ghost-btn{
-  border: none;
-  border-radius: var(--r-md);
-  background: var(--fill-2);
-  color: var(--muted-strong);
-  font-weight: var(--fw-bold);
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-
-/* =====================================================================
-   [2026-08-03·5차] 다크 가독성 · 카드 모양 · 상태 버튼
-   ===================================================================== */
-
-/* ── 음표(알림음) 버튼 — 정지 버튼과 같은 색으로 ── */
-#pomo-detail-toggle{ color: var(--muted-strong); }
-
-/* ── 폰트 조절 — 머리말 배경에 자연스럽게 붙는 색 ── */
-.font-pill,
-.font-btn{
-  background: var(--header);
-  border-color: var(--border);
-  color: var(--text);
-}
-
-/* ── 프로필 카드 — 책등 제거 · 왼쪽 모서리 각지게 ── */
-.user-card{
-  border-left: 1px solid var(--border);
-  border-radius: 0 16px 16px 0;
-}
-
-/* ── 아래칸 — 닉네임 왼끝 ↔ 안테나 오른끝, 목표·진척은 그 폭을 꽉 채움 ── */
-.card-foot{ padding-right: 11px; }
-.card-name{ padding-right: 22px; }   /* 안테나와 겹치지 않게 이름 줄만 비움 */
-.card-goal,
-.card-meta{ width: 100%; }
-
-/* 내 카드 아래칸만 손 모양 커서 */
-.card-foot{ cursor: default; }
-.card-foot[data-record-of]{ cursor: pointer; }
-
-/* ── 상태 버튼 — 둥근 알약, WORK 는 주황 ── */
-.card-state{ border-radius: var(--r-full); }
-html[data-theme-style="ink"] .card-state{ border-radius: var(--r-full); }
-.card-state.status-writing{
-  background: rgba(255,159,10,.63);
-  border-color: rgba(255,159,10,.76);
-  color: #7A4406;
-}
-:root[data-is-dark="true"] .card-state.status-writing{ color: #FFCE85; }
-
-/* =====================================================================
-   [2026-08-03·6차] 다크(마감 전야) 가독성 — 상태 버튼 · 🍅 횟수
-   ===================================================================== */
-/* 상태 버튼: 다크에서는 짙은 반투명 배경 + 밝은 글자로 또렷하게 */
-:root[data-is-dark="true"] .card-state.status-writing,
-:root[data-is-dark="true"] .card-state.status-focus{
-  background: rgba(255,159,10,.20);
-  border-color: rgba(255,159,10,.45);
-  color: #FFCE85;
-}
-:root[data-is-dark="true"] .card-state.status-rest,
-:root[data-is-dark="true"] .card-state.status-away{
-  background: rgba(48,209,88,.16);
-  border-color: rgba(48,209,88,.40);
-  color: #8CE8C6;
-}
-/* 🍅 오늘 집중 횟수: 다크에서 밝은 라벤더로 */
-:root[data-is-dark="true"]{ --card-pomo: #CFC5F0; }
-
-/* =====================================================================
-   [2026-08-03·7차] 프로필 카드 고정 폭 · 채팅 접기 버튼
-   ===================================================================== */
-/* 카드가 칸 폭을 따라 늘어나지 않고 --card-w(214px) 그대로 고정됩니다.
-   칸이 넓으면 남는 자리는 가운데 여백으로 흡수돼요. */
-.user-cards-grid{
-  grid-template-columns: repeat(auto-fill, var(--card-w));
-  justify-content: center;
-}
-
-/* 채팅 헤더의 접기 버튼 — 머리말 아이콘과 같은 크기감 */
-#chat-collapse-btn{
-  width: 28px;
-  height: 28px;
-  font-size: 12px;
-}
-
-/* =====================================================================
-   [2026-08-03·8차] 채팅 접힘 마무리 — 빈 기둥 · 손잡이 정리
-   ===================================================================== */
-/* 접힌 채팅 본체는 확실히 숨깁니다 (칸 자체도 0px 로 줄어듭니다) */
-body.chat-collapsed .chat-sidebar{ display: none !important; }
-/* 접힌 채팅 옆의 크기조절 손잡이는 의미가 없으니 감춥니다 */
-body.chat-collapsed .split-grip[data-key="panel/chat"]{ display: none; }
-
-/* =====================================================================
-   [2026-08-03·9차] 프로필 카드 — 스프링 노트
-   왼쪽에 스프링 링, 오른쪽·아래로 종이 여러 장이 겹친 낌새를 냅니다.
-   ===================================================================== */
-.user-card{
-  /* 겹친 종이 — 오른쪽 아래로 낱장 두 장이 삐져나온 그림자 */
-  box-shadow:
-    2.5px 2.5px 0 -0.5px var(--panel),
-    2.5px 2.5px 0 0      var(--border),
-    5px   5px   0 -0.5px var(--panel),
-    5px   5px   0 0      var(--border);
-}
-
-/* =====================================================================
-   [2026-08-03·10차] 창 제목 서체 통일 — 뽀모 창 제목과 같게
-   Chat · Letters · 카드 닉네임이 잉크 테마에서 명조로 따로 놀던 것을
-   뽀모 제목과 같은 본문 고딕(굵게)으로 맞춥니다.
-   ===================================================================== */
-#my-info,
-.wc-title{
-  font-size: var(--fs-md);
-  font-weight: var(--fw-bold);
-}
-html[data-theme-style="ink"] #my-info,
-html[data-theme-style="ink"] .wc-title,
-html[data-theme-style="ink"] .card-name{
-  font-family: var(--font);
-}
-
-/* =====================================================================
-   [2026-08-03·11차] 뽀모·글자수 줄 접기 · 대기 타이머
-   ===================================================================== */
-/* 접힌 뽀모·글자수 본체는 확실히 숨깁니다 */
-body.side-collapsed .pane-pomo{ display: none !important; }
-
-/* 뽀모 제목 줄 — 오른쪽 끝에 접기 버튼 */
-.pomo-pane-title{
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;   /* 제목은 왼쪽 정렬 그대로 */
-  /* 획(::before)의 margin-right 7px 만 쓰도록 gap 은 0 —
-     gap 8px 가 더해져 다른 창 제목보다 간격이 넓어 보였습니다 */
-  gap: 0;
-}
-.pomo-pane-title span{ flex: 0 0 auto; }
-#side-fold-btn{
-  width: 26px;
-  height: 26px;
-  flex: 0 0 auto;
-  font-size: 12px;
-  margin-left: auto;   /* 접기 버튼만 오른쪽 끝으로 */
-}
-
-/* =====================================================================
-   [2026-08-03·12차] 접속자 창 프레임 제거 — 카드가 원고지 위에 바로
-   ===================================================================== */
-.cards-area{
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-/* =====================================================================
-   [2026-08-03·13차] 상태 3종 · 기록 주간 넘기기 · 제목 영문 · 카드 정렬
-   ===================================================================== */
-/* 상태 버튼 글꼴 — 창 제목과 같은 본문 고딕 */
-.card-state,
-html[data-theme-style="ink"] .card-state{ font-family: var(--font); }
-
-/* AWAY 인 카드는 색이 빠져 흐리게 (마우스를 올리면 또렷) */
-.user-card.status-away{ filter: grayscale(.85); opacity: .7; transition: filter var(--anim), opacity var(--anim); }
-.user-card.status-away:hover{ filter: none; opacity: 1; }
-
-/* 목표·투두 소제목 — 획 없이 */
-.goal-wrap .personal-title::before,
-.todo-wrap .personal-title::before{ display: none; }
-
-/* 기록 — 주간 넘기기 · 막대 위 시간 표기 */
-.rec-weeknav{ display: flex; align-items: center; gap: 8px; }
-.rec-nav{
-  width: 24px; height: 24px; border-radius: 8px;
-  border: 1px solid var(--border); background: var(--panel2);
-  cursor: pointer; line-height: 1; font-size: 13px; color: var(--text);
-}
-.rec-nav:disabled{ opacity: .35; cursor: default; }
-.rec-week span .rec-bar-v{
-  display: block;
-  min-height: 13px;
-  font-size: 10px;
-  font-weight: var(--fw-medium);
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-/* 카드 아래칸 — 접속 점은 왼쪽 끝, 닉네임·목표는 오른쪽 정렬 */
-.card-conn{ left: 7px; right: auto; }
-.card-foot{ padding-left: 26px; padding-right: 11px; }
-.card-name{ justify-content: flex-end; text-align: right; padding-right: 0; }
-.card-goal .goal-line{ text-align: right; }
-
-/* =====================================================================
-   [2026-08-03·14차] 카드 진척 바 — 닉네임 상자 양 끝에 맞춤
-   ===================================================================== */
-/* 접속 점의 자리는 이름 줄에서만 비우고,
-   목표·진척 바·완료/토마토 줄은 상자 폭을 끝까지 씁니다. */
-.card-foot{ padding-left: 11px; }
-.card-name{ padding-left: 22px; }   /* 왼쪽 점과 겹치지 않게 이름 줄만 */
-.card-goal,
-.card-meta,
-.card-meta .card-prog-track{ width: 100%; }
-.card-meta-line{ width: 100%; }
-
-/* =====================================================================
-   [2026-08-03·15차] 설정창 리스킨 — 대시보드와 같은 결
-   ===================================================================== */
-/* 탭 — 알약 묶음, 고른 탭은 포인트 컬러 */
-.tabs{
-  border: none;
-  background: var(--fill-2);
-  border-radius: var(--r-full);
-  padding: 5px;
-  gap: 4px;
-}
-.tab{
-  border-radius: var(--r-full);
-  border: none;
-}
-.tab.active{
-  background: var(--accent);
-  border-color: transparent;
-  color: var(--me-text);
-}
-.tab.active:hover{ color: var(--me-text); }
-
-/* 설정 상자 — 낮은 그림자의 카드 */
-.set-block{
-  border: none;
-  box-shadow: 0 1px 6px rgba(0,0,0,.07);
-}
-:root[data-is-dark="true"] .set-block{ box-shadow: 0 1px 6px rgba(0,0,0,.35); }
-
-/* 상자 제목 — 창 제목처럼 포인트 획 */
-.set-title::before{
-  content: "";
-  display: inline-block;
-  width: 14px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--accent);
-  margin-right: 7px;
-  vertical-align: 3px;
-}
+.my-status-chip:hover{ filter: brightness(1.05); }
+.my-status-chip.hidden{ display: none; }

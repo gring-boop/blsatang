@@ -455,12 +455,9 @@
 
   // ✅ 원터치 집필/휴식 전환
   function toggleWritingStatus() {
-    /* [2026-08-03] 상태 3단계 순환: Work → Break → Away → Work */
     const sel = document.getElementById("db-status");
     if (!sel) return;
-    sel.value = sel.value === "writing" ? "rest"
-              : sel.value === "rest"    ? "away"
-              : "writing";
+    sel.value = (sel.value === "writing") ? "rest" : "writing";
     renderQuickStatusBtn();
     saveNow();
   }
@@ -470,10 +467,10 @@
     const sel = document.getElementById("db-status");
     if (!btn || !sel) return;
     if (sel.value === "writing") {
-      btn.textContent = "☕ Break로";
+      btn.textContent = "☕ 휴식으로";
       btn.classList.remove("primary");
     } else {
-      btn.textContent = "✍️ Work 시작!";
+      btn.textContent = "✍️ WORK 시작!";
       btn.classList.add("primary");
     }
   }

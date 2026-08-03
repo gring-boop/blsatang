@@ -42,10 +42,10 @@
 (function () {
 
   const STATUSES = [
-    { id: "writing", label: "Work",        color: "#C0392B" },
-    { id: "focus",   label: "Work(집중)",  color: "#C2701A" },   /* 옛 기록용 */
-    { id: "rest",    label: "Break",       color: "#2E8B6B" },
-    { id: "away",    label: "Away",        color: "#8A8F98" }
+    { id: "writing", label: "WORK",       color: "#C0392B" },
+    { id: "focus",   label: "🔥집중",      color: "#C2701A" },
+    { id: "rest",    label: "휴식",        color: "#2E8B6B" },
+    { id: "away",    label: "자리비움",    color: "#8A8F98" }
   ];
   const STATUS_IDS = STATUSES.map(s => s.id);
 
@@ -384,7 +384,7 @@
   /* ---------------------------------------------------------------
      [4] 합계 계산
      --------------------------------------------------------------- */
-  async function loadSummary(nick, days, backWeeks = 0) {
+  async function loadSummary(nick, days) {
     const out = [];               // [{ date, totals:{status:ms}, pomo }]
     const t = nowMs();
 
@@ -398,7 +398,7 @@
     } catch (e) {}
 
     for (let i = days - 1; i >= 0; i--) {
-      const dayMs = dayStart(t) - (i + backWeeks * 7) * 24 * 60 * 60 * 1000;
+      const dayMs = dayStart(t) - i * 24 * 60 * 60 * 1000;
       const key = ymd(dayMs);
       const totals = {}; STATUS_IDS.forEach(s => totals[s] = 0);
 
@@ -445,10 +445,10 @@
      --------------------------------------------------------------- */
   function fmtDur(ms) {
     const m = Math.round(ms / 60000);
-    if (m < 1) return "0m";
-    if (m < 60) return `${m}m`;
+    if (m < 1) return "0분";
+    if (m < 60) return `${m}분`;
     const h = Math.floor(m / 60), mm = m % 60;
-    return mm ? `${h}h ${mm}m` : `${h}h`;
+    return mm ? `${h}시간 ${mm}분` : `${h}시간`;
   }
   const DOW = ["일","월","화","수","목","금","토"];
 
@@ -473,55 +473,39 @@
      같은 걸 띄우려면 복사해야 했는데, 그러면 한쪽만 고치는 사고가
      반드시 납니다. 함수로 떼어내 한 곳에서만 만듭니다.
      --------------------------------------------------------------- */
-  function recordHtml(rows, backWeeks = 0, wcBack = 0) {
+  function recordHtml(rows) {
     const today = rows[rows.length - 1];
-    const isThisWeek = backWeeks === 0;
     const sumWork = today.totals.writing + today.totals.focus;
     const maxDay = Math.max(1, ...rows.map(r => r.totals.writing + r.totals.focus));
     const weekWork = rows.reduce((a, r) => a + r.totals.writing + r.totals.focus, 0);
     const weekPomo = rows.reduce((a, r) => a + r.pomo, 0);
-    const weekLabel = isThisWeek ? "지난 7일" : `${backWeeks}주 전`;
 
-    /* 지난 주를 보는 동안에는 "오늘" 요약은 접어둡니다 — 그 주의 값이 아니니까요 */
-    const todayHtml = !isThisWeek ? "" : `
+    return `
       <div class="rec-today">
         <div class="rec-big">${fmtDur(sumWork)}</div>
-        <div class="rec-sub">오늘 작업 시간 (Work)</div>
+        <div class="rec-sub">오늘 집필 시간 (WORK + 집중)</div>
       </div>
 
       <div class="rec-bars">
-        ${[
-          { label: "Work",  color: "#C0392B", v: today.totals.writing + today.totals.focus },
-          { label: "Break", color: "#2E8B6B", v: today.totals.rest },
-          { label: "Away",  color: "#8A8F98", v: today.totals.away }
-        ].map(s2 => {
+        ${STATUSES.map(s2 => {
+          const v = today.totals[s2.id];
           const all = Math.max(1, STATUS_IDS.reduce((a, k) => a + today.totals[k], 0));
           return `<div class="rec-row">
                     <span class="rec-name">${s2.label}</span>
-                    <span class="rec-track"><i style="width:${(s2.v / all * 100).toFixed(1)}%;background:${s2.color}"></i></span>
-                    <span class="rec-val">${fmtDur(s2.v)}</span>
+                    <span class="rec-track"><i style="width:${(v / all * 100).toFixed(1)}%;background:${s2.color}"></i></span>
+                    <span class="rec-val">${fmtDur(v)}</span>
                   </div>`;
         }).join("")}
-      </div>`;
-
-    return `
-      ${todayHtml}
-
-      <div class="rec-h2 rec-weeknav">
-        <button type="button" class="rec-nav" title="한 주 전"
-                onclick="renderMyRecordPanel(${backWeeks + 1}, ${wcBack})">‹</button>
-        <span>${weekLabel} · Working hours</span>
-        <button type="button" class="rec-nav" title="한 주 뒤" ${isThisWeek ? "disabled" : ""}
-                onclick="renderMyRecordPanel(${backWeeks - 1}, ${wcBack})">›</button>
       </div>
+
+      <div class="rec-h2">지난 7일 · 집필 시간</div>
       <div class="rec-week">
         ${rows.map(r => {
           const v = r.totals.writing + r.totals.focus;
           const h = Math.max(3, Math.round(v / maxDay * 74));
           const d = new Date(r.date + "T00:00:00");
-          const isToday = isThisWeek && r === today;
+          const isToday = r === today;
           return `<span title="${r.date} · ${fmtDur(v)} · 🍅 ${r.pomo}">
-                    <b class="rec-bar-v">${v ? fmtDur(v) : ""}</b>
                     <i style="height:${h}px${v ? "" : ";background:var(--fill-2)"}"></i>
                     <s${isToday ? ' class="on"' : ""}>${DOW[d.getDay()]}</s>
                   </span>`;
@@ -529,7 +513,7 @@
       </div>
 
       <div class="rec-foot">
-        ${isThisWeek ? "이번 주" : weekLabel} <b>${fmtDur(weekWork)}</b> · 🍅 <b>${weekPomo}회</b>
+        이번 주 <b>${fmtDur(weekWork)}</b> · 🍅 <b>${weekPomo}회</b>
       </div>
       <p class="hint">
         상태를 바꾼 시각을 기준으로 계산합니다. <b>창을 내려두고 다른 앱에서
@@ -546,7 +530,7 @@
      집필 시간과 글자수는 같은 하루를 다른 각도에서 본 값이라,
      나란히 두면 "오래 앉아 있었는데 덜 썼네" 같은 게 보입니다.
      --------------------------------------------------------------- */
-  async function renderMyRecordPanel(backWeeks = 0, wcBack = 0) {
+  async function renderMyRecordPanel() {
     const host = document.getElementById("panel-record");
     if (!host) return;
 
@@ -558,23 +542,17 @@
     host.innerHTML = `<div class="set-block"><p class="hint">불러오는 중…</p></div>`;
 
     let timeHtml = "";
-    try { timeHtml = recordHtml(await loadSummary(myNick, 7, backWeeks), backWeeks, wcBack); }
+    try { timeHtml = recordHtml(await loadSummary(myNick, 7)); }
     catch (e) { timeHtml = `<p class="hint">기록을 불러오지 못했어요.</p>`; }
 
     host.innerHTML = `
       <div class="set-block">
-        <div class="set-title">⏱️ Working hours</div>
+        <div class="set-title">⏱️ 집필 시간</div>
         ${timeHtml}
       </div>
       <div class="set-block">
-        <button class="ghost-btn w-full" type="button"
-                onclick="exportMyRecord(${backWeeks}, ${wcBack})">📤 보고 있는 주를 텍스트로 내보내기</button>
-        <p class="hint">위의 Working hours 주와 아래 Letters 주를 .txt 파일로 저장해요.</p>
-      </div>
-      <div class="set-block">
-        <div class="set-title">✍️ Letters</div>
-        ${(window.Wordcount?.myWeekHtml ? await window.Wordcount.myWeekHtml(wcBack, backWeeks) : null)
-          || `<p class="hint">글자수 기록을 불러오지 못했어요.</p>`}
+        <div class="set-title">✍️ 글자수</div>
+        ${window.Wordcount?.myWeekHtml?.() || `<p class="hint">글자수 기록을 불러오지 못했어요.</p>`}
       </div>`;
   }
   window.renderMyRecordPanel = renderMyRecordPanel;
@@ -606,10 +584,7 @@
         window.openGoals?.();
         return;
       }
-      /* [2026-08-03] 남의 카드는 눌리지 않습니다 — 작업시간은 본인만
-         설정 → 📊 나의 기록에서 봅니다. (마크업에서도 남의 카드에는
-         data-record-of 를 붙이지 않으므로 여기는 이중 안전장치) */
-      return;
+      openRecord(who);
     });
 
     document.addEventListener("keydown", (e) => {
@@ -620,58 +595,138 @@
   }
   window.bindRecordOpen = bindRecordOpen;
 
-  /* [2026-08-03] 나가기 직전 마무리 — 열린 구간을 지금까지로 저장하고
-     timeCur 를 지웁니다. 묵은 timeCur 가 남아 다음 입장을 어지럽히거나
-     지금까지의 작업 시간이 사라지는 일을 막습니다. */
-  window.finalizeTimelogOnLeave = async function () {
-    if (!myNick) return;
+  /* =================================================================
+     펫 — 누적 집필 시간으로 자랍니다
+
+     저장 자리
+       users/{닉}/workMsTotal        집필 누적 (ms)
+       users/{닉}/pet                { species, color }
+       users/{닉}/petDex/{종/색}      만렙 찍은 것들
+
+     레벨과 승계 계산은 script_pet.js 가 합니다. 여기서는 값을 읽고
+     쓰는 일만 합니다.
+     ================================================================= */
+  function petRef() { return db.ref(`users/${myNick}/pet`); }
+  function dexRef() { return db.ref(`users/${myNick}/petDex`); }
+
+  let _petCache = null;      // { species, color }
+  let _dexCache = {};
+  let _workTotal = 0;
+
+  /** 지금 열려 있는 구간까지 더한 집필 누적 */
+  function workTotalLive() {
+    let extra = 0;
+    if (_cur && (_cur.s === "writing" || _cur.s === "focus")) {
+      extra = Math.max(0, Math.min(nowMs() - Number(_cur.a), SEG_CAP_MS));
+    }
+    return _workTotal + extra;
+  }
+  window.petWorkTotal = workTotalLive;
+  window.petDex = () => ({ ..._dexCache });
+  window.petCurrent = () => (_petCache ? { ..._petCache } : null);
+
+  /** 지금 펫의 진행 상태 (없으면 null) */
+  function petState() {
+    if (!window.Pet) return null;
+    const done = Object.keys(_dexCache).length;
+    const prog = window.Pet.petProgress(workTotalLive(), done);
+    const cur = _petCache || { species: "cat" };
+    return { ...prog, species: cur.species };
+  }
+  window.petState = petState;
+
+  /** 만렙이면 도감에 넣고 다음 펫을 시작합니다 */
+  async function promoteIfMaxed() {
+    if (!myNick || !window.Pet || !_petCache) return false;
+    const st = petState();
+    if (!st || !st.isMax) return false;
+
+    const key = window.Pet.dexKey(_petCache.species);
+    _dexCache[key] = Date.now();
+    try { await dexRef().child(key).set(Date.now()); } catch (e) {}
+
+    const next = window.Pet.pickNextPet(_dexCache);
+    _petCache = next;
+    try { await petRef().set(next); } catch (e) {}
+
     try {
-      if (_cur && Number(_cur.a) > 0) {
-        await pushSegment(_cur.s, Number(_cur.a), nowMs());
-      }
-      _cur = null;
-      await curRef().remove();
-    } catch (e) { console.warn("[finalizeTimelogOnLeave]", e); }
-    _tlStarted = false;   // 같은 화면에서 다시 입장하면 새로 시작
+      window.showPetLevelUp?.(key, next);
+      window.rerenderUserCards?.();
+      window.renderPetPanel?.();
+      window.pushPetToStatus?.();
+    } catch (e) {}
+    return true;
+  }
+  window.promotePetIfMaxed = promoteIfMaxed;
+
+  /** 카드에 보이도록 status 에 요약을 실어 보냅니다 */
+  window.pushPetToStatus = function () {
+    try { window.updateStatus?.(false); } catch (e) {}
   };
 
-  /* [2026-08-03] 나의 작업 — 텍스트 내보내기 */
-  window.exportMyRecord = async function (backWeeks = 0, wcBack = 0) {
-    if (!myNick) { alert("입장 후에 쓸 수 있어요."); return; }
-    const rows = await loadSummary(myNick, 7, backWeeks);
-    const L = [];
-    L.push(`TheMagam — ${myNick} 작업 기록`);
-    L.push(`내보낸 시각: ${new Date().toLocaleString("ko-KR")}`);
-    L.push("");
-    L.push(`■ Working hours (${backWeeks === 0 ? "이번 주" : backWeeks + "주 전"})`);
-    let tw = 0, tp = 0;
-    rows.forEach(r => {
-      const v = r.totals.writing + r.totals.focus;
-      tw += v; tp += r.pomo;
-      L.push(`${r.date}  Work ${fmtDur(v)} · Break ${fmtDur(r.totals.rest)} · Away ${fmtDur(r.totals.away)} · 🍅 ${r.pomo}`);
-    });
-    L.push(`합계      Work ${fmtDur(tw)} · 🍅 ${tp}`);
-    L.push("");
-    L.push(`■ Letters (${wcBack === 0 ? "이번 주" : wcBack + "주 전"})`);
-    let tc = 0;
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(); d.setDate(d.getDate() - (i + wcBack * 7));
-      const key = window.Wordcount?.dayKey?.(d) || "";
-      let total = 0;
-      try {
-        const s = await db.ref(`wordlog/${key}/${myNick}`).once("value");
-        total = Number(s.val()?.total || 0);
-      } catch (e) {}
-      tc += total;
-      L.push(`${key}  ${total.toLocaleString()}자`);
+  let _petStarted = false;
+  async function startPet() {
+    if (!myNick || !window.Pet) return;
+    if (_petStarted) return;          // 두 번 불려도 타이머가 겹치지 않게
+    _petStarted = true;
+
+    try {
+      const snap = await db.ref(`users/${myNick}`).once("value");
+      const v = snap.val() || {};
+      _workTotal = Number(v.workMsTotal || 0);
+      _dexCache = v.petDex || {};
+      _petCache = (v.pet && v.pet.species) ? v.pet : null;
+    } catch (e) {}
+
+    if (!_petCache) {
+      _petCache = window.Pet.pickNextPet(_dexCache);
+      try { await petRef().set(_petCache); } catch (e) {}
     }
-    L.push(`합계      ${tc.toLocaleString()}자`);
-    const blob = new Blob([L.join("\n")], { type: "text/plain;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `더마감_${myNick}_기록_${new Date().toISOString().slice(0,10)}.txt`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+
+    // 누적이 바뀌면 카드와 관리 창을 갱신합니다
+    try {
+      db.ref(`users/${myNick}/workMsTotal`).on("value", s2 => {
+        _workTotal = Number(s2.val() || 0);
+        promoteIfMaxed();
+        try { window.renderPetPanel?.(); } catch (e) {}
+      });
+    } catch (e) {}
+
+    await promoteIfMaxed();
+    window.pushPetToStatus();
+
+    /* 1분마다 한 번 — 열린 구간이 자라면서 레벨이 오를 수 있습니다.
+       레벨이 실제로 바뀔 때만 화면을 건드립니다. */
+    let lastLv = petState()?.level;
+    setInterval(() => {
+      if (!myNick) return;
+      const st = petState();
+      if (!st) return;
+      if (st.level !== lastLv || st.isMax) {
+        lastLv = st.level;
+        promoteIfMaxed();
+        try { window.renderPetPanel?.(); } catch (e) {}
+        window.pushPetToStatus();
+      }
+    }, 60 * 1000);
+  }
+  window.startPet = startPet;
+
+  /** 껍데기를 바꿉니다 — 아직 안 태어난 Lv.1 에서만.
+
+      안에 든 것은 그룹 안에서 다시 무작위로 뽑습니다. 고르는 것은
+      껍데기까지이고, 무엇이 들었는지는 태어나야 압니다. */
+  window.setPetShell = async function (group) {
+    if (!myNick || !window.Pet || !_petCache) return;
+    const st = petState();
+    if (!st || st.level !== 1) return;          // 태어난 뒤에는 못 바꿉니다
+
+    const sp = window.Pet.pickInGroup(group, _dexCache);
+    if (!sp) return;
+    _petCache = { species: sp };
+    try { await petRef().set(_petCache); } catch (e) {}
+    try { window.renderPetPanel?.(); window.rerenderUserCards?.(); } catch (e) {}
+    window.pushPetToStatus();
   };
 
   window.TimeLog = { STATUSES, STATUS_IDS, GAP_LIMIT_MS, OFFLINE_MIN_MS, SEG_CAP_MS,
