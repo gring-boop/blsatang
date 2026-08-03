@@ -63,7 +63,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
 
-  <link rel="stylesheet" href="styles.css?v=202608031423" />
+  <link rel="stylesheet" href="styles.css?v=202608031437" />
 </head>
 
 <body>
@@ -460,6 +460,10 @@
   <header class="app-head" aria-label="도구">
     <div class="mini-row work-head-row">
 
+      <!-- [2026-08-03] 공지 핀 — 관리자만 고칠 수 있어요 (script_realtime.js) -->
+      <button class="head-notice empty" id="head-notice" type="button"
+              title="공지 — 관리자만 고정할 수 있어요">📌 <span id="head-notice-text">공지 (관리자)</span></button>
+
       <!-- 폰트 · 가이드 · 설정 · 나가기는 한 덩어리로 붙여서 오른쪽 끝에 -->
       <!-- 치워둔 창 되돌리기 — 비어 있으면 통째로 숨습니다 -->
       <div id="hidden-panels" class="hidden-panels hidden" aria-label="치워둔 창"></div>
@@ -752,21 +756,21 @@
 
 <!-- Core → UI → Chat → Data → Realtime → Profile 순서 -->
 <!-- script_profile.js는 다른 모듈의 함수를 감싸므로 반드시 마지막에 로드 -->
-<script src="fortune_data.js?v=202608031423"></script>
-<script src="script_core.js?v=202608031423"></script>
-<script src="script_auth.js?v=202608031423"></script>
-<script src="script_ui.js?v=202608031423"></script>
-<script src="script_chat.js?v=202608031423"></script>
-<script src="script_data.js?v=202608031423"></script>
-<script src="script_realtime.js?v=202608031423"></script>
-<script src="script_layout.js?v=202608031423"></script>
-<script src="script_pet.js?v=202608031423"></script>
-<script src="script_pet_ui.js?v=202608031423"></script>
-<script src="script_wordcount.js?v=202608031423"></script>
-<script src="script_timelog.js?v=202608031423"></script>
-<script src="script_profile.js?v=202608031423"></script>
-<script src="script_reactions.js?v=202608031423"></script>
-<script src="script_manual.js?v=202608031423"></script>
+<script src="fortune_data.js?v=202608031437"></script>
+<script src="script_core.js?v=202608031437"></script>
+<script src="script_auth.js?v=202608031437"></script>
+<script src="script_ui.js?v=202608031437"></script>
+<script src="script_chat.js?v=202608031437"></script>
+<script src="script_data.js?v=202608031437"></script>
+<script src="script_realtime.js?v=202608031437"></script>
+<script src="script_layout.js?v=202608031437"></script>
+<script src="script_pet.js?v=202608031437"></script>
+<script src="script_pet_ui.js?v=202608031437"></script>
+<script src="script_wordcount.js?v=202608031437"></script>
+<script src="script_timelog.js?v=202608031437"></script>
+<script src="script_profile.js?v=202608031437"></script>
+<script src="script_reactions.js?v=202608031437"></script>
+<script src="script_manual.js?v=202608031437"></script>
 
 <script>
   window.addEventListener("load", () => {

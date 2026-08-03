@@ -508,6 +508,60 @@
     });
   }
 
+  /* =====================================================
+     [2026-08-03] 공지 핀 — 헤더의 📌
+     config/notice { text, by, at } — 보안규칙의 config 는
+     로그인한 사람이면 쓸 수 있어서 규칙 변경이 필요 없습니다.
+     고치는 건 관리자 핀을 아는 사람만 (채팅 핀과 같은 방식).
+     ===================================================== */
+  let _noticeText = "";
+  let _noticeListening = false;
+  function listenNotice() {
+    if (_noticeListening) return;
+    _noticeListening = true;
+    try {
+      db.ref("config/notice").on("value", (snap) => {
+        const v = snap.val();
+        _noticeText = (v && v.text) ? String(v.text) : "";
+        const t = document.getElementById("head-notice-text");
+        const btn = document.getElementById("head-notice");
+        if (!t || !btn) return;
+        t.textContent = _noticeText || "공지 (관리자)";
+        btn.classList.toggle("empty", !_noticeText);
+        btn.title = _noticeText
+          ? `📌 ${_noticeText} — 관리자만 고칠 수 있어요`
+          : "공지 — 관리자만 고정할 수 있어요";
+      });
+    } catch (e) { console.warn("[listenNotice]", e); }
+  }
+  function bindNoticeEdit() {
+    const btn = document.getElementById("head-notice");
+    if (!btn || btn._noticeBound) return;
+    btn._noticeBound = true;
+    btn.addEventListener("click", async () => {
+      if (!myNick) { alert("입장 후에 공지를 고정할 수 있어요."); return; }
+      if (AppSession.getItem("adminPinOk") !== "true") {
+        if (!window.requireAdminPin?.()) return;
+      }
+      const next = prompt("📌 고정할 공지 (비우고 확인하면 내려요)", _noticeText);
+      if (next === null) return;               // 취소
+      const text = String(next).trim();
+      try {
+        if (text) await db.ref("config/notice").set({ text, by: myNick, at: Date.now() });
+        else      await db.ref("config/notice").remove();
+      } catch (e) {
+        console.warn("[notice save]", e);
+        alert("공지 저장에 실패했어요. 연결을 확인해 주세요.");
+      }
+    });
+  }
+  window.listenNotice = listenNotice;
+  window.bindNoticeEdit = bindNoticeEdit;
+  document.addEventListener("DOMContentLoaded", () => {
+    try { bindNoticeEdit(); } catch (e) {}
+    try { if (window.db) listenNotice(); } catch (e) {}
+  });
+
   // =====================================================
   // pomodoro realtime
   // =====================================================
