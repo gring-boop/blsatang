@@ -42,10 +42,10 @@
 (function () {
 
   const STATUSES = [
-    { id: "writing", label: "WORK",       color: "#C0392B" },
-    { id: "focus",   label: "🔥집중",      color: "#C2701A" },
-    { id: "rest",    label: "휴식",        color: "#2E8B6B" },
-    { id: "away",    label: "자리비움",    color: "#8A8F98" }
+    { id: "writing", label: "Work",        color: "#C0392B" },
+    { id: "focus",   label: "Work(집중)",  color: "#C2701A" },   /* 옛 기록용 */
+    { id: "rest",    label: "Break",       color: "#2E8B6B" },
+    { id: "away",    label: "Break(이석)", color: "#8A8F98" }    /* 옛 기록용 */
   ];
   const STATUS_IDS = STATUSES.map(s => s.id);
 
@@ -584,7 +584,10 @@
         window.openGoals?.();
         return;
       }
-      openRecord(who);
+      /* [2026-08-03] 남의 카드는 눌리지 않습니다 — 작업시간은 본인만
+         설정 → 📊 나의 기록에서 봅니다. (마크업에서도 남의 카드에는
+         data-record-of 를 붙이지 않으므로 여기는 이중 안전장치) */
+      return;
     });
 
     document.addEventListener("keydown", (e) => {
@@ -594,140 +597,6 @@
     });
   }
   window.bindRecordOpen = bindRecordOpen;
-
-  /* =================================================================
-     펫 — 누적 집필 시간으로 자랍니다
-
-     저장 자리
-       users/{닉}/workMsTotal        집필 누적 (ms)
-       users/{닉}/pet                { species, color }
-       users/{닉}/petDex/{종/색}      만렙 찍은 것들
-
-     레벨과 승계 계산은 script_pet.js 가 합니다. 여기서는 값을 읽고
-     쓰는 일만 합니다.
-     ================================================================= */
-  function petRef() { return db.ref(`users/${myNick}/pet`); }
-  function dexRef() { return db.ref(`users/${myNick}/petDex`); }
-
-  let _petCache = null;      // { species, color }
-  let _dexCache = {};
-  let _workTotal = 0;
-
-  /** 지금 열려 있는 구간까지 더한 집필 누적 */
-  function workTotalLive() {
-    let extra = 0;
-    if (_cur && (_cur.s === "writing" || _cur.s === "focus")) {
-      extra = Math.max(0, Math.min(nowMs() - Number(_cur.a), SEG_CAP_MS));
-    }
-    return _workTotal + extra;
-  }
-  window.petWorkTotal = workTotalLive;
-  window.petDex = () => ({ ..._dexCache });
-  window.petCurrent = () => (_petCache ? { ..._petCache } : null);
-
-  /** 지금 펫의 진행 상태 (없으면 null) */
-  function petState() {
-    if (!window.Pet) return null;
-    const done = Object.keys(_dexCache).length;
-    const prog = window.Pet.petProgress(workTotalLive(), done);
-    const cur = _petCache || { species: "cat" };
-    return { ...prog, species: cur.species };
-  }
-  window.petState = petState;
-
-  /** 만렙이면 도감에 넣고 다음 펫을 시작합니다 */
-  async function promoteIfMaxed() {
-    if (!myNick || !window.Pet || !_petCache) return false;
-    const st = petState();
-    if (!st || !st.isMax) return false;
-
-    const key = window.Pet.dexKey(_petCache.species);
-    _dexCache[key] = Date.now();
-    try { await dexRef().child(key).set(Date.now()); } catch (e) {}
-
-    const next = window.Pet.pickNextPet(_dexCache);
-    _petCache = next;
-    try { await petRef().set(next); } catch (e) {}
-
-    try {
-      window.showPetLevelUp?.(key, next);
-      window.rerenderUserCards?.();
-      window.renderPetPanel?.();
-      window.pushPetToStatus?.();
-    } catch (e) {}
-    return true;
-  }
-  window.promotePetIfMaxed = promoteIfMaxed;
-
-  /** 카드에 보이도록 status 에 요약을 실어 보냅니다 */
-  window.pushPetToStatus = function () {
-    try { window.updateStatus?.(false); } catch (e) {}
-  };
-
-  let _petStarted = false;
-  async function startPet() {
-    if (!myNick || !window.Pet) return;
-    if (_petStarted) return;          // 두 번 불려도 타이머가 겹치지 않게
-    _petStarted = true;
-
-    try {
-      const snap = await db.ref(`users/${myNick}`).once("value");
-      const v = snap.val() || {};
-      _workTotal = Number(v.workMsTotal || 0);
-      _dexCache = v.petDex || {};
-      _petCache = (v.pet && v.pet.species) ? v.pet : null;
-    } catch (e) {}
-
-    if (!_petCache) {
-      _petCache = window.Pet.pickNextPet(_dexCache);
-      try { await petRef().set(_petCache); } catch (e) {}
-    }
-
-    // 누적이 바뀌면 카드와 관리 창을 갱신합니다
-    try {
-      db.ref(`users/${myNick}/workMsTotal`).on("value", s2 => {
-        _workTotal = Number(s2.val() || 0);
-        promoteIfMaxed();
-        try { window.renderPetPanel?.(); } catch (e) {}
-      });
-    } catch (e) {}
-
-    await promoteIfMaxed();
-    window.pushPetToStatus();
-
-    /* 1분마다 한 번 — 열린 구간이 자라면서 레벨이 오를 수 있습니다.
-       레벨이 실제로 바뀔 때만 화면을 건드립니다. */
-    let lastLv = petState()?.level;
-    setInterval(() => {
-      if (!myNick) return;
-      const st = petState();
-      if (!st) return;
-      if (st.level !== lastLv || st.isMax) {
-        lastLv = st.level;
-        promoteIfMaxed();
-        try { window.renderPetPanel?.(); } catch (e) {}
-        window.pushPetToStatus();
-      }
-    }, 60 * 1000);
-  }
-  window.startPet = startPet;
-
-  /** 껍데기를 바꿉니다 — 아직 안 태어난 Lv.1 에서만.
-
-      안에 든 것은 그룹 안에서 다시 무작위로 뽑습니다. 고르는 것은
-      껍데기까지이고, 무엇이 들었는지는 태어나야 압니다. */
-  window.setPetShell = async function (group) {
-    if (!myNick || !window.Pet || !_petCache) return;
-    const st = petState();
-    if (!st || st.level !== 1) return;          // 태어난 뒤에는 못 바꿉니다
-
-    const sp = window.Pet.pickInGroup(group, _dexCache);
-    if (!sp) return;
-    _petCache = { species: sp };
-    try { await petRef().set(_petCache); } catch (e) {}
-    try { window.renderPetPanel?.(); window.rerenderUserCards?.(); } catch (e) {}
-    window.pushPetToStatus();
-  };
 
   window.TimeLog = { STATUSES, STATUS_IDS, GAP_LIMIT_MS, OFFLINE_MIN_MS, SEG_CAP_MS,
                      loadSummary, fmtDur, pushSegment };
